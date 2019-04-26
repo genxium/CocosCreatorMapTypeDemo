@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>	
+	<meta charset="utf-8"/>
+	<title></title>
+</head>
+<body>	
+  <p id= "content"></p>
+</body>
+<script type="text/javascript "src="../../resources/i18n/en.js">	
+</script>
+<script type="text/javascript">	
+  const jsContent = window.i18n.languages['en']; 
+  function forEachContent(value) {
+    for(let i in value){
+      const obj = value[i];
+      if('object' == typeof(obj) ){
+        forEachContent(obj)
+      }else {
+        document.getElementById("content").innerHTML = document.getElementById("content").innerHTML + obj + "</br>";  
+      }
+    }
+  } 
+ forEachContent(jsContent); 
+</script>
+</html> 

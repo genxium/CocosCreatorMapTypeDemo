@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" tiledversion="1.1.6" orientation="isometric" renderorder="right-down" width="40" height="40" tilewidth="256" tileheight="128" infinite="0" nextobjectid="1">
+ <tileset firstgid="1" source="Tile_W256_H128_S01.tsx"/>
+ <layer name="StatefulBuildableInstanceHighlighter" width="40" height="40">
+  <properties>
+   <property name="type" value="stateful_buildable_instance_highlighter"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJztw7ENAAAMAiBn/z/Y3tFAQgIAAAAAAPBH7wAZKAAL
+  </data>
+ </layer>
+ <layer name="floor" width="40" height="40">
+  <data encoding="base64" compression="zlib">
+   eJzt17EJACAMAMFgIcT9B9YZDBGLK76/9ldELEl63HjUrS9Ps7nk4+Pj4+Pj4+Pj4+Pj4/vA1/3mFZ8kVdoABTO/
+  </data>
+ </layer>
+</map>
