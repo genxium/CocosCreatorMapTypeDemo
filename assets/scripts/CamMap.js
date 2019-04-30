@@ -98,7 +98,7 @@ cc.Class({
     const statefulBuildableInstance = statefulBuildableInstanceNode.getComponent("StatefulBuildableInstance");
     if (null == playerBuildableBinding) {
       statefulBuildableInstance.initFromStatelessBuildableBinding(targetedStatelessBuildableInstance, self);
-      statefulBuildableInstance.state = window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING; // 此时还没开始建造
+      statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos); 
     } else {
       statefulBuildableInstance.initOrUpdateFromPlayerBuildableBinding(playerBuildableBinding, targetedStatelessBuildableInstance, self);
     }
@@ -150,10 +150,10 @@ cc.Class({
     statefulBuildableInstance.isNew = false;
     switch (statefulBuildableInstance.state) {
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE:
-        statefulBuildableInstance.state = window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING;
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
         break;
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
-        statefulBuildableInstance.state = window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING;
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING, statefulBuildableInstanceNode.fixedSpriteCentreContinuousPos);
       default:
         break;
     }
@@ -195,36 +195,27 @@ cc.Class({
       const editingStatefulBuildableInstanceNode = editingStatefulBuildableInstance.node;
       self.removePositioningNewStatefulBuildableInstance();
       if (!successfullyPlacedOrNot && null != editingStatefulBuildableInstanceNode && null != editingStatefulBuildableInstanceNode.parent) {
-        //Case #1.1 if is building and cancelBuildButton clicked
-        // 新建时取消
         if (editingStatefulBuildableInstance.isNew && window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING == editingStatefulBuildableInstance.state) {
           editingStatefulBuildableInstanceNode.parent.removeChild(editingStatefulBuildableInstanceNode);
           self.onBuildButtonClicked(); //重新打开statelessBuildableInstanceCardListNode
         } else if (!editingStatefulBuildableInstance.isNew) {
-          //Case #1.2 if else recover the statefulBuildableInstance.
-          // 修改时取消,若建造未完成,则状态应为BUILDING
           editingStatefulBuildableInstanceNode.setPosition(editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
           switch (editingStatefulBuildableInstance.state) {
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
-              editingStatefulBuildableInstance.state = window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE;
+              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-              editingStatefulBuildableInstance.state = window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING;
+              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
           }
 
           self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
         }
       } else {
-        //Case #2 if confirmBuildButton clicked;
         self.removeEditingExistingStatefulBuildableInstance();
 
-        // 如果是新建造的，则push到mapIns.statefulBuildableInstanceList保存。[BEGINS]
-        if (editingStatefulBuildableInstance.isNew) { // TODO: 将其变成常量 
+        if (editingStatefulBuildableInstance.isNew) {  
           self.statefulBuildableInstanceList.push(editingStatefulBuildableInstance.playerBuildableBinding);
         }
-        // 此时才开始建造
-        editingStatefulBuildableInstance.state = (window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING);
-        editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos = (editingStatefulBuildableInstanceNode.position);
-        // 如果是新建造的，则push到mapIns.statefulBuildableInstanceList保存。[ENDS]
+        editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position /* which is assigned only conditionally within `this.onMovingBuildableInstance` */);
 
         self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
         self.renderPerStatefulBuildableInstanceNode(editingStatefulBuildableInstance);
@@ -379,7 +370,7 @@ cc.Class({
     mapIns.editingStatefulBuildableInstance.node.setPosition(immediateContinuousPosWrtMapNode);
     mapIns.refreshHighlightedTileGridForEditingStatefulBuildableInstance(mapIns.tiledMapIns);
 
-  // TODO: Handle the case where `mapIns.editingStatefulBuildableInstance` is moving out of the current visible area of `mapIns.mainCamera`.
+    // TODO: Handle the case where `mapIns.editingStatefulBuildableInstance` is moving out of the current visible area of `mapIns.mainCamera`.
   },
 
   onCancelBuildButtonClicked(evt) {
@@ -735,8 +726,7 @@ cc.Class({
   },
 
   sendPlayerSyncDataUpsync(queryParam) {
-    const self = this;
-    cc.sys.localStorage.setItem("playerBuildableBindingList", JSON.stringify(self.statefulBuildableInstanceList));
+    // Deliberately left blank.
   },
 
   _findStatelessBuildableInstance(fromPlayerBuildableBinding) {

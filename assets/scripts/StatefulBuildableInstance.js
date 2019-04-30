@@ -21,6 +21,14 @@ const StatefulBuildableInstance = cc.Class({
         return (null == this._fixedSpriteCentreContinuousPos ? null : this._fixedSpriteCentreContinuousPos);
       },
       set: function(val) {
+        /*
+         * WARNING
+         *
+         * You SHOULDN'T DIRECTLY trigger this setter from outside of `StatefulBuildableInstance` class.
+         *
+         * -- YFLu
+         */
+        if (null == val) return;
         const self = this;
         if (!self.mapIns || !self.mapIns.tiledMapIns) return; 
         if (!self.playerBuildableBinding) return;
@@ -28,12 +36,6 @@ const StatefulBuildableInstance = cc.Class({
         const anchorTileDiscretePos = tileCollisionManager._continuousToDiscrete(self.mapIns.node, self.mapIns.tiledMapIns, val.add(self.estimatedSpriteCentreToAnchorTileCentreContinuousOffset), cc.v2(0, 0));
         self.playerBuildableBinding.topmostTileDiscretePositionX = anchorTileDiscretePos.x;
         self.playerBuildableBinding.topmostTileDiscretePositionY = anchorTileDiscretePos.y;
-        cc.log(self.playerBuildableBinding)
-        cc.sys.localStorage.setItem("playerBuildableBindingList", JSON.stringify(self.mapIns.statefulBuildableInstanceList));
-        /** 请求后端刷新数据 [begins] */
-        /** 本地运行,无需与服务器通信 */
-        self.mapIns.sendPlayerSyncDataUpsync();
-        /** 请求后端刷新数据 [ends] */
       },
     },
     state: {
@@ -41,6 +43,13 @@ const StatefulBuildableInstance = cc.Class({
         return (null == this._state ? STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING : this._state);
       },
       set: function(val) {
+        /*
+         * WARNING
+         *
+         * You SHOULDN'T DIRECTLY trigger this setter from outside of `StatefulBuildableInstance` class.
+         *
+         * -- YFLu
+         */
         const self = this, modified = self._state && self._state != val;
         self._state = val;
         if (!self.playerBuildableBinding) return;
@@ -87,20 +96,27 @@ const StatefulBuildableInstance = cc.Class({
             this.editBuildButton.interactable = false;
             break;
         }
-        // 使statefulBuilding的state只在转变为IDLE或者BUILDING时才进行数据持久化
-        if (
-          modified
-          && 
-          (val == STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE || val == STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING)
-        ) {
-          cc.sys.localStorage.setItem("playerBuildableBindingList", JSON.stringify(self.mapIns.statefulBuildableInstanceList));
-          /** 请求后端刷新数据 [begins] */
-          /** 本地运行,不需要与服务器通信*/
-          self.mapIns.sendPlayerSyncDataUpsync();
-        }
-        /** 请求后端刷新数据 [ends] */
       },
     },
+  },
+
+  updateCriticalProperties(newState, newFixedSpriteCentreContinuousPos) {
+    const self = this;
+    const anythingChanged = (
+      (newState != self.state)
+      ||
+      (newFixedSpriteCentreContinuousPos.x != self.fixedSpriteCentreContinuousPos.x || ewFixedSpriteCentreContinuousPos.y != self.fixedSpriteCentreContinuousPos.y)
+    ); 
+    self.state = newState; 
+    self.fixedSpriteCentreContinuousPos = newFixedSpriteCentreContinuousPos;
+    if (
+      anythingChanged
+      &&
+      (newState == STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE || newState == STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING)
+    ) {
+      cc.sys.localStorage.setItem("playerBuildableBindingList", JSON.stringify(self.mapIns.statefulBuildableInstanceList));
+      self.mapIns.sendPlayerSyncDataUpsync();
+    }
   },
 
   onLoad() {
@@ -144,10 +160,8 @@ const StatefulBuildableInstance = cc.Class({
 
     const anchorTileContinuousPos = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapIns.node, self.mapIns.tiledMapIns, null, playerBuildableBinding.topmostTileDiscretePositionX, playerBuildableBinding.topmostTileDiscretePositionY);
 
-    // Using `self._fixedSpriteCentreContinuousPos` instead of `self.fixedSpriteCentreContinuousPos` to avoid saving again into persistent storage.
-    self._fixedSpriteCentreContinuousPos = anchorTileContinuousPos.sub(self.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); 
+    self.fixedSpriteCentreContinuousPos = anchorTileContinuousPos.sub(self.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); 
 
-    // Will possibly trigger setter of `self.state`.
     self.state = playerBuildableBinding.state;
   }, 
 
