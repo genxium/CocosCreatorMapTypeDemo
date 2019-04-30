@@ -203,8 +203,10 @@ cc.Class({
           switch (editingStatefulBuildableInstance.state) {
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
               editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
+              break;
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
               editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
+              break;
           }
 
           self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
