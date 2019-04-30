@@ -105,7 +105,7 @@ const StatefulBuildableInstance = cc.Class({
     const anythingChanged = (
       (newState != self.state)
       ||
-      (newFixedSpriteCentreContinuousPos.x != self.fixedSpriteCentreContinuousPos.x || ewFixedSpriteCentreContinuousPos.y != self.fixedSpriteCentreContinuousPos.y)
+      (newFixedSpriteCentreContinuousPos.x != self.fixedSpriteCentreContinuousPos.x || newFixedSpriteCentreContinuousPos.y != self.fixedSpriteCentreContinuousPos.y)
     ); 
     self.state = newState; 
     self.fixedSpriteCentreContinuousPos = newFixedSpriteCentreContinuousPos;
