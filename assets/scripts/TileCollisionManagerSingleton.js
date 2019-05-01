@@ -30,40 +30,40 @@ function TileCollisionManager() {
 }
 
 TileCollisionManager.prototype._continuousFromCentreOfDiscreteTile = function(tiledMapNode, tiledMapIns, layerIns, discretePosX, discretePosY) {
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var mapTileRectilinearSize = tiledMapIns.getTileSize();
-  var mapAnchorOffset = cc.v2(0, 0);
-  var tileSize = {
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let mapTileRectilinearSize = tiledMapIns.getTileSize();
+  let mapAnchorOffset = cc.v2(0, 0);
+  let tileSize = {
     width: 0,
     height: 0
   };
-  var layerOffset = cc.v2(0, 0);
+  let layerOffset = cc.v2(0, 0);
 
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:
       return null;
 
     case cc.TiledMap.Orientation.ISO:
-      var tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width / 4 + mapTileRectilinearSize.height * mapTileRectilinearSize.height / 4);
+      let tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width / 4 + mapTileRectilinearSize.height * mapTileRectilinearSize.height / 4);
       tileSize = {
         width: tileSizeUnifiedLength,
         height: tileSizeUnifiedLength
       };
-      var cosineThetaRadian = mapTileRectilinearSize.width / 2 / tileSizeUnifiedLength;
-      var sineThetaRadian = mapTileRectilinearSize.height / 2 / tileSizeUnifiedLength;
+      let cosineThetaRadian = mapTileRectilinearSize.width / 2 / tileSizeUnifiedLength;
+      let sineThetaRadian = mapTileRectilinearSize.height / 2 / tileSizeUnifiedLength;
       mapAnchorOffset = cc.v2(
         tiledMapNode.getContentSize().width * (0.5 - tiledMapNode.getAnchorPoint().x),
         tiledMapNode.getContentSize().height * (1 - tiledMapNode.getAnchorPoint().y)
       );
       layerOffset = cc.v2(0, 0);
-      var transMat = [
+      let transMat = [
         [cosineThetaRadian, -cosineThetaRadian],
         [-sineThetaRadian, -sineThetaRadian]
       ];
-      var tmpContinuousX = (parseFloat(discretePosX) + 0.5) * tileSizeUnifiedLength;
-      var tmpContinuousY = (parseFloat(discretePosY) + 0.5) * tileSizeUnifiedLength;
-      var dContinuousXWrtMapNode = transMat[0][0] * tmpContinuousX + transMat[0][1] * tmpContinuousY;
-      var dContinuousYWrtMapNode = transMat[1][0] * tmpContinuousX + transMat[1][1] * tmpContinuousY;
+      let tmpContinuousX = (parseFloat(discretePosX) + 0.5) * tileSizeUnifiedLength;
+      let tmpContinuousY = (parseFloat(discretePosY) + 0.5) * tileSizeUnifiedLength;
+      let dContinuousXWrtMapNode = transMat[0][0] * tmpContinuousX + transMat[0][1] * tmpContinuousY;
+      let dContinuousYWrtMapNode = transMat[1][0] * tmpContinuousX + transMat[1][1] * tmpContinuousY;
       return cc.v2(dContinuousXWrtMapNode, dContinuousYWrtMapNode).add(mapAnchorOffset);
 
     default:
@@ -78,37 +78,37 @@ TileCollisionManager.prototype._continuousToDiscrete = function(tiledMapNode, ti
    * - http://cocos2d-x.org/docs/api-ref/creator/v1.5/classes/TiledLayer.html
    * - http://docs.mapeditor.org/en/stable/reference/tmx-map-format/?highlight=orientation#map
    */
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var mapTileRectilinearSize = tiledMapIns.getTileSize();
-  var mapAnchorOffset = {
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let mapTileRectilinearSize = tiledMapIns.getTileSize();
+  let mapAnchorOffset = {
     x: 0,
     y: 0
   };
-  var tileSize = {
+  let tileSize = {
     width: 0,
     height: 0
   };
-  var layerOffset = {
+  let layerOffset = {
     x: 0,
     y: 0
   };
-  var convertedContinuousOldXInTileCoordinates = null;
-  var convertedContinuousOldYInTileCoordinates = null;
-  var convertedContinuousNewXInTileCoordinates = null;
-  var convertedContinuousNewYInTileCoordinates = null;
-  var oldWholeMultipleX = 0;
-  var oldWholeMultipleY = 0;
-  var newWholeMultipleX = 0;
-  var newWholeMultipleY = 0;
-  var discretePosX = 0;
-  var discretePosY = 0;
-  var exactBorderX = 0;
-  var exactBorderY = 0; // These tmp variables are NOT NECESSARILY useful.
+  let convertedContinuousOldXInTileCoordinates = null;
+  let convertedContinuousOldYInTileCoordinates = null;
+  let convertedContinuousNewXInTileCoordinates = null;
+  let convertedContinuousNewYInTileCoordinates = null;
+  let oldWholeMultipleX = 0;
+  let oldWholeMultipleY = 0;
+  let newWholeMultipleX = 0;
+  let newWholeMultipleY = 0;
+  let discretePosX = 0;
+  let discretePosY = 0;
+  let exactBorderX = 0;
+  let exactBorderY = 0; // These tmp variables are NOT NECESSARILY useful.
 
-  var oldTmpX = 0;
-  var oldTmpY = 0;
-  var newTmpX = 0;
-  var newTmpY = 0;
+  let oldTmpX = 0;
+  let oldTmpY = 0;
+  let newTmpX = 0;
+  let newTmpY = 0;
 
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:
@@ -128,13 +128,13 @@ TileCollisionManager.prototype._continuousToDiscrete = function(tiledMapNode, ti
       break;
 
     case cc.TiledMap.Orientation.ISO:
-      var tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width / 4 + mapTileRectilinearSize.height * mapTileRectilinearSize.height / 4);
+      let tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width / 4 + mapTileRectilinearSize.height * mapTileRectilinearSize.height / 4);
       tileSize = {
         width: tileSizeUnifiedLength,
         height: tileSizeUnifiedLength
       };
-      var cosineThetaRadian = mapTileRectilinearSize.width / 2 / tileSizeUnifiedLength;
-      var sineThetaRadian = mapTileRectilinearSize.height / 2 / tileSizeUnifiedLength;
+      let cosineThetaRadian = mapTileRectilinearSize.width / 2 / tileSizeUnifiedLength;
+      let sineThetaRadian = mapTileRectilinearSize.height / 2 / tileSizeUnifiedLength;
       mapAnchorOffset = {
         x: tiledMapNode.getContentSize().width * (0.5 - tiledMapNode.getAnchorPoint().x),
         y: tiledMapNode.getContentSize().height * (1 - tiledMapNode.getAnchorPoint().y)
@@ -147,7 +147,7 @@ TileCollisionManager.prototype._continuousToDiscrete = function(tiledMapNode, ti
       oldTmpY = continuousOldPosLocalToMap.y - layerOffset.y - mapAnchorOffset.y;
       newTmpX = continuousNewPosLocalToMap.x - layerOffset.x - mapAnchorOffset.x;
       newTmpY = continuousNewPosLocalToMap.y - layerOffset.y - mapAnchorOffset.y;
-      var transMat = [[1 / (2 * cosineThetaRadian), -1 / (2 * sineThetaRadian)], [-1 / (2 * cosineThetaRadian), -1 / (2 * sineThetaRadian)]];
+      let transMat = [[1 / (2 * cosineThetaRadian), -1 / (2 * sineThetaRadian)], [-1 / (2 * cosineThetaRadian), -1 / (2 * sineThetaRadian)]];
       convertedContinuousOldXInTileCoordinates = transMat[0][0] * oldTmpX + transMat[0][1] * oldTmpY;
       convertedContinuousOldYInTileCoordinates = transMat[1][0] * oldTmpX + transMat[1][1] * oldTmpY;
       convertedContinuousNewXInTileCoordinates = transMat[0][0] * newTmpX + transMat[0][1] * newTmpY;
@@ -219,10 +219,10 @@ TileCollisionManager.prototype._continuousToDiscrete = function(tiledMapNode, ti
 };
 
 TileCollisionManager.prototype.continuousMapNodeVecToContinuousObjLayerVec = function(withTiledMapNode, continuousMapNodeVec) {
-  var tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
+  let tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
 
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var mapTileRectilinearSize = tiledMapIns.getTileSize();
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let mapTileRectilinearSize = tiledMapIns.getTileSize();
 
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:
@@ -230,19 +230,19 @@ TileCollisionManager.prototype.continuousMapNodeVecToContinuousObjLayerVec = fun
       return null;
 
     case cc.TiledMap.Orientation.ISO:
-      var tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width * 0.25 + mapTileRectilinearSize.height * mapTileRectilinearSize.height * 0.25);
-      var isometricObjectLayerPointOffsetScaleFactor = (tileSizeUnifiedLength / mapTileRectilinearSize.height);
-      var inverseIsometricObjectLayerPointOffsetScaleFactor = 1 / isometricObjectLayerPointOffsetScaleFactor;
+      let tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width * 0.25 + mapTileRectilinearSize.height * mapTileRectilinearSize.height * 0.25);
+      let isometricObjectLayerPointOffsetScaleFactor = (tileSizeUnifiedLength / mapTileRectilinearSize.height);
+      let inverseIsometricObjectLayerPointOffsetScaleFactor = 1 / isometricObjectLayerPointOffsetScaleFactor;
 
-      var cosineThetaRadian = (mapTileRectilinearSize.width * 0.5) / tileSizeUnifiedLength;
-      var sineThetaRadian = (mapTileRectilinearSize.height * 0.5) / tileSizeUnifiedLength;
+      let cosineThetaRadian = (mapTileRectilinearSize.width * 0.5) / tileSizeUnifiedLength;
+      let sineThetaRadian = (mapTileRectilinearSize.height * 0.5) / tileSizeUnifiedLength;
 
-      var inverseTransMat = [
+      let inverseTransMat = [
         [inverseIsometricObjectLayerPointOffsetScaleFactor * 0.5 * (1 / cosineThetaRadian), -inverseIsometricObjectLayerPointOffsetScaleFactor * 0.5 * (1 / sineThetaRadian)],
         [-inverseIsometricObjectLayerPointOffsetScaleFactor * 0.5 * (1 / cosineThetaRadian), -inverseIsometricObjectLayerPointOffsetScaleFactor * 0.5 * (1 / sineThetaRadian)]
       ];
-      var convertedVecX = inverseTransMat[0][0] * continuousMapNodeVec.x + inverseTransMat[0][1] * continuousMapNodeVec.y;
-      var convertedVecY = inverseTransMat[1][0] * continuousMapNodeVec.x + inverseTransMat[1][1] * continuousMapNodeVec.y;
+      let convertedVecX = inverseTransMat[0][0] * continuousMapNodeVec.x + inverseTransMat[0][1] * continuousMapNodeVec.y;
+      let convertedVecY = inverseTransMat[1][0] * continuousMapNodeVec.x + inverseTransMat[1][1] * continuousMapNodeVec.y;
 
       return cc.v2(convertedVecX, convertedVecY);
 
@@ -252,10 +252,10 @@ TileCollisionManager.prototype.continuousMapNodeVecToContinuousObjLayerVec = fun
 }
 
 TileCollisionManager.prototype.continuousObjLayerVecToContinuousMapNodeVec = function(withTiledMapNode, continuousObjLayerVec) {
-  var tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
+  let tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
 
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var mapTileRectilinearSize = tiledMapIns.getTileSize();
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let mapTileRectilinearSize = tiledMapIns.getTileSize();
 
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:
@@ -263,18 +263,18 @@ TileCollisionManager.prototype.continuousObjLayerVecToContinuousMapNodeVec = fun
       return null;
 
     case cc.TiledMap.Orientation.ISO:
-      var tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width * 0.25 + mapTileRectilinearSize.height * mapTileRectilinearSize.height * 0.25);
-      var isometricObjectLayerPointOffsetScaleFactor = (tileSizeUnifiedLength / mapTileRectilinearSize.height);
+      let tileSizeUnifiedLength = Math.sqrt(mapTileRectilinearSize.width * mapTileRectilinearSize.width * 0.25 + mapTileRectilinearSize.height * mapTileRectilinearSize.height * 0.25);
+      let isometricObjectLayerPointOffsetScaleFactor = (tileSizeUnifiedLength / mapTileRectilinearSize.height);
 
-      var cosineThetaRadian = (mapTileRectilinearSize.width * 0.5) / tileSizeUnifiedLength;
-      var sineThetaRadian = (mapTileRectilinearSize.height * 0.5) / tileSizeUnifiedLength;
+      let cosineThetaRadian = (mapTileRectilinearSize.width * 0.5) / tileSizeUnifiedLength;
+      let sineThetaRadian = (mapTileRectilinearSize.height * 0.5) / tileSizeUnifiedLength;
 
-      var transMat = [
+      let transMat = [
         [isometricObjectLayerPointOffsetScaleFactor * cosineThetaRadian, -isometricObjectLayerPointOffsetScaleFactor * cosineThetaRadian],
         [-isometricObjectLayerPointOffsetScaleFactor * sineThetaRadian, -isometricObjectLayerPointOffsetScaleFactor * sineThetaRadian]
       ];
-      var convertedVecX = transMat[0][0] * continuousObjLayerVec.x + transMat[0][1] * continuousObjLayerVec.y;
-      var convertedVecY = transMat[1][0] * continuousObjLayerVec.x + transMat[1][1] * continuousObjLayerVec.y;
+      let convertedVecX = transMat[0][0] * continuousObjLayerVec.x + transMat[0][1] * continuousObjLayerVec.y;
+      let convertedVecY = transMat[1][0] * continuousObjLayerVec.x + transMat[1][1] * continuousObjLayerVec.y;
 
       return cc.v2(convertedVecX, convertedVecY);
 
@@ -284,10 +284,10 @@ TileCollisionManager.prototype.continuousObjLayerVecToContinuousMapNodeVec = fun
 }
 
 TileCollisionManager.prototype.continuousObjLayerOffsetToContinuousMapNodePos = function(withTiledMapNode, continuousObjLayerOffset) {
-  var tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
+  let tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
 
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var mapTileRectilinearSize = tiledMapIns.getTileSize();
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let mapTileRectilinearSize = tiledMapIns.getTileSize();
 
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:
@@ -295,10 +295,10 @@ TileCollisionManager.prototype.continuousObjLayerOffsetToContinuousMapNodePos = 
       return null;
 
     case cc.TiledMap.Orientation.ISO:
-      var calibratedVec = continuousObjLayerOffset; // TODO: Respect the real offsets!
+      let calibratedVec = continuousObjLayerOffset; // TODO: Respect the real offsets!
 
       // The immediately following statement takes a magic assumption that the anchor of `withTiledMapNode` is (0.5, 0.5) which is NOT NECESSARILY true.
-      var layerOffset = cc.v2(0, +(withTiledMapNode.getContentSize().height * 0.5));
+      let layerOffset = cc.v2(0, +(withTiledMapNode.getContentSize().height * 0.5));
 
       return layerOffset.add(this.continuousObjLayerVecToContinuousMapNodeVec(withTiledMapNode, calibratedVec));
 
@@ -308,10 +308,10 @@ TileCollisionManager.prototype.continuousObjLayerOffsetToContinuousMapNodePos = 
 }
 
 TileCollisionManager.prototype.continuousMapNodePosToContinuousObjLayerOffset = function(withTiledMapNode, continuousMapNodePos) {
-  var tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
+  let tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap);
 
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var mapTileRectilinearSize = tiledMapIns.getTileSize();
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let mapTileRectilinearSize = tiledMapIns.getTileSize();
 
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:
@@ -320,8 +320,8 @@ TileCollisionManager.prototype.continuousMapNodePosToContinuousObjLayerOffset = 
 
     case cc.TiledMap.Orientation.ISO:
       // The immediately following statement takes a magic assumption that the anchor of `withTiledMapNode` is (0.5, 0.5) which is NOT NECESSARILY true.
-      var layerOffset = cc.v2(0, +(withTiledMapNode.getContentSize().height * 0.5));
-      var calibratedVec = continuousMapNodePos.sub(layerOffset); // TODO: Respect the real offsets!
+      let layerOffset = cc.v2(0, +(withTiledMapNode.getContentSize().height * 0.5));
+      let calibratedVec = continuousMapNodePos.sub(layerOffset); // TODO: Respect the real offsets!
       return this.continuousMapNodeVecToContinuousObjLayerVec(withTiledMapNode, calibratedVec);
 
     default:
@@ -333,7 +333,7 @@ TileCollisionManager.prototype.continuousMapNodePosToContinuousObjLayerOffset = 
  * Note that `TileCollisionManager.extractBoundaryObjects` returns everything with coordinates local to `withTiledMapNode`!
  */
 TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNode) {
-  var toRet = {
+  let toRet = {
     barriers: [],
     transparents: [],
     shelterChainTails: [],
@@ -342,68 +342,68 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
     frameAnimations: [],
     imageObjects: [],
     grandBoundaries: [],
-    restaurants: [],
+    statefulBuildableInhibitions: [],
   };
-  var tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap); // This is a magic name.
-  var mapTileSize = tiledMapIns.getTileSize();
-  var mapOrientation = tiledMapIns.getMapOrientation();
+  let tiledMapIns = withTiledMapNode.getComponent(cc.TiledMap); // This is a magic name.
+  let mapTileSize = tiledMapIns.getTileSize();
+  let mapOrientation = tiledMapIns.getMapOrientation();
 
   /*
    * Copies from https://github.com/cocos-creator/engine/blob/master/cocos2d/tilemap/CCTiledMap.js as a hack to parse advanced <tile> info
    * of a TSX file. [BEGINS]
    */
-  var file = tiledMapIns._tmxFile;
-  var texValues = file.textures;
-  var texKeys = file.textureNames;
-  var textures = {};
-  for (var texIdx = 0; texIdx < texValues.length; ++texIdx) {
+  let file = tiledMapIns._tmxFile;
+  let texValues = file.textures;
+  let texKeys = file.textureNames;
+  let textures = {};
+  for (let texIdx = 0; texIdx < texValues.length; ++texIdx) {
     textures[texKeys[texIdx]] = texValues[texIdx];
   }
 
-  var tsxFileNames = file.tsxFileNames;
-  var tsxFiles = file.tsxFiles;
-  var tsxMap = {};
-  for (var tsxFilenameIdx = 0; tsxFilenameIdx < tsxFileNames.length; ++tsxFilenameIdx) {
+  let tsxFileNames = file.tsxFileNames;
+  let tsxFiles = file.tsxFiles;
+  let tsxMap = {};
+  for (let tsxFilenameIdx = 0; tsxFilenameIdx < tsxFileNames.length; ++tsxFilenameIdx) {
     if (0 >= tsxFileNames[tsxFilenameIdx].length) continue;
     tsxMap[tsxFileNames[tsxFilenameIdx]] = tsxFiles[tsxFilenameIdx].text;
   }
 
-  var mapInfo = new cc.TMXMapInfo(file.tmxXmlStr, tsxMap, textures);
-  var tileSets = mapInfo.getTilesets();
+  let mapInfo = new cc.TMXMapInfo(file.tmxXmlStr, tsxMap, textures);
+  let tileSets = mapInfo.getTilesets();
   /*
    * Copies from https://github.com/cocos-creator/engine/blob/master/cocos2d/tilemap/CCTiledMap.js as a hack to parse advanced <tile> info
    * of a TSX file. [ENDS]
    */
-  var gidBoundariesMap = {};
-  var tilesElListUnderTilesets = {};
-  for (var tsxFilenameIdx = 0; tsxFilenameIdx < tsxFileNames.length; ++tsxFilenameIdx) {
+  let gidBoundariesMap = {};
+  let tilesElListUnderTilesets = {};
+  for (let tsxFilenameIdx = 0; tsxFilenameIdx < tsxFileNames.length; ++tsxFilenameIdx) {
 
-    var tsxOrientation = tileSets[tsxFilenameIdx].orientation;
+    let tsxOrientation = tileSets[tsxFilenameIdx].orientation;
     if (cc.TiledMap.Orientation.ORTHO == tsxOrientation) {
       cc.error("Error at tileset %s: We proceed with ONLY tilesets in ORTHO orientation for all map orientations by now.", tsxFileNames[tsxFilenameIdx]);
       continue;
     }
     ;
 
-    var tsxXMLStr = tsxMap[tsxFileNames[tsxFilenameIdx]];
-    var selTileset = mapInfo._parser._parseXML(tsxXMLStr).documentElement;
-    var firstGid = (parseInt(selTileset.getAttribute('firstgid')) || tileSets[tsxFilenameIdx].firstGid || 0);
-    var currentTiles = selTileset.getElementsByTagName('tile');
+    let tsxXMLStr = tsxMap[tsxFileNames[tsxFilenameIdx]];
+    let selTileset = mapInfo._parser._parseXML(tsxXMLStr).documentElement;
+    let firstGid = (parseInt(selTileset.getAttribute('firstgid')) || tileSets[tsxFilenameIdx].firstGid || 0);
+    let currentTiles = selTileset.getElementsByTagName('tile');
     if (!currentTiles) continue;
     tilesElListUnderTilesets[tsxFileNames[tsxFilenameIdx]] = currentTiles;
 
-    for (var tileIdx = 0; tileIdx < currentTiles.length; ++tileIdx) {
-      var currentTile = currentTiles[tileIdx];
-      var parentGID = parseInt(firstGid) + parseInt(currentTile.getAttribute('id') || 0);
+    for (let tileIdx = 0; tileIdx < currentTiles.length; ++tileIdx) {
+      let currentTile = currentTiles[tileIdx];
+      let parentGID = parseInt(firstGid) + parseInt(currentTile.getAttribute('id') || 0);
       if (cc.sys.isNative) {
-        var childrenOfCurrentTile = currentTile.getElementsByTagName("objectgroup");
+        let childrenOfCurrentTile = currentTile.getElementsByTagName("objectgroup");
       } else {
-        var childrenOfCurrentTile = currentTile.children;
+        let childrenOfCurrentTile = currentTile.children;
       }
-      for (var childIdx = 0; childIdx < childrenOfCurrentTile.length; ++childIdx) {
-        var ch = childrenOfCurrentTile[childIdx];
+      for (let childIdx = 0; childIdx < childrenOfCurrentTile.length; ++childIdx) {
+        let ch = childrenOfCurrentTile[childIdx];
         if (!(ch.nodeName === 'objectgroup')) continue;
-        var currentObjectGroupUnderTile = mapInfo._parseObjectGroup(ch);
+        let currentObjectGroupUnderTile = mapInfo._parseObjectGroup(ch);
         gidBoundariesMap[parentGID] = {
           barriers: [],
           shelterChainTails: [],
@@ -412,29 +412,29 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
           sheltersZReducer: [],
           tilesetTileSize: tileSets[tsxFilenameIdx]._tileSize,
         };
-        for (var oidx = 0; oidx < currentObjectGroupUnderTile._objects.length; ++oidx) {
-          var oo = currentObjectGroupUnderTile._objects[oidx];
-          var polylinePoints = oo.polylinePoints;
+        for (let oidx = 0; oidx < currentObjectGroupUnderTile._objects.length; ++oidx) {
+          let oo = currentObjectGroupUnderTile._objects[oidx];
+          let polylinePoints = oo.polylinePoints;
           if (!polylinePoints) continue;
-          var boundaryType = oo.boundary_type;
+          let boundaryType = oo.boundary_type;
           switch (boundaryType) {
             case "barrier":
-              var brToPushTmp = [];
-              for (var bidx = 0; bidx < polylinePoints.length; ++bidx) {
+              let brToPushTmp = [];
+              for (let bidx = 0; bidx < polylinePoints.length; ++bidx) {
                 brToPushTmp.push(cc.v2(oo.x, oo.y).add(polylinePoints[bidx]));
               }
               gidBoundariesMap[parentGID].barriers.push(brToPushTmp);
               break;
             case "transparent":
-              var transToPushTmp = [];
-              for (var shidx = 0; shidx < polylinePoints.length; ++shidx) {
+              let transToPushTmp = [];
+              for (let shidx = 0; shidx < polylinePoints.length; ++shidx) {
                 transToPushTmp.push(cc.v2(oo.x, oo.y).add(polylinePoints[shidx]));
               }
               gidBoundariesMap[parentGID].transparents.push(transToPushTmp);
               break;
             case "shelter_z_reducer":
-              var shzrToPushTmp = [];
-              for (var shzridx = 0; shzridx < polylinePoints.length; ++shzridx) {
+              let shzrToPushTmp = [];
+              for (let shzridx = 0; shzridx < polylinePoints.length; ++shzridx) {
                 shzrToPushTmp.push(cc.v2(oo.x, oo.y).add(polylinePoints[shzridx]));
               }
               gidBoundariesMap[parentGID].sheltersZReducer.push(shzrToPushTmp);
@@ -461,21 +461,21 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
     }
   }
   // Reference http://docs.cocos.com/creator/api/en/classes/TiledMap.html.
-  var allObjectGroups = tiledMapIns.getObjectGroups();
+  let allObjectGroups = tiledMapIns.getObjectGroups();
 
-  for (var i = 0; i < allObjectGroups.length; ++i) {
+  for (let i = 0; i < allObjectGroups.length; ++i) {
     // Reference http://docs.cocos.com/creator/api/en/classes/TiledObjectGroup.html.
-    var objectGroup = allObjectGroups[i];
+    let objectGroup = allObjectGroups[i];
     if ("sprite_frame" != objectGroup.getProperty("type")) continue;
-    var allObjects = objectGroup.getObjects();
-    for (var j = 0; j < allObjects.length; ++j) {
-      var object = allObjects[j];
-      var gid = object.gid;
+    let allObjects = objectGroup.getObjects();
+    for (let j = 0; j < allObjects.length; ++j) {
+      let object = allObjects[j];
+      let gid = object.gid;
       if (!gid || gid <= 0) {
         // cc.log("gid is null ", gid)
         continue;
       }
-      var spriteFrameInfoForGid = getOrCreateSpriteFrameForGid(gid, mapInfo, tilesElListUnderTilesets);
+      let spriteFrameInfoForGid = getOrCreateSpriteFrameForGid(gid, mapInfo, tilesElListUnderTilesets);
       if (!spriteFrameInfoForGid) {
         // cc.log("cannot find the spriteFrameInfoForGid for gid: ", gid)
         continue;
@@ -487,10 +487,7 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
         sizeInMapNode: cc.size(object.width, object.height),
         spriteFrame: spriteFrameInfoForGid.spriteFrame,
         imageObjectNode: null,
-        restaurantId: objectGroup.getProperty("restaurantId"),
-        restaurantLevel: object.level,
         name: object.name, //FOR DEBUG 
-        restaurantButtonId: object.restaurantButtonId,
       };
       toRet.imageObjects.push(theImageObject);
       if (!gidBoundariesMap[gid]) {
@@ -505,10 +502,10 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
       let currentSpriteFrameAnchorPosInMapNode = unscaledSpriteFrameCenterInMapNode.sub(cc.v2(0, 0.5 * spriteFrameInfoForGid.origSize.height));
       let currentObjPosInMapNode = currentSpriteFrameAnchorPosInMapNode.add(cc.v2(0, 0.5 * gidBoundaries.tilesetTileSize.height /* WARNING: Using "0.5*object.height" instead would be INCORRECT! */ ));
 
-      for (var bidx = 0; bidx < gidBoundaries.barriers.length; ++bidx) {
-        var theBarrier = gidBoundaries.barriers[bidx]; // An array of cc.v2 points.
-        var brToPushTmp = [];
-        for (var tbidx = 0; tbidx < theBarrier.length; ++tbidx) {
+      for (let bidx = 0; bidx < gidBoundaries.barriers.length; ++bidx) {
+        let theBarrier = gidBoundaries.barriers[bidx]; // An array of cc.v2 points.
+        let brToPushTmp = [];
+        for (let tbidx = 0; tbidx < theBarrier.length; ++tbidx) {
           const polylinePointOffsetInMapNode = cc.v2(-scaleX * (0.5 * gidBoundaries.tilesetTileSize.width - theBarrier[tbidx].x), scaleY * (gidBoundaries.tilesetTileSize.height - theBarrier[tbidx].y));
           brToPushTmp.push(currentObjPosInMapNode.add(polylinePointOffsetInMapNode));
         }
@@ -535,10 +532,10 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
         shToPushTmp.imageObject = theImageObject;
         toRet.shelterChainHeads.push(shToPushTmp);
       }
-      for (var shzridx = 0; shzridx < gidBoundaries.sheltersZReducer.length; ++shzridx) {
-        var theShelter = gidBoundaries.sheltersZReducer[shzridx]; // An array of cc.v2 points.
-        var shzrToPushTmp = [];
-        for (var tshzridx = 0; tshzridx < theShelter.length; ++tshzridx) {
+      for (let shzridx = 0; shzridx < gidBoundaries.sheltersZReducer.length; ++shzridx) {
+        let theShelter = gidBoundaries.sheltersZReducer[shzridx]; // An array of cc.v2 points.
+        let shzrToPushTmp = [];
+        for (let tshzridx = 0; tshzridx < theShelter.length; ++tshzridx) {
           const polylinePointOffsetInMapNode = cc.v2(-scaleX * (0.5 * gidBoundaries.tilesetTileSize.width - theShelter[tshzridx].x), scaleY * (gidBoundaries.tilesetTileSize.height - theShelter[tshzridx].y));
           shzrToPushTmp.push(currentObjPosInMapNode.add(polylinePointOffsetInMapNode));
         }
@@ -547,18 +544,18 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
       }
     }
   }
-  for (var i = 0; i < allObjectGroups.length; ++i) {
+  for (let i = 0; i < allObjectGroups.length; ++i) {
     // Reference http://docs.cocos.com/creator/api/en/classes/TiledObjectGroup.html.
-    var objectGroup = allObjectGroups[i];
+    let objectGroup = allObjectGroups[i];
     if ("frame_anim" != objectGroup.getProperty("type")) continue;
-    var allObjects = objectGroup.getObjects();
-    for (var j = 0; j < allObjects.length; ++j) {
-      var object = allObjects[j];
-      var gid = object.gid;
+    let allObjects = objectGroup.getObjects();
+    for (let j = 0; j < allObjects.length; ++j) {
+      let object = allObjects[j];
+      let gid = object.gid;
       if (!gid || gid <= 0) {
         continue;
       }
-      var animationClipInfoForGid = getOrCreateAnimationClipForGid(gid, mapInfo, tilesElListUnderTilesets);
+      let animationClipInfoForGid = getOrCreateAnimationClipForGid(gid, mapInfo, tilesElListUnderTilesets);
       if (!animationClipInfoForGid) continue;
       toRet.frameAnimations.push({
         posInMapNode: this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset),
@@ -566,57 +563,56 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
         sizeInMapNode: cc.size(object.width, object.height),
         animationClip: animationClipInfoForGid.animationClip,
         type: objectGroup.getProperty("animType"),
-        restaurantId: object.restaurantId,
       });
     }
   }
-  for (var i = 0; i < allObjectGroups.length; ++i) {
-    var objectGroup = allObjectGroups[i];
+  for (let i = 0; i < allObjectGroups.length; ++i) {
+    let objectGroup = allObjectGroups[i];
     if ("barrier_and_shelter" != objectGroup.getProperty("type")) continue;
-    var allObjects = objectGroup.getObjects();
-    for (var j = 0; j < allObjects.length; ++j) {
-      var object = allObjects[j];
-      var gid = object.gid;
+    let allObjects = objectGroup.getObjects();
+    for (let j = 0; j < allObjects.length; ++j) {
+      let object = allObjects[j];
+      let gid = object.gid;
       if (gid > 0) {
         continue;
       }
-      var polylinePoints = object.polylinePoints;
+      let polylinePoints = object.polylinePoints;
       if (!polylinePoints) {
         continue
       }
-      var boundaryType = object.boundary_type;
+      let boundaryType = object.boundary_type;
       switch (boundaryType) {
         case "barrier":
-          var toPushBarriers = [];
-          for (var k = 0; k < polylinePoints.length; ++k) {
+          let toPushBarriers = [];
+          for (let k = 0; k < polylinePoints.length; ++k) {
             toPushBarriers.push(this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset.add(polylinePoints[k])));
           }
           toRet.barriers.push(toPushBarriers);
           break;
         case "transparent":
-          var toPushTrans = [];
-          for (var kk = 0; kk < polylinePoints.length; ++kk) {
+          let toPushTrans = [];
+          for (let kk = 0; kk < polylinePoints.length; ++kk) {
             toPushTrans.push(this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset.add(polylinePoints[kk])));
           }
           toRet.transparents.push(toPushTrans);
           break;
         case "shelter_z_reducer":
-          var toPushSheltersZReducer = [];
-          for (var kkk = 0; kkk < polylinePoints.length; ++kkk) {
+          let toPushSheltersZReducer = [];
+          for (let kkk = 0; kkk < polylinePoints.length; ++kkk) {
             toPushSheltersZReducer.push(this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset.add(polylinePoints[kkk])));
           }
           toRet.sheltersZReducer.push(toPushSheltersZReducer);
           break;
-        case "restaurant":
-          var toPushRestaurant = [];
-          for (var kkk = 0; kkk < polylinePoints.length; ++kkk) {
-            toPushRestaurant.push(this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset.add(polylinePoints[kkk])));
+        case "stateful_buildable_inhibition":
+          let toPushStatefulBuildableInhibition = [];
+          for (let kkk = 0; kkk < polylinePoints.length; ++kkk) {
+            toPushStatefulBuildableInhibition.push(this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset.add(polylinePoints[kkk])));
           }
-          toRet.restaurants.push(toPushRestaurant);
+          toRet.statefulBuildableInhibitions.push(toPushStatefulBuildableInhibition);
           break;
         case "grand_boundary":
-          var toPushGrandBoundaries = [];
-          for (var kkk = 0; kkk < polylinePoints.length; ++kkk) {
+          let toPushGrandBoundaries = [];
+          for (let kkk = 0; kkk < polylinePoints.length; ++kkk) {
             toPushGrandBoundaries.push(this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset.add(polylinePoints[kkk])));
           }
           toRet.grandBoundaries.push(toPushGrandBoundaries);
@@ -628,31 +624,24 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
           }
           toRet.shelterChainHeads.push(toPushShelterChainHeads);
           break;
-        case "shelter_z_reducer":
-          let toPushSheltersZReducer = [];
-          for (let kkk = 0; kkk < polylinePoints.length; ++kkk) {
-            toPushSheltersZReducer.push(this.continuousObjLayerOffsetToContinuousMapNodePos(withTiledMapNode, object.offset.add(polylinePoints[kkk])));
-          }
-          toRet.sheltersZReducer.push(toPushSheltersZReducer);
-          break;
         default:
           break;
       }
     }
   }
 
-  var mapTileSize = tiledMapIns.getTileSize();
-  var allLayers = tiledMapIns.getLayers();
+  let allLayers = tiledMapIns.getLayers();
 
-  var layerDOMTrees = [];
-  var mapDomTree = mapInfo._parser._parseXML(tiledMapIns.tmxAsset.tmxXmlStr).documentElement;
+  let layerDOMTrees = [];
+  let mapDomTree = mapInfo._parser._parseXML(tiledMapIns.tmxAsset.tmxXmlStr).documentElement;
+  let mapDomAllChildren = null;
   if (cc.sys.isNative) {
-    var mapDOMAllChildren = mapDomTree.getElementsByTagName("layer");
+    mapDomAllChildren = mapDomTree.getElementsByTagName("layer");
   } else {
-    var mapDOMAllChildren = mapDomTree.children;
+    mapDomAllChildren = mapDomTree.children;
   }
-  for (var mdtIdx = 0; mdtIdx < mapDOMAllChildren.length; ++mdtIdx) {
-    var tmpCh = mapDOMAllChildren[mdtIdx];
+  for (let mdtIdx = 0; mdtIdx < mapDomAllChildren.length; ++mdtIdx) {
+    let tmpCh = mapDomAllChildren[mdtIdx];
     if (mapInfo._shouldIgnoreNode(tmpCh)) {
       continue;
     }
@@ -662,19 +651,19 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
     }
     layerDOMTrees.push(tmpCh);
   }
-  for (var j = 0; j < allLayers.length; ++j) {
+  for (let j = 0; j < allLayers.length; ++j) {
     // TODO: Respect layer offset!
-    var currentTileLayer = allLayers[j];
-    var currentTileset = currentTileLayer.getTileSet();
+    let currentTileLayer = allLayers[j];
+    let currentTileset = currentTileLayer.getTileSet();
 
     if (!currentTileset) {
       continue;
     }
 
-    var currentLayerSize = currentTileLayer.getLayerSize();
+    let currentLayerSize = currentTileLayer.getLayerSize();
 
-    var currentLayerTileSize = currentTileset._tileSize;
-    var firstGidInCurrentTileset = currentTileset.firstGid;
+    let currentLayerTileSize = currentTileset._tileSize;
+    let firstGidInCurrentTileset = currentTileset.firstGid;
 
     /*
     if ((0 != currentLayerTileSize.width % mapTileSize.width) || (0 != currentLayerTileSize.height % mapTileSize.height)) {
@@ -682,11 +671,11 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
     }
     */
 
-    for (var discreteXInLayer = 0; discreteXInLayer < currentLayerSize.width; ++discreteXInLayer) {
-      for (var discreteYInLayer = 0; discreteYInLayer < currentLayerSize.height; ++discreteYInLayer) {
-        var currentGid = currentTileLayer.getTileGIDAt(discreteXInLayer, discreteYInLayer);
+    for (let discreteXInLayer = 0; discreteXInLayer < currentLayerSize.width; ++discreteXInLayer) {
+      for (let discreteYInLayer = 0; discreteYInLayer < currentLayerSize.height; ++discreteYInLayer) {
+        let currentGid = currentTileLayer.getTileGIDAt(discreteXInLayer, discreteYInLayer);
         if (0 >= currentGid) continue;
-        var gidBoundaries = gidBoundariesMap[currentGid];
+        let gidBoundaries = gidBoundariesMap[currentGid];
         if (!gidBoundaries) continue;
         switch (mapOrientation) {
           case cc.TiledMap.Orientation.ORTHO:
@@ -694,20 +683,20 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
             return toRet;
 
           case cc.TiledMap.Orientation.ISO:
-            var centreOfAnchorTileInMapNode = this._continuousFromCentreOfDiscreteTile(withTiledMapNode, tiledMapIns, currentTileLayer, discreteXInLayer, discreteYInLayer);
-            var topLeftOfWholeTsxTileInMapNode = centreOfAnchorTileInMapNode.add(cc.v2(-0.5 * mapTileSize.width, currentLayerTileSize.height - 0.5 * mapTileSize.height));
-            for (var bidx = 0; bidx < gidBoundaries.barriers.length; ++bidx) {
-              var theBarrier = gidBoundaries.barriers[bidx]; // An array of cc.v2 points.
-              var brToPushTmp = [];
-              for (var tbidx = 0; tbidx < theBarrier.length; ++tbidx) {
+            let centreOfAnchorTileInMapNode = this._continuousFromCentreOfDiscreteTile(withTiledMapNode, tiledMapIns, currentTileLayer, discreteXInLayer, discreteYInLayer);
+            let topLeftOfWholeTsxTileInMapNode = centreOfAnchorTileInMapNode.add(cc.v2(-0.5 * mapTileSize.width, currentLayerTileSize.height - 0.5 * mapTileSize.height));
+            for (let bidx = 0; bidx < gidBoundaries.barriers.length; ++bidx) {
+              let theBarrier = gidBoundaries.barriers[bidx]; // An array of cc.v2 points.
+              let brToPushTmp = [];
+              for (let tbidx = 0; tbidx < theBarrier.length; ++tbidx) {
                 brToPushTmp.push(topLeftOfWholeTsxTileInMapNode.add(cc.v2(theBarrier[tbidx].x, -theBarrier[tbidx].y /* Mind the reverse y-axis here. */ )));
               }
               toRet.barriers.push(brToPushTmp);
             }
-            for (var shidx = 0; shidx < gidBoundaries.transparents.length; ++shidx) {
-              var theTransparent = gidBoundaries.transparents[shidx]; // An array of cc.v2 points.
-              var transToPushTmp = [];
-              for (var tshidx = 0; tshidx < theTransparent.length; ++tshidx) {
+            for (let shidx = 0; shidx < gidBoundaries.transparents.length; ++shidx) {
+              let theTransparent = gidBoundaries.transparents[shidx]; // An array of cc.v2 points.
+              let transToPushTmp = [];
+              for (let tshidx = 0; tshidx < theTransparent.length; ++tshidx) {
                 transToPushTmp.push(topLeftOfWholeTsxTileInMapNode.add(cc.v2(theTransparent[tshidx].x, -theTransparent[tshidx].y)));
               }
               transToPushTmp.pTiledLayer = currentTileLayer;
@@ -734,10 +723,10 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
               shToPushTmp.tileDiscretePos = cc.v2(discreteXInLayer, discreteYInLayer);
               toRet.shelterChainHeads.push(shToPushTmp);
             }
-            for (var shzridx = 0; shzridx < gidBoundaries.sheltersZReducer.length; ++shzridx) {
-              var theShelter = gidBoundaries.sheltersZReducer[shzridx]; // An array of cc.v2 points.
-              var shzrToPushTmp = [];
-              for (var tshzridx = 0; tshzridx < theShelter.length; ++tshzridx) {
+            for (let shzridx = 0; shzridx < gidBoundaries.sheltersZReducer.length; ++shzridx) {
+              let theShelter = gidBoundaries.sheltersZReducer[shzridx]; // An array of cc.v2 points.
+              let shzrToPushTmp = [];
+              for (let tshzridx = 0; tshzridx < theShelter.length; ++tshzridx) {
                 shzrToPushTmp.push(topLeftOfWholeTsxTileInMapNode.add(cc.v2(theShelter[tshzridx].x, -theShelter[tshzridx].y)));
               }
               toRet.sheltersZReducer.push(shzrToPushTmp);
@@ -773,8 +762,6 @@ TileCollisionManager.prototype.initMapNodeByTiledBoundaries = function(mapScript
       break;
     }
   }
-  mapScriptIns.restaurantLayers = {};
-  mapScriptIns.restaurantButtonsInImageObject = {};
   for (let imageObject of extractedBoundaryObjs.imageObjects) {
     const imageObjectNode = cc.instantiate(mapScriptIns.imageObjectPrefab);
     const spriteComp = imageObjectNode.getComponent(cc.Sprite);
@@ -789,37 +776,6 @@ TileCollisionManager.prototype.initMapNodeByTiledBoundaries = function(mapScript
     setLocalZOrder(imageObjectNode, window.CORE_LAYER_Z_INDEX.IMAGE_OBJ);
     imageObjectNode.origZIndex = window.CORE_LAYER_Z_INDEX.IMAGE_OBJ;
     imageObject.imageObjectNode = imageObjectNode;
-    /** init the objectNode in restaurant begin. **/
-    const restaurantId = imageObject.restaurantId;
-    if (restaurantId) {
-      let theRestaurantLayer = mapScriptIns.restaurantLayers[restaurantId]; //restaurantLayers[restaurantId][layer] = [];  
-      if (!theRestaurantLayer) {
-        mapScriptIns.restaurantLayers[restaurantId] = {};
-        theRestaurantLayer = mapScriptIns.restaurantLayers[restaurantId];
-      }
-      const levelList = imageObject.restaurantLevel;
-      if (!levelList) {
-        cc.error(`the restaurantLayer obejct has no level porperty and the objectName == ${imageObject.name}, restaurantId == ${restaurantId}`)
-        continue;
-      }
-      const levels = levelList.split(",");
-      for (let level of levels) {
-        let theRestaurantLayerInLevel = theRestaurantLayer[level];
-        if (!theRestaurantLayerInLevel) {
-          theRestaurantLayer[level] = new Set();
-          theRestaurantLayerInLevel = theRestaurantLayer[level];
-        }
-        theRestaurantLayerInLevel.add(imageObjectNode);
-      }
-    }
-    /** init the objectNode in restaurant end. **/
-
-    const restaurantButtonId = imageObject.restaurantButtonId;
-    /** init the objectNode which is restaurantButton begins.**/
-    if (restaurantButtonId) {
-      mapScriptIns.restaurantButtonsInImageObject[restaurantButtonId] = imageObjectNode;
-    }
-  /** init the objectNode which is restaurantButton ends.**/
   }
 
   mapScriptIns.dictOfTiledFrameAnimationList = {};
@@ -834,43 +790,19 @@ TileCollisionManager.prototype.initMapNodeByTiledBoundaries = function(mapScript
       mapScriptIns.dictOfTiledFrameAnimationList[frameAnim.type] = [];
       frameAnimInType = mapScriptIns.dictOfTiledFrameAnimationList[frameAnim.type];
     }
-    //初始化升级动画节点
-    if (constants.ANIM_LAYER_TYPE.BUILDING_OR_UPGRADING == frameAnim.type || constants.ANIM_LAYER_TYPE.UPGRAD_COMPLETED) {
-      const animNodeDstList = tiledMapIns.getObjectGroup("upgradeOrFinishedFrameInRestaurant");
-      const objectsInList = animNodeDstList.getObjects();
-      for (let i = 0; i < objectsInList.length; i++) {
-        let animFrameNodeInPos = this.continuousObjLayerOffsetToContinuousMapNodePos(mapScriptIns.node, objectsInList[i].offset);
-        const animNode = cc.instantiate(mapScriptIns.tiledAnimPrefab);
-        const anim = animNode.getComponent(cc.Animation);
-        animNode.setPosition(animFrameNodeInPos);
-        animNode.width = frameAnim.sizeInMapNode.width;
-        animNode.height = frameAnim.sizeInMapNode.height;
-        animNode.setScale(frameAnim.sizeInMapNode.width / frameAnim.origSize.width, frameAnim.sizeInMapNode.height / frameAnim.origSize.height);
-        animNode.opacity = 0;
-        animNode.setAnchorPoint(cc.v2(0.5, 0.5)); // A special requirement for "image-type Tiled object" by "CocosCreator v2.0.1".
-        safelyAddChild(mapScriptIns.node, animNode);
-        setLocalZOrder(animNode, 5);
-        anim.addClip(frameAnim.animationClip, "default");
-        anim.play("default");
-        animNode.restaurantId = objectsInList[i].restaurantId;
-        frameAnimInType.push(animNode);
-      }
-    } else {
-      const animNode = cc.instantiate(mapScriptIns.tiledAnimPrefab);
-      const anim = animNode.getComponent(cc.Animation);
-      animNode.setPosition(frameAnim.posInMapNode);
-      animNode.width = frameAnim.sizeInMapNode.width;
-      animNode.height = frameAnim.sizeInMapNode.height;
-      animNode.setScale(frameAnim.sizeInMapNode.width / frameAnim.origSize.width, frameAnim.sizeInMapNode.height / frameAnim.origSize.height);
-      animNode.opacity = 0;
-      animNode.setAnchorPoint(cc.v2(0.5, 0)); // A special requirement for "image-type Tiled object" by "CocosCreator v2.0.1".
-      safelyAddChild(mapScriptIns.node, animNode);
-      setLocalZOrder(animNode, 5);
-      anim.addClip(frameAnim.animationClip, "default");
-      anim.play("default");
-      animNode.restaurantId = frameAnim.restaurantId;
-      frameAnimInType.push(animNode);
-    }
+    const animNode = cc.instantiate(mapScriptIns.tiledAnimPrefab);
+    const anim = animNode.getComponent(cc.Animation);
+    animNode.setPosition(frameAnim.posInMapNode);
+    animNode.width = frameAnim.sizeInMapNode.width;
+    animNode.height = frameAnim.sizeInMapNode.height;
+    animNode.setScale(frameAnim.sizeInMapNode.width / frameAnim.origSize.width, frameAnim.sizeInMapNode.height / frameAnim.origSize.height);
+    animNode.opacity = 0;
+    animNode.setAnchorPoint(cc.v2(0.5, 0)); // A special requirement for "image-type Tiled object" by "CocosCreator v2.0.1".
+    safelyAddChild(mapScriptIns.node, animNode);
+    setLocalZOrder(animNode, 5);
+    anim.addClip(frameAnim.animationClip, "default");
+    anim.play("default");
+    frameAnimInType.push(animNode);
   }
 
   for (let boundaryObj of extractedBoundaryObjs.shelterChainTails) {
@@ -914,19 +846,19 @@ TileCollisionManager.prototype.initMapNodeByTiledBoundaries = function(mapScript
     mapScriptIns.node.addChild(newShelter);
   }
 
-
-  //for type3NPC 
-  for (let boundaryObj of extractedBoundaryObjs.restaurants) {
-    const newBarrier = cc.instantiate(mapScriptIns.polygonBoundaryRestaurantPrefab);
+  mapScriptIns.statefulBuildableInhibitionColliders = [];
+  for (let boundaryObj of extractedBoundaryObjs.statefulBuildableInhibitions) {
+    const newStatefulBuildableInhibition = cc.instantiate(mapScriptIns.polygonBoundaryStatefulBuildableInhibitionPrefab);
     const newBoundaryOffsetInMapNode = cc.v2(boundaryObj[0].x, boundaryObj[0].y);
-    newBarrier.setPosition(newBoundaryOffsetInMapNode);
-    newBarrier.setAnchorPoint(cc.v2(0, 0));
-    const newBarrierColliderIns = newBarrier.getComponent(cc.PolygonCollider);
-    newBarrierColliderIns.points = [];
+    newStatefulBuildableInhibition.setPosition(newBoundaryOffsetInMapNode);
+    newStatefulBuildableInhibition.setAnchorPoint(cc.v2(0, 0));
+    const newStatefulBuildableInhibitionColliderIns = newStatefulBuildableInhibition.getComponent(cc.PolygonCollider);
+    newStatefulBuildableInhibitionColliderIns.points = [];
     for (let p of boundaryObj) {
-      newBarrierColliderIns.points.push(p.sub(newBoundaryOffsetInMapNode));
+      newStatefulBuildableInhibitionColliderIns.points.push(p.sub(newBoundaryOffsetInMapNode));
     }
-    mapScriptIns.node.addChild(newBarrier);
+    mapScriptIns.statefulBuildableInhibitionColliders.push(newStatefulBuildableInhibition);
+    mapScriptIns.node.addChild(newStatefulBuildableInhibition);
   }
 
   mapScriptIns.barrierColliders = [];
@@ -1002,12 +934,12 @@ TileCollisionManager.prototype.initMapNodeByTiledBoundaries = function(mapScript
 }
 
 TileCollisionManager.prototype.isOutOfMapNode = function(tiledMapNode, continuousPosLocalToMap) {
-  var tiledMapIns = tiledMapNode.getComponent(cc.TiledMap); // This is a magic name.
+  let tiledMapIns = tiledMapNode.getComponent(cc.TiledMap); // This is a magic name.
 
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var mapTileRectilinearSize = tiledMapIns.getTileSize();
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let mapTileRectilinearSize = tiledMapIns.getTileSize();
 
-  var mapContentSize = cc.size(tiledMapIns.getTileSize().width * tiledMapIns.getMapSize().width, tiledMapIns.getTileSize().height * tiledMapIns.getMapSize().height);
+  let mapContentSize = cc.size(tiledMapIns.getTileSize().width * tiledMapIns.getMapSize().width, tiledMapIns.getTileSize().height * tiledMapIns.getMapSize().height);
 
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:
@@ -1015,7 +947,7 @@ TileCollisionManager.prototype.isOutOfMapNode = function(tiledMapNode, continuou
       return true;
 
     case cc.TiledMap.Orientation.ISO:
-      var continuousObjLayerOffset = this.continuousMapNodePosToContinuousObjLayerOffset(tiledMapNode, continuousPosLocalToMap);
+      let continuousObjLayerOffset = this.continuousMapNodePosToContinuousObjLayerOffset(tiledMapNode, continuousPosLocalToMap);
       return 0 > continuousObjLayerOffset.x || 0 > continuousObjLayerOffset.y || mapContentSize.width < continuousObjLayerOffset.x || mapContentSize.height < continuousObjLayerOffset.y;
 
     default:
@@ -1025,10 +957,10 @@ TileCollisionManager.prototype.isOutOfMapNode = function(tiledMapNode, continuou
 };
 
 TileCollisionManager.prototype.cameraIsOutOfGrandBoundary = function(tiledMapNode, continuousPosLocalToMap) {
-  var tiledMapIns = tiledMapNode.getComponent(cc.TiledMap);
+  let tiledMapIns = tiledMapNode.getComponent(cc.TiledMap);
 
-  var mapOrientation = tiledMapIns.getMapOrientation();
-  var tileRectilinearSize = tiledMapIns.getTileSize();
+  let mapOrientation = tiledMapIns.getMapOrientation();
+  let tileRectilinearSize = tiledMapIns.getTileSize();
   let rhombus = null;
   switch (mapOrientation) {
     case cc.TiledMap.Orientation.ORTHO:

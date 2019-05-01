@@ -68,14 +68,14 @@
         "__id__": 3
       },
       {
-        "__id__": 11
+        "__id__": 15
       }
     ],
     "_active": true,
     "_level": 1,
     "_components": [
       {
-        "__id__": 13
+        "__id__": 17
       }
     ],
     "_prefab": null,
@@ -136,19 +136,25 @@
       },
       {
         "__id__": 6
+      },
+      {
+        "__id__": 8
+      },
+      {
+        "__id__": 10
       }
     ],
     "_active": true,
     "_level": 1,
     "_components": [
       {
-        "__id__": 8
+        "__id__": 12
       },
       {
-        "__id__": 9
+        "__id__": 13
       },
       {
-        "__id__": 10
+        "__id__": 14
       }
     ],
     "_prefab": null,
@@ -254,7 +260,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "groupIndex": 0,
-    "_id": "839IwlEbBCTq41kp4ev8I5"
+    "_id": "c81JKiFPJGJY5OS4tgSlsk"
   },
   {
     "__type__": "cc.TiledLayer",
@@ -264,7 +270,7 @@
       "__id__": 4
     },
     "_enabled": true,
-    "_id": "6faCHNrZ1CjpIAkAs+QkQo"
+    "_id": "d1g4/VndJOiaWzPzB9HIIA"
   },
   {
     "__type__": "cc.Node",
@@ -324,7 +330,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "groupIndex": 0,
-    "_id": "7fv34gxORF+JzRbTuFHqoM"
+    "_id": "02WU5cI5RCfJgtWwE85u4v"
   },
   {
     "__type__": "cc.TiledLayer",
@@ -334,7 +340,147 @@
       "__id__": 6
     },
     "_enabled": true,
-    "_id": "9aLHBL8zlOwLFLingF/uPh"
+    "_id": "cfNCTx1hRJIJRAuzGMra2H"
+  },
+  {
+    "__type__": "cc.Node",
+    "_name": "HomingNpcGrandSrc",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 3
+    },
+    "_children": [],
+    "_active": true,
+    "_level": 2,
+    "_components": [
+      {
+        "__id__": 9
+      }
+    ],
+    "_prefab": null,
+    "_opacity": 255,
+    "_color": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 10240,
+      "height": 5120
+    },
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0.5,
+      "y": 0.5
+    },
+    "_position": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_scale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_rotationX": 0,
+    "_rotationY": 0,
+    "_quat": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_skewX": 0,
+    "_skewY": 0,
+    "groupIndex": 0,
+    "_id": "5fFeqOU81IfY3KEPAUafPY"
+  },
+  {
+    "__type__": "cc.TiledObjectGroup",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 8
+    },
+    "_enabled": true,
+    "_id": "4dR6128uRF4K//zWteudxx"
+  },
+  {
+    "__type__": "cc.Node",
+    "_name": "StatefulBuildableInhibition",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 3
+    },
+    "_children": [],
+    "_active": true,
+    "_level": 2,
+    "_components": [
+      {
+        "__id__": 11
+      }
+    ],
+    "_prefab": null,
+    "_opacity": 255,
+    "_color": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 10240,
+      "height": 5120
+    },
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0.5,
+      "y": 0.5
+    },
+    "_position": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_scale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_rotationX": 0,
+    "_rotationY": 0,
+    "_quat": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_skewX": 0,
+    "_skewY": 0,
+    "groupIndex": 0,
+    "_id": "10MutjaSFIiLfSbh8UknAs"
+  },
+  {
+    "__type__": "cc.TiledObjectGroup",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 10
+    },
+    "_enabled": true,
+    "_id": "afat8X3B1ByZEmk2s5ovKp"
   },
   {
     "__type__": "b52e5+Yqh9Mk7dA5b8Emgrm",
@@ -346,7 +492,7 @@
     "_enabled": true,
     "narrativeScenePrefab": null,
     "delegate": {
-      "__id__": 9
+      "__id__": 13
     },
     "_id": "03b8xYZwlLBIoZFTp7tzM1"
   },
@@ -398,7 +544,7 @@
     "_level": 1,
     "_components": [
       {
-        "__id__": 12
+        "__id__": 16
       }
     ],
     "_prefab": null,
@@ -451,7 +597,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 11
+      "__id__": 15
     },
     "_enabled": true,
     "_cullingMask": 4294967295,

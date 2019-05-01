@@ -105,7 +105,9 @@ const StatefulBuildableInstance = cc.Class({
     const anythingChanged = (
       (newState != self.state)
       ||
-      (newFixedSpriteCentreContinuousPos.x != self.fixedSpriteCentreContinuousPos.x || newFixedSpriteCentreContinuousPos.y != self.fixedSpriteCentreContinuousPos.y)
+      (null == self.fixedSpriteCentreContinuousPos && null != newFixedSpriteCentreContinuousPos)
+      ||
+      (null != self.fixedSpriteCentreContinuousPos && (newFixedSpriteCentreContinuousPos.x != self.fixedSpriteCentreContinuousPos.x || newFixedSpriteCentreContinuousPos.y != self.fixedSpriteCentreContinuousPos.y))
     ); 
     self.state = newState; 
     self.fixedSpriteCentreContinuousPos = newFixedSpriteCentreContinuousPos;
@@ -115,7 +117,7 @@ const StatefulBuildableInstance = cc.Class({
       (newState == STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE || newState == STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING)
     ) {
       cc.sys.localStorage.setItem("playerBuildableBindingList", JSON.stringify(self.mapIns.statefulBuildableInstanceList));
-      self.mapIns.sendPlayerSyncDataUpsync();
+      cc.sys.localStorage.setItem("wallet", JSON.stringify(self.mapIns.wallet));
     }
   },
 

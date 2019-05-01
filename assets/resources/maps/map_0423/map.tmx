@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.1.6" orientation="isometric" renderorder="right-down" width="40" height="40" tilewidth="256" tileheight="128" infinite="0" nextobjectid="1">
+<map version="1.2" tiledversion="1.2.3" orientation="isometric" renderorder="right-down" width="40" height="40" tilewidth="256" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="28">
+ <properties>
+  <property name="type" value="homing_npc_grand_src"/>
+ </properties>
  <tileset firstgid="1" source="Tile_W256_H128_S01.tsx"/>
- <layer name="StatefulBuildableInstanceHighlighter" width="40" height="40">
+ <layer id="1" name="StatefulBuildableInstanceHighlighter" width="40" height="40">
   <properties>
    <property name="type" value="stateful_buildable_instance_highlighter"/>
   </properties>
@@ -9,9 +12,55 @@
    eJztw7ENAAAMAiBn/z/Y3tFAQgIAAAAAAPBH7wAZKAAL
   </data>
  </layer>
- <layer name="floor" width="40" height="40">
+ <layer id="2" name="floor" width="40" height="40">
   <data encoding="base64" compression="zlib">
    eJzt17EJACAMAMFgIcT9B9YZDBGLK76/9ldELEl63HjUrS9Ps7nk4+Pj4+Pj4+Pj4+Pj4/vA1/3mFZ8kVdoABTO/
   </data>
  </layer>
+ <objectgroup id="3" name="HomingNpcGrandSrc">
+  <properties>
+   <property name="type" value="homing_npc_grand_src"/>
+  </properties>
+  <object id="20" x="1377.87" y="1336.73">
+   <point/>
+  </object>
+  <object id="21" x="1591.45" y="3517.37">
+   <point/>
+  </object>
+  <object id="22" x="3765.8" y="3777.26">
+   <point/>
+  </object>
+  <object id="23" x="3267.22" y="1742.31">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="4" name="StatefulBuildableInhibition">
+  <properties>
+   <property name="type" value="barrier_and_shelter"/>
+  </properties>
+  <object id="24" x="1322.24" y="1279.63">
+   <properties>
+    <property name="boundary_type" value="stateful_buildable_inhibition"/>
+   </properties>
+   <polyline points="-1.86916,-50.4673 13.0841,181.308 151.402,177.57 138.318,-33.6449"/>
+  </object>
+  <object id="25" x="1471" y="3393">
+   <properties>
+    <property name="boundary_type" value="stateful_buildable_inhibition"/>
+   </properties>
+   <polyline points="0,0 3,273 269,263 267,5"/>
+  </object>
+  <object id="26" x="3131" y="1613">
+   <properties>
+    <property name="boundary_type" value="stateful_buildable_inhibition"/>
+   </properties>
+   <polyline points="0,0 6,254 262,246 263,-11"/>
+  </object>
+  <object id="27" x="3652" y="3644">
+   <properties>
+    <property name="boundary_type" value="stateful_buildable_inhibition"/>
+   </properties>
+   <polyline points="0,0 -10.6667,266.667 249.333,262.667 263.333,6"/>
+  </object>
+ </objectgroup>
 </map>
