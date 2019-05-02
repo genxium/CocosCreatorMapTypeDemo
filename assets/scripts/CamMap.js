@@ -98,7 +98,7 @@ cc.Class({
     const statefulBuildableInstance = statefulBuildableInstanceNode.getComponent("StatefulBuildableInstance");
     if (null == playerBuildableBinding) {
       statefulBuildableInstance.initFromStatelessBuildableBinding(targetedStatelessBuildableInstance, self);
-      statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos); 
+      statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
     } else {
       statefulBuildableInstance.initOrUpdateFromPlayerBuildableBinding(playerBuildableBinding, targetedStatelessBuildableInstance, self);
     }
@@ -214,10 +214,10 @@ cc.Class({
       } else {
         self.removeEditingExistingStatefulBuildableInstance();
 
-        if (editingStatefulBuildableInstance.isNew) {  
+        if (editingStatefulBuildableInstance.isNew) {
           self.statefulBuildableInstanceList.push(editingStatefulBuildableInstance.playerBuildableBinding);
         }
-        editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position /* which is assigned only conditionally within `this.onMovingBuildableInstance` */);
+        editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position /* which is assigned only conditionally within `this.onMovingBuildableInstance` */ );
 
         self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
         self.renderPerStatefulBuildableInstanceNode(editingStatefulBuildableInstance);
@@ -265,7 +265,7 @@ cc.Class({
     newBarrier.setAnchorPoint(cc.v2(0, 0));
 
     const anchorTileContinuousPos = statefulBuildableInstance.fixedSpriteCentreContinuousPos.add(statefulBuildableInstance.estimatedSpriteCentreToAnchorTileCentreContinuousOffset);
-    const boundingBoxCentrePos = anchorTileContinuousPos.sub(statefulBuildableInstance.topmostAnchorTileCentreWrtBoundingBoxCentre); 
+    const boundingBoxCentrePos = anchorTileContinuousPos.sub(statefulBuildableInstance.topmostAnchorTileCentreWrtBoundingBoxCentre);
 
     const newBarrierPos = boundingBoxCentrePos.sub(halfBarrierAnchorToBoundingBoxCentre);
     newBarrier.setPosition(newBarrierPos);
@@ -372,7 +372,7 @@ cc.Class({
     mapIns.editingStatefulBuildableInstance.node.setPosition(immediateContinuousPosWrtMapNode);
     mapIns.refreshHighlightedTileGridForEditingStatefulBuildableInstance(mapIns.tiledMapIns);
 
-    // TODO: Handle the case where `mapIns.editingStatefulBuildableInstance` is moving out of the current visible area of `mapIns.mainCamera`.
+  // TODO: Handle the case where `mapIns.editingStatefulBuildableInstance` is moving out of the current visible area of `mapIns.mainCamera`.
   },
 
   onCancelBuildButtonClicked(evt) {
@@ -446,285 +446,287 @@ cc.Class({
 
   sendGlobalBuildableLevelConfQuery(queryParam) {
     const self = this;
-        self.AllStatelessBuildableInstances = [
-  {
-    "id": 1,
-    "type": 1,
-    "discreteWidth": 2,
-    "discreteHeight": 2,
-    "displayName": "Headquarter",
-    "levelConfs": [
+    self.AllStatelessBuildableInstances = [
       {
         "id": 1,
-        "buildable": {
-          "id": 1,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Headquarter"
-        },
-        "level": 1,
-        "buildingOrUpgradingDuration": 0,
-        "buildingOrUpgradingRequiredGold": 0,
-        "buildingOrUpgradingRequiredResidentsCount": 0,
-        "baseFoodProductionRate": 200
+        "type": 1,
+        "discreteWidth": 2,
+        "discreteHeight": 2,
+        "displayName": "Headquarter",
+        "levelConfs": [
+          {
+            "id": 1,
+            "buildable": {
+              "id": 1,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Headquarter"
+            },
+            "level": 1,
+            "buildingOrUpgradingDuration": 0,
+            "buildingOrUpgradingRequiredGold": 0,
+            "buildingOrUpgradingRequiredResidentsCount": 0,
+            "baseFoodProductionRate": 200
+          },
+          {
+            "id": 2,
+            "buildable": {
+              "id": 1,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Headquarter"
+            },
+            "level": 2,
+            "buildingOrUpgradingDuration": 300,
+            "buildingOrUpgradingRequiredGold": 2000,
+            "buildingOrUpgradingRequiredResidentsCount": 10,
+            "baseFoodProductionRate": 400
+          },
+          {
+            "id": 3,
+            "buildable": {
+              "id": 1,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Headquarter"
+            },
+            "level": 3,
+            "buildingOrUpgradingDuration": 10800,
+            "buildingOrUpgradingRequiredGold": 6000,
+            "buildingOrUpgradingRequiredResidentsCount": 20,
+            "baseFoodProductionRate": 600
+          }
+        ]
       },
       {
         "id": 2,
-        "buildable": {
-          "id": 1,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Headquarter"
-        },
-        "level": 2,
-        "buildingOrUpgradingDuration": 300,
-        "buildingOrUpgradingRequiredGold": 2000,
-        "buildingOrUpgradingRequiredResidentsCount": 10,
-        "baseFoodProductionRate": 400
+        "type": 1,
+        "discreteWidth": 2,
+        "discreteHeight": 2,
+        "displayName": "Farmland",
+        "levelConfs": [
+          {
+            "id": 4,
+            "buildable": {
+              "id": 2,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Farmland"
+            },
+            "level": 1,
+            "buildingOrUpgradingDuration": 30,
+            "buildingOrUpgradingRequiredResidentsCount": 3,
+            "baseFoodProductionRate": 80
+          },
+          {
+            "id": 5,
+            "buildable": {
+              "id": 2,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Farmland"
+            },
+            "level": 2,
+            "buildingOrUpgradingDuration": 60,
+            "buildingOrUpgradingRequiredGold": 100,
+            "buildingOrUpgradingRequiredResidentsCount": 5,
+            "baseFoodProductionRate": 150
+          },
+          {
+            "id": 6,
+            "buildable": {
+              "id": 2,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Farmland"
+            },
+            "level": 3,
+            "buildingOrUpgradingDuration": 300,
+            "buildingOrUpgradingRequiredGold": 200,
+            "buildingOrUpgradingRequiredResidentsCount": 7,
+            "baseFoodProductionRate": 220
+          }
+        ]
       },
       {
         "id": 3,
-        "buildable": {
-          "id": 1,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Headquarter"
-        },
-        "level": 3,
-        "buildingOrUpgradingDuration": 10800,
-        "buildingOrUpgradingRequiredGold": 6000,
-        "buildingOrUpgradingRequiredResidentsCount": 20,
-        "baseFoodProductionRate": 600
-      }
-    ]
-  },
-  {
-    "id": 2,
-    "type": 1,
-    "discreteWidth": 2,
-    "discreteHeight": 2,
-    "displayName": "Farmland",
-    "levelConfs": [
+        "type": 1,
+        "discreteWidth": 2,
+        "discreteHeight": 2,
+        "displayName": "Restaurant",
+        "levelConfs": [
+          {
+            "id": 7,
+            "buildable": {
+              "id": 3,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Restaurant"
+            },
+            "level": 1,
+            "buildingOrUpgradingDuration": 60,
+            "buildingOrUpgradingRequiredGold": 150,
+            "buildingOrUpgradingRequiredResidentsCount": 5,
+            "baseGoldProductionRate": 0.05
+          },
+          {
+            "id": 8,
+            "buildable": {
+              "id": 3,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Restaurant"
+            },
+            "level": 2,
+            "buildingOrUpgradingDuration": 300,
+            "buildingOrUpgradingRequiredGold": 300,
+            "buildingOrUpgradingRequiredResidentsCount": 10,
+            "baseGoldProductionRate": 0.11
+          },
+          {
+            "id": 9,
+            "buildable": {
+              "id": 3,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Restaurant"
+            },
+            "level": 3,
+            "buildingOrUpgradingDuration": 900,
+            "buildingOrUpgradingRequiredGold": 700,
+            "buildingOrUpgradingRequiredResidentsCount": 15,
+            "baseGoldProductionRate": 0.17
+          }
+        ]
+      },
       {
         "id": 4,
-        "buildable": {
-          "id": 2,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Farmland"
-        },
-        "level": 1,
-        "buildingOrUpgradingDuration": 30,
-        "buildingOrUpgradingRequiredResidentsCount": 3,
-        "baseFoodProductionRate": 80
+        "type": 1,
+        "discreteWidth": 2,
+        "discreteHeight": 2,
+        "displayName": "Barrack",
+        "levelConfs": [
+          {
+            "id": 10,
+            "buildable": {
+              "id": 4,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Barrack"
+            },
+            "level": 1,
+            "buildingOrUpgradingDuration": 180,
+            "buildingOrUpgradingRequiredGold": 250,
+            "buildingOrUpgradingRequiredResidentsCount": 5
+          },
+          {
+            "id": 11,
+            "buildable": {
+              "id": 4,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Barrack"
+            },
+            "level": 2,
+            "buildingOrUpgradingDuration": 1800,
+            "buildingOrUpgradingRequiredGold": 1500,
+            "buildingOrUpgradingRequiredResidentsCount": 10
+          },
+          {
+            "id": 12,
+            "buildable": {
+              "id": 4,
+              "type": 1,
+              "discreteWidth": 2,
+              "discreteHeight": 2,
+              "displayName": "Barrack"
+            },
+            "level": 3,
+            "buildingOrUpgradingDuration": 3600,
+            "buildingOrUpgradingRequiredGold": 4000,
+            "buildingOrUpgradingRequiredResidentsCount": 15
+          }
+        ]
       },
       {
         "id": 5,
-        "buildable": {
-          "id": 2,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Farmland"
-        },
-        "level": 2,
-        "buildingOrUpgradingDuration": 60,
-        "buildingOrUpgradingRequiredGold": 100,
-        "buildingOrUpgradingRequiredResidentsCount": 5,
-        "baseFoodProductionRate": 150
-      },
-      {
-        "id": 6,
-        "buildable": {
-          "id": 2,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Farmland"
-        },
-        "level": 3,
-        "buildingOrUpgradingDuration": 300,
-        "buildingOrUpgradingRequiredGold": 200,
-        "buildingOrUpgradingRequiredResidentsCount": 7,
-        "baseFoodProductionRate": 220
-      }
-    ]
-  },
-  {
-    "id": 3,
-    "type": 1,
-    "discreteWidth": 2,
-    "discreteHeight": 2,
-    "displayName": "Restaurant",
-    "levelConfs": [
-      {
-        "id": 7,
-        "buildable": {
-          "id": 3,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Restaurant"
-        },
-        "level": 1,
-        "buildingOrUpgradingDuration": 60,
-        "buildingOrUpgradingRequiredGold": 150,
-        "buildingOrUpgradingRequiredResidentsCount": 5,
-        "baseGoldProductionRate": 0.05
-      },
-      {
-        "id": 8,
-        "buildable": {
-          "id": 3,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Restaurant"
-        },
-        "level": 2,
-        "buildingOrUpgradingDuration": 300,
-        "buildingOrUpgradingRequiredGold": 300,
-        "buildingOrUpgradingRequiredResidentsCount": 10,
-        "baseGoldProductionRate": 0.11
-      },
-      {
-        "id": 9,
-        "buildable": {
-          "id": 3,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Restaurant"
-        },
-        "level": 3,
-        "buildingOrUpgradingDuration": 900,
-        "buildingOrUpgradingRequiredGold": 700,
-        "buildingOrUpgradingRequiredResidentsCount": 15,
-        "baseGoldProductionRate": 0.17
-      }
-    ]
-  },
-  {
-    "id": 4,
-    "type": 1,
-    "discreteWidth": 2,
-    "discreteHeight": 2,
-    "displayName": "Barrack",
-    "levelConfs": [
-      {
-        "id": 10,
-        "buildable": {
-          "id": 4,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Barrack"
-        },
-        "level": 1,
-        "buildingOrUpgradingDuration": 180,
-        "buildingOrUpgradingRequiredGold": 250,
-        "buildingOrUpgradingRequiredResidentsCount": 5
-      },
-      {
-        "id": 11,
-        "buildable": {
-          "id": 4,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Barrack"
-        },
-        "level": 2,
-        "buildingOrUpgradingDuration": 1800,
-        "buildingOrUpgradingRequiredGold": 1500,
-        "buildingOrUpgradingRequiredResidentsCount": 10
-      },
-      {
-        "id": 12,
-        "buildable": {
-          "id": 4,
-          "type": 1,
-          "discreteWidth": 2,
-          "discreteHeight": 2,
-          "displayName": "Barrack"
-        },
-        "level": 3,
-        "buildingOrUpgradingDuration": 3600,
-        "buildingOrUpgradingRequiredGold": 4000,
-        "buildingOrUpgradingRequiredResidentsCount": 15
-      }
-    ]
-  },
-  {
-    "id": 5,
-    "type": 2,
-    "discreteWidth": 1,
-    "discreteHeight": 1,
-    "displayName": "Rifleman",
-    "levelConfs": [
-      {
-        "id": 13,
-        "buildable": {
-          "id": 5,
-          "type": 2,
-          "discreteWidth": 1,
-          "discreteHeight": 1,
-          "displayName": "Rifleman"
-        },
-        "level": 1,
-        "buildingOrUpgradingRequiredResidentsCount": 1,
-        "baseRiflemanProductionRequiredGold": 25,
-        "baseRiflemanProductionDuration": 5
-      },
-      {
-        "id": 14,
-        "buildable": {
-          "id": 5,
-          "type": 2,
-          "discreteWidth": 1,
-          "discreteHeight": 1,
-          "displayName": "Rifleman"
-        },
-        "level": 2,
-        "buildingOrUpgradingRequiredResidentsCount": 1,
-        "baseRiflemanProductionRequiredGold": 40,
-        "baseRiflemanProductionDuration": 5
-      },
-      {
-        "id": 15,
-        "buildable": {
-          "id": 5,
-          "type": 2,
-          "discreteWidth": 1,
-          "discreteHeight": 1,
-          "displayName": "Rifleman"
-        },
-        "level": 3,
-        "buildingOrUpgradingRequiredResidentsCount": 1,
-        "baseRiflemanProductionRequiredGold": 60,
-        "baseRiflemanProductionDuration": 5
-      }
-    ]
-  }
-]; 
-        self.refreshStatelessBuildableInstances(self.AllStatelessBuildableInstances);
-        let playerBuildableBindingList = cc.sys.localStorage.getItem("playerBuildableBindingList");
-        if (playerBuildableBindingList) {
-          playerBuildableBindingList = JSON.parse(playerBuildableBindingList);
-          window.playerBuildableBindingList = playerBuildableBindingList;
-          for (let i in playerBuildableBindingList) {
-            const playerBuildableBinding = playerBuildableBindingList[i];
-            const targetedStatelessBuildableInstance = self._findStatelessBuildableInstance(playerBuildableBinding);
-            const statefulBuildableInstance = self.createPerStatefulBuildableInstanceNodes(playerBuildableBinding, targetedStatelessBuildableInstance);
-            self.createBoundaryColliderForStatefulBuildableInsatnce(statefulBuildableInstance, self.tiledMapIns);
-            self.statefulBuildableInstanceList.push(statefulBuildableInstance.playerBuildableBinding);
-            self.renderPerStatefulBuildableInstanceNode(statefulBuildableInstance);
+        "type": 2,
+        "discreteWidth": 1,
+        "discreteHeight": 1,
+        "displayName": "Rifleman",
+        "levelConfs": [
+          {
+            "id": 13,
+            "buildable": {
+              "id": 5,
+              "type": 2,
+              "discreteWidth": 1,
+              "discreteHeight": 1,
+              "displayName": "Rifleman"
+            },
+            "level": 1,
+            "buildingOrUpgradingRequiredResidentsCount": 1,
+            "baseRiflemanProductionRequiredGold": 25,
+            "baseRiflemanProductionDuration": 5
+          },
+          {
+            "id": 14,
+            "buildable": {
+              "id": 5,
+              "type": 2,
+              "discreteWidth": 1,
+              "discreteHeight": 1,
+              "displayName": "Rifleman"
+            },
+            "level": 2,
+            "buildingOrUpgradingRequiredResidentsCount": 1,
+            "baseRiflemanProductionRequiredGold": 40,
+            "baseRiflemanProductionDuration": 5
+          },
+          {
+            "id": 15,
+            "buildable": {
+              "id": 5,
+              "type": 2,
+              "discreteWidth": 1,
+              "discreteHeight": 1,
+              "displayName": "Rifleman"
+            },
+            "level": 3,
+            "buildingOrUpgradingRequiredResidentsCount": 1,
+            "baseRiflemanProductionRequiredGold": 60,
+            "baseRiflemanProductionDuration": 5
           }
-        }
+        ]
+      }
+    ];
+    self.refreshStatelessBuildableInstances(self.AllStatelessBuildableInstances);
+    let playerBuildableBindingList = cc.sys.localStorage.getItem("playerBuildableBindingList");
+    if (null != playerBuildableBindingList) {
+      playerBuildableBindingList = JSON.parse(playerBuildableBindingList);
+      window.playerBuildableBindingList = playerBuildableBindingList;
+      for (let i in playerBuildableBindingList) {
+        const playerBuildableBinding = playerBuildableBindingList[i];
+        const targetedStatelessBuildableInstance = self._findStatelessBuildableInstance(playerBuildableBinding);
+        const statefulBuildableInstance = self.createPerStatefulBuildableInstanceNodes(playerBuildableBinding, targetedStatelessBuildableInstance);
+        self.createBoundaryColliderForStatefulBuildableInsatnce(statefulBuildableInstance, self.tiledMapIns);
+        self.statefulBuildableInstanceList.push(statefulBuildableInstance.playerBuildableBinding);
+        self.renderPerStatefulBuildableInstanceNode(statefulBuildableInstance);
+      }
+    }
+
+    self.spawnHomingNpcs();
   },
 
   sendPlayerSyncDataUpsync(queryParam) {
@@ -776,4 +778,28 @@ cc.Class({
     return AllStatelessBuildableInstances;
   },
 
+  spawnHomingNpcs() {
+    const self = this;
+    if (!self.homingNpcPrefab) {
+      cc.warn(`There's no "homingNpcPrefab" yet!`);
+      return;
+    }
+    const tiledMapIns = self.tiledMapIns;
+    const homingNpcGrandSrcLayer = tiledMapIns.getObjectGroup('HomingNpcGrandSrc');
+    if (!homingNpcGrandSrcLayer) {
+      return;
+    }
+
+    const homingNpcGrandSrcList = homingNpcGrandSrcLayer.getObjects();
+    for (let indice = 0; indice < homingNpcGrandSrcList.length; ++indice) {
+      let homingNpcGrandSrc = homingNpcGrandSrcList[indice];
+      const npcNode = cc.instantiate(self.homingNpcPrefab);
+      const npcScriptIns = npcNode.getComponent("HomingNpc"); 
+      npcScriptIns.mapNode = self.node;
+      const npcPlayerSrcContinuousPositionWrtMapNode = tileCollisionManager.continuousObjLayerOffsetToContinuousMapNodePos(self.node, homingNpcGrandSrc.offset);
+      npcNode.setPosition(npcPlayerSrcContinuousPositionWrtMapNode);
+      safelyAddChild(self.node, npcNode);
+      setLocalZOrder(npcNode, window.CORE_LAYER_Z_INDEX.PLAYER);
+    }
+  },
 });

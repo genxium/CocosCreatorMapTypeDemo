@@ -80,7 +80,7 @@ const NEIGHBOUR_DISCRETE_OFFSETS = [{
   dy: 1
 }];
 
-window.findPathForType2NPCWithMapDiscretizingAStar = function(continuousSrcPtInMapNode, continuousDstPtInMapNode, eps, thisPlayerCollider, barrierColliders, controlledPlayerColliders, mapNode, maxExpanderTrialCount) {
+window.findPathWithMapDiscretizingAStar = function(continuousSrcPtInMapNode, continuousDstPtInMapNode, eps, thisPlayerCollider, barrierColliders, controlledPlayerColliders, mapNode, maxExpanderTrialCount) {
   if (null == maxExpanderTrialCount) {
     maxExpanderTrialCount = 10000;
   }

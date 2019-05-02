@@ -256,35 +256,6 @@ cc.Class({
     self.lastCompositeAnimStateUpdatedAt = now;  
   },
 
-
-  onCollisionEnter(other, self) {
-    BasePlayer.prototype.onCollisionEnter.call(this, other, self);
-    const playerScriptIns = self.getComponent(self.node.name);
-    switch (other.node.name) {
-      case "PolygonBoundaryRestaurant":
-        playerScriptIns._addContactedRestaurant(other);
-        break;
-      default:
-        break;
-    }
-  },
-
-  onCollisionStay(other, self) {
-    // TBD.
-  },
-
-  onCollisionExit(other, self) {
-    BasePlayer.prototype.onCollisionExit.call(this, other, self);
-    const playerScriptIns = self.getComponent(self.node.name);
-    switch (other.node.name) {
-      case "PolygonBoundaryRestaurant":
-        playerScriptIns._removeContactedRestaurant(other);
-        break;
-      default:
-        break;
-    }
-  },
-
   setAnim(speciesName, cb) {
     const self = this;
     const walkingDirPath = constants.WANDERING_NPC_ANIM[speciesName].WALKING;
@@ -317,24 +288,5 @@ cc.Class({
         }
       });
     });
-  },
-
-  _addContactedRestaurant(comp) {
-    const self = this;
-    for (let aComp of self.contactedRestaurants) {
-      if (aComp.uuid == comp.uuid) {
-        return false;
-      }
-    }
-    self.contactedRestaurants.push(comp);
-    return true;
-  },
-
-  _removeContactedRestaurant(comp) {
-    const self = this;
-    self.contactedRestaurants = self.contactedRestaurants.filter((aComp) => {
-      return aComp.uuid != comp.uuid;
-    });
-    return true;
   },
 });

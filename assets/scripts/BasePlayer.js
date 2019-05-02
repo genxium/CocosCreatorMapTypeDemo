@@ -47,9 +47,8 @@ module.export = cc.Class({
 
   onLoad() {
     const self = this;
-    self.node.zIndex = 5;
-    self.player = this.node.getComponent(cc.Animation);
-    self.player.play();
+    self.animComp = this.node.getComponent(cc.Animation);
+    self.animComp.play();
   },
 
   scheduleNewDirection(newScheduledDirection, forceAnimSwitch) {
@@ -70,7 +69,7 @@ module.export = cc.Class({
           console.warn('Clip for clipKey === ' + clipKey + ' is invalid: ' + clip + '.');
         }
       } else {
-        this.player.play(clip);
+        this.animComp.play(clip);
       }
     }
   },
@@ -237,7 +236,7 @@ module.export = cc.Class({
 
   onCollisionEnter(other, self) {
     const playerScriptIns = self.getComponent(self.node.name);
-    const mapIns = playerScriptIns.mapNode.name;
+    const mapIns = playerScriptIns.mapNode.getComponent(playerScriptIns.mapNode.name);
     switch (other.node.name) {
       case "NPCPlayer":
         playerScriptIns._addContactedNPCPlayers(other);
@@ -271,7 +270,7 @@ module.export = cc.Class({
 
   onCollisionExit(other, self) {
     const playerScriptIns = self.getComponent(self.node.name);
-    const mapIns = playerScriptIns.mapNode.name;
+    const mapIns = playerScriptIns.mapNode.getComponent(playerScriptIns.mapNode.name);
     switch (other.node.name) {
       case "NPCPlayer":
         playerScriptIns._removeContactedNPCPlayer(other);
