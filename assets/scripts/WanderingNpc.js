@@ -109,7 +109,7 @@ cc.Class({
 
   _canMoveBy(vecToMoveBy) {
     /*
-     * Copies almost exactly what "BasePlayer._canMoveBy" does, exact that we don't repect the GrandBoundaries here.
+     * Copies almost exactly what "BasePlayer._canMoveBy" does, except that we don't repect the GrandBoundaries here.
      *
      */
      
