@@ -159,7 +159,7 @@ module.export = cc.Class({
       return false;
     }
 
-    const currentSelfColliderCircle = self.node.getComponent("cc.CircleCollider");
+    const currentSelfColliderCircle = self.node.getComponent(cc.CircleCollider);
     let nextSelfColliderCircle = null;
     if (0 < self.contactedBarriers.length || 0 < self.contactedNPCPlayers.length) {
       /* To avoid unexpected buckling. */

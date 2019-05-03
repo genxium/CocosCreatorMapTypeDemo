@@ -796,10 +796,23 @@ cc.Class({
       const npcNode = cc.instantiate(self.homingNpcPrefab);
       const npcScriptIns = npcNode.getComponent("HomingNpc"); 
       npcScriptIns.mapNode = self.node;
-      const npcPlayerSrcContinuousPositionWrtMapNode = tileCollisionManager.continuousObjLayerOffsetToContinuousMapNodePos(self.node, homingNpcGrandSrc.offset);
-      npcNode.setPosition(npcPlayerSrcContinuousPositionWrtMapNode);
+      const npcSrcContinuousPosWrtMapNode = tileCollisionManager.continuousObjLayerOffsetToContinuousMapNodePos(self.node, homingNpcGrandSrc.offset);
+      npcNode.setPosition(npcSrcContinuousPosWrtMapNode);
       safelyAddChild(self.node, npcNode);
       setLocalZOrder(npcNode, window.CORE_LAYER_Z_INDEX.PLAYER);
+
+      cc.log(`Finding destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
+      npcScriptIns.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.node, npcSrcContinuousPosWrtMapNode, 5);
+      cc.log(`Found destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}: ${npcScriptIns.currentDestination}`);
+
+      cc.log(`\tVerifying destination for HomingNpc by A* search...`);
+      const npcBarrierCollider = npcNode.getComponent(cc.CircleCollider);
+      const stops = window.findPathWithMapDiscretizingAStar(npcSrcContinuousPosWrtMapNode, npcScriptIns.currentDestination, 0.01, npcBarrierCollider, self.barrierColliders, null, self.node);
+      if (null == stops) {
+        cc.warn(`\t[NOT VERIFIED]Path not found for HomingNpc ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`);
+        continue; 
+      } 
+      cc.log(`\t[VERIFIED]Path found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`, stops);
     }
   },
 });

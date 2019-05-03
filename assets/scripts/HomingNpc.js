@@ -30,9 +30,6 @@ module.export = cc.Class({
       '-2-1': 'FlatHeadSisterRunBottomLeft',
       '2-1': 'FlatHeadSisterRunBottomRight'
     };
-    cc.log(`Finding destination for HomingNpc located at ${this.node.position}`);
-    this.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(this.mapNode, this.node.position, 5);
-    cc.log(`Found destination for HomingNpc located at ${this.node.position}: ${this.currentDestination}`);
   },
 
   update(dt) {
