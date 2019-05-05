@@ -49,6 +49,28 @@ module.export = cc.Class({
     BasePlayer.prototype.update.call(this, dt);
   },
 
+  transitToStuck() {
+    switch(this.state) {
+      case window.HOMING_NPC_STATE.MOVING_IN:
+        this.state = window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_IN; 
+      break;
+      case window.HOMING_NPC_STATE.MOVING_OUT:
+        this.state = window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_OUT; 
+      break;
+    }
+  },
+
+  transitToMoving() {
+    switch(this.state) {
+      case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_IN:
+        this.state = window.HOMING_NPC_STATE.MOVING_IN; 
+      break;
+      case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
+        this.state = window.HOMING_NPC_STATE.MOVING_OUT; 
+      break;
+    }
+  },
+
   refreshCurrentDestination() {
     /**
     * WARNING: You should update `this.state` before calling this method. 
@@ -56,6 +78,7 @@ module.export = cc.Class({
     let previousDiscretizedDestinaion = null;
     let discretizedDestinaion = null;
     const self = this;
+    self.node.stopAllActions();
     switch (self.state) {
       case window.HOMING_NPC_STATE.MOVING_IN:
       case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_IN:
@@ -73,7 +96,11 @@ module.export = cc.Class({
         }
 
         self.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.grandSrc, 5);
-        discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
+        if (null == self.currentDestination) {
+          self.transitToStuck();  
+        } else {
+          discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
+        }
       break;
       default:
       break;
@@ -114,14 +141,22 @@ module.export = cc.Class({
 
   refreshContinuousStopsFromCurrentPositionToCurrentDestination() {
     const self = this;
-    const npcBarrierCollider = self.node.getComponent(cc.CircleCollider);
-    self.movementStops = window.findPathWithMapDiscretizingAStar(self.node.position, self.currentDestination, 0.01 /* Hardcoded temporarily */, npcBarrierCollider, self.mapIns.barrierColliders, null, self.mapNode);
+    if (null == self.currentDestination) {
+      self.movementStops = null;
+    } else {
+      const npcBarrierCollider = self.node.getComponent(cc.CircleCollider);
+      self.movementStops = window.findPathWithMapDiscretizingAStar(self.node.position, self.currentDestination, 0.01 /* Hardcoded temporarily */, npcBarrierCollider, self.mapIns.barrierColliders, null, self.mapNode);
+    }
     return self.movementStops;
   },
 
   restartPatrolling() {
     const self = this;
     self.node.stopAllActions();
+    const stops = self.movementStops;
+    if (null == stops || 0 >= stops.length) {
+      return;
+    }
     let ccSeqActArray = [];
     if (null == self.drawer) {
       self.drawer = self.node.getChildByName("Drawer");
@@ -135,11 +170,13 @@ module.export = cc.Class({
     if (CC_DEBUG) {
       g.moveTo(self.node.position.x, self.node.position.y);
     }
-    const stops = self.movementStops;
     for (let i = 0; i < stops.length; ++i) {
       const stop = cc.v2(stops[i]);
       if (i > 0) {
         const preStop = cc.v2(stops[i - 1]);
+        ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / self.speed, stop));
+      } else {
+        const preStop = self.node.position;
         ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / self.speed, stop));
       }
 
@@ -190,5 +227,43 @@ module.export = cc.Class({
     }, self));
 
     self.node.runAction(cc.sequence(ccSeqActArray)); 
+  },
+
+  onCollisionEnter(otherCollider, selfCollider) {
+    BasePlayer.prototype.onCollisionEnter.call(this, otherCollider, selfCollider);
+    const self = this.getComponent(this.node.name);
+    switch (otherCollider.node.name) {
+      case "PolygonBoundaryBarrier":
+        self.node.stopAllActions();
+        const availableNewPositionNearby = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.node.position, 1);
+        if (null == availableNewPositionNearby) {
+          self.node.setPosition(self.grandSrc);  
+          self.state = window.HOMING_NPC_STATE.MOVING_OUT;
+        } else {
+          self.node.setPosition(availableNewPositionNearby);  
+        }
+        self.refreshCurrentDestination();
+        self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
+        self.restartPatrolling();
+        break;
+      default:
+        break;
+    }
+  },
+
+  onCollisionStay(otherCollider, selfCollider) {
+    // TBD.
+  },
+
+  onCollisionExit(otherCollider, selfCollider) {
+    BasePlayer.prototype.onCollisionEnter.call(this, otherCollider, selfCollider);
+    const self = this.getComponent(this.node.name);
+    switch (otherCollider.node.name) {
+      case "PolygonBoundaryBarrier":
+        // Deliberatly not handling. -- YFLu
+        break;
+      default:
+        break;
+    }
   },
 });

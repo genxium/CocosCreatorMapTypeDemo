@@ -38,6 +38,7 @@ cc.Class({
   onLoad() {
     NarrativeSceneManagerDelegate.prototype.onLoad.call(this);
     const self = this;
+    window.mapIns = self;
     const mapNode = self.node;
     cc.director.getCollisionManager().enabled = true;
     cc.director.getCollisionManager().enabledDebugDraw = CC_DEBUG;

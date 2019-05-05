@@ -49,10 +49,24 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
             cachedKnownBarrierGridDict[discretePosXInMap] = {};
           }
           cachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap] = true;
+          if (null != window.reverseHomingNpcDestinationDict && null != window.reverseHomingNpcDestinationDict[discretePosXInMap]) {
+            const reverseHomingNpcDestinationDictRecord = window.reverseHomingNpcDestinationDict[discretePosXInMap][discretePosYInMap];
+            if (null != reverseHomingNpcDestinationDictRecord) {
+              const homingNpcsBoundForThisGrid = Object.values(reverseHomingNpcDestinationDictRecord);  
+              for (let homingNpc of homingNpcsBoundForThisGrid) {
+                homingNpc.refreshCurrentDestination();
+              }
+            }  
+          } 
         }
       }
     }
   }
+  for (let k in window.mapIns.homingNpcScriptInsDict) {
+    const homingNpc = window.mapIns.homingNpcScriptInsDict[k]; 
+    homingNpc.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
+    homingNpc.restartPatrolling();
+  }  
 };
 
 const NEIGHBOUR_DISCRETE_OFFSETS = [{
@@ -335,6 +349,5 @@ cc.Class({
 
   // LIFE-CYCLE CALLBACKS:
   onLoad() {
-    //window.resizeCallback(this.node);
   }
 });
