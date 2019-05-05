@@ -802,13 +802,13 @@ cc.Class({
       npcNode.setPosition(npcSrcContinuousPosWrtMapNode);
       safelyAddChild(self.node, npcNode);
       setLocalZOrder(npcNode, window.CORE_LAYER_Z_INDEX.PLAYER);
-      npcScriptIns.grandSrc = homingNpcGrandSrc;
+      npcScriptIns.grandSrc = npcSrcContinuousPosWrtMapNode;
       self.homingNpcScriptInsDict[npcNode.uuid] = npcScriptIns;
 
       cc.log(`Finding destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
-      npcScriptIns.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.node, npcSrcContinuousPosWrtMapNode, 5);
+      npcScriptIns.refreshCurrentDestination();
       if (null == npcScriptIns.currentDestination) {
-        cc.log(`\Destination not found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
+        cc.log(`\tDestination not found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
       } else {
         cc.log(`\tFound destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}: ${npcScriptIns.currentDestination}`);
 
@@ -819,6 +819,7 @@ cc.Class({
           continue; 
         } 
         cc.log(`\t\t[VERIFIED]Path found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`, stops);
+        npcScriptIns.restartPatrolling();
       }
 
     }

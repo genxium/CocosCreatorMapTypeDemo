@@ -1,9 +1,10 @@
 const BasePlayer = require("./BasePlayer");
 
 window.HOMING_NPC_STATE = {
-  STUCK: 1,
-  MOVING_OUT: 2,
-  MOVING_IN: 3, 
+  MOVING_OUT: 1,
+  MOVING_IN: 2, 
+  STUCK_WHILE_MOVING_OUT: 3,
+  STUCK_WHILE_MOVING_IN: 4,
 };
 
 module.export = cc.Class({
@@ -23,6 +24,7 @@ module.export = cc.Class({
   ctor() {
     this.state = HOMING_NPC_STATE.MOVING_OUT;      
     this.movementStops = null;
+    this.drawer = null;
   },
 
   start() {
@@ -47,6 +49,25 @@ module.export = cc.Class({
     BasePlayer.prototype.update.call(this, dt);
   },
 
+  refreshCurrentDestination() {
+    /**
+    * WARNING: You should update `this.state` before calling this method. 
+    */
+    const self = this;
+    switch (self.state) {
+      case window.HOMING_NPC_STATE.MOVING_IN:
+      case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_IN:
+        self.currentDestination = self.grandSrc;
+      break;
+      case window.HOMING_NPC_STATE.MOVING_OUT:
+      case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
+        self.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.grandSrc, 5);
+      break;
+      default:
+      break;
+    }
+  },
+
   refreshContinuousStopsFromCurrentPositionToCurrentDestination() {
     const self = this;
     const npcBarrierCollider = self.node.getComponent(cc.CircleCollider);
@@ -58,8 +79,11 @@ module.export = cc.Class({
     const self = this;
     self.node.stopAllActions();
     let ccSeqActArray = [];
-    const drawer = self.node.getChildByName("Drawer");
-    drawer.parent = self.mapNode;
+    if (null == self.drawer) {
+      self.drawer = self.node.getChildByName("Drawer");
+      self.drawer.parent = self.mapNode;
+    }
+    const drawer = self.drawer;
     drawer.setPosition(cc.v2(0, 0));
     setLocalZOrder(drawer, 20);
     let g = drawer.getComponent(cc.Graphics);
@@ -67,12 +91,12 @@ module.export = cc.Class({
     if (CC_DEBUG) {
       g.moveTo(self.node.position.x, self.node.position.y);
     }
+    const stops = self.movementStops;
     for (let i = 0; i < stops.length; ++i) {
       const stop = cc.v2(stops[i]);
-      // Note that `stops[0]` is always `npcPlayerSrcContinuousPositionWrtMapNode`.
       if (i > 0) {
         const preStop = cc.v2(stops[i - 1]);
-        ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / npcScriptIns.speed, stop));
+        ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / self.speed, stop));
       }
 
       if (i < stops.length - 1) {
@@ -83,55 +107,44 @@ module.export = cc.Class({
           dy: tmpVec.y,
         };
 
-        const discretizedDirection = self.touchEventManagerScriptIns.discretizeDirection(diffVec.dx, diffVec.dy, self.touchEventManagerScriptIns.joyStickEps);
+        const discretizedDirection = self.mapIns.ctrl.discretizeDirection(diffVec.dx, diffVec.dy, self.mapIns.ctrl.joyStickEps);
 
         if (CC_DEBUG) {
           g.lineTo(nextStop.x, nextStop.y);
           g.circle(nextStop.x, nextStop.y, 5);
         }
         ccSeqActArray.push(cc.callFunc(() => {
-          npcScriptIns.scheduleNewDirection(discretizedDirection);
-        }, npcScriptIns));
+          self.scheduleNewDirection(discretizedDirection);
+        }, self));
       }
     }
     if (CC_DEBUG) {
       g.stroke();
     }
 
-    let reversedStops = [];
-    for (let stop of stops) {
-      reversedStops.push(stop);
-    }
-    reversedStops.reverse();
-
-    for (let i = 0; i < reversedStops.length; ++i) {
-      const stop = cc.v2(reversedStops[i]);
-      if (i > 0) {
-        const preStop = cc.v2(reversedStops[i - 1]);
-        ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / npcScriptIns.speed, stop));
-      }
-
-      if (i < stops.length - 1) {
-        const nextStop = cc.v2(reversedStops[i + 1]);
-        const tmpVec = nextStop.sub(stop);
-        const diffVec = {
-          dx: tmpVec.x,
-          dy: tmpVec.y,
-        };
-
-        const discretizedDirection = self.touchEventManagerScriptIns.discretizeDirection(diffVec.dx, diffVec.dy, self.touchEventManagerScriptIns.joyStickEps);
-        ccSeqActArray.push(cc.callFunc(() => {
-          npcScriptIns.scheduleNewDirection(discretizedDirection);
-        }, npcScriptIns));
-      }
-    }
-
     ccSeqActArray.push(cc.callFunc(() => {
-      if (cc.isValid(npcPlayerNode)) {
+      if (cc.isValid(self.node)) {
         drawer.getComponent(cc.Graphics).clear();
       }
-    }));
 
-    self.node.runAction(cc.repeatForever(cc.sequence(ccSeqActArray))); 
+      switch (self.state) {
+        case window.HOMING_NPC_STATE.MOVING_IN:
+          self.state = window.HOMING_NPC_STATE.MOVING_OUT;
+          self.refreshCurrentDestination();
+          self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
+          self.restartPatrolling();
+        break;
+        case window.HOMING_NPC_STATE.MOVING_OUT:
+          self.state = window.HOMING_NPC_STATE.MOVING_IN;
+          self.refreshCurrentDestination();
+          self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
+          self.restartPatrolling();
+        break;
+        default:
+        break;
+      } 
+    }, self));
+
+    self.node.runAction(cc.sequence(ccSeqActArray)); 
   },
 });
