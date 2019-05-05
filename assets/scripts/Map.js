@@ -26,14 +26,6 @@ cc.Class({
       type: cc.Prefab,
       default: null,
     },
-    npcPlayerPrefab: {
-      type: cc.Prefab,
-      default: null,
-    },
-    type2NpcPlayerPrefab: {
-      type: cc.Prefab,
-      default: null,
-    },
   },
 
   ctor() {
@@ -108,24 +100,6 @@ cc.Class({
 
     setLocalZOrder(newPlayer, 5);
     this.selfPlayerNode = newPlayer;
-  },
-
-  spawnNPCs() {
-    const self = this;
-    const tiledMapIns = self.node.getComponent(cc.TiledMap);
-    const npcPatrolLayer = tiledMapIns.getObjectGroup('NPCPatrol');
-
-    const npcList = npcPatrolLayer.getObjects();
-    npcList.forEach(function(npcPlayerObj, index) {
-      const npcPlayerNode = cc.instantiate(self.npcPlayerPrefab);
-      const npcPlayerContinuousPositionWrtMapNode = tileCollisionManager.continuousObjLayerOffsetToContinuousMapNodePos(self.node, npcPlayerObj.offset);
-      npcPlayerNode.getChildByName('username').getComponent(cc.Label).string = npcPlayerObj.name;
-      npcPlayerNode.setPosition(npcPlayerContinuousPositionWrtMapNode);
-
-      npcPlayerNode.getComponent('NPCPlayer').mapNode = self.node;
-      safelyAddChild(self.node, npcPlayerNode);
-      setLocalZOrder(npcPlayerNode, 5);
-    });
   },
 
   update(dt) {

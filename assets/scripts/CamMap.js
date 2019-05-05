@@ -27,6 +27,7 @@ cc.Class({
   ctor() {
     this.ctrl = null;
     this.statelessBuildableInstanceCardListNode = null;
+    this.homingNpcScriptInsDict = {}; // Used at least for refreshing the whole collection of `HomingNpc`s.
   },
 
   // LIFE-CYCLE CALLBACKS:
@@ -796,23 +797,30 @@ cc.Class({
       const npcNode = cc.instantiate(self.homingNpcPrefab);
       const npcScriptIns = npcNode.getComponent("HomingNpc"); 
       npcScriptIns.mapNode = self.node;
+      npcScriptIns.mapIns = self;
       const npcSrcContinuousPosWrtMapNode = tileCollisionManager.continuousObjLayerOffsetToContinuousMapNodePos(self.node, homingNpcGrandSrc.offset);
       npcNode.setPosition(npcSrcContinuousPosWrtMapNode);
       safelyAddChild(self.node, npcNode);
       setLocalZOrder(npcNode, window.CORE_LAYER_Z_INDEX.PLAYER);
+      npcScriptIns.grandSrc = homingNpcGrandSrc;
+      self.homingNpcScriptInsDict[npcNode.uuid] = npcScriptIns;
 
       cc.log(`Finding destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
       npcScriptIns.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.node, npcSrcContinuousPosWrtMapNode, 5);
-      cc.log(`Found destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}: ${npcScriptIns.currentDestination}`);
+      if (null == npcScriptIns.currentDestination) {
+        cc.log(`\Destination not found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
+      } else {
+        cc.log(`\tFound destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}: ${npcScriptIns.currentDestination}`);
 
-      cc.log(`\tVerifying destination for HomingNpc by A* search...`);
-      const npcBarrierCollider = npcNode.getComponent(cc.CircleCollider);
-      const stops = window.findPathWithMapDiscretizingAStar(npcSrcContinuousPosWrtMapNode, npcScriptIns.currentDestination, 0.01, npcBarrierCollider, self.barrierColliders, null, self.node);
-      if (null == stops) {
-        cc.warn(`\t[NOT VERIFIED]Path not found for HomingNpc ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`);
-        continue; 
-      } 
-      cc.log(`\t[VERIFIED]Path found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`, stops);
+        cc.log("\t\tVerifying destination for HomingNpc by A* search...");
+        const stops = npcScriptIns.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
+        if (null == stops) {
+          cc.warn(`\t\t[NOT VERIFIED]Path not found for HomingNpc ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`);
+          continue; 
+        } 
+        cc.log(`\t\t[VERIFIED]Path found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`, stops);
+      }
+
     }
   },
 });

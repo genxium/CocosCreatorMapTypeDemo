@@ -1,5 +1,4 @@
 {
-  "assets-sort-type": "name",
   "collision-matrix": [
     [
       false,
@@ -95,16 +94,6 @@
     "Physics",
     "StudioComponent"
   ],
-  "facebook": {
-    "appID": "",
-    "audience": {
-      "enable": false
-    },
-    "enable": false,
-    "live": {
-      "enable": false
-    }
-  },
   "fit-height": true,
   "fit-width": false,
   "group-list": [
@@ -118,7 +107,6 @@
     "transparent",
     "stateful_buildable_inhibition"
   ],
-  "last-module-event-record-time": 1555570075531,
   "simulator-orientation": false,
   "simulator-resolution": {
     "height": 640,
@@ -126,5 +114,17 @@
   },
   "use-customize-simulator": true,
   "use-project-simulator-setting": false,
-  "start-scene": "current"
+  "start-scene": "current",
+  "last-module-event-record-time": 0,
+  "assets-sort-type": "name",
+  "facebook": {
+    "enable": false,
+    "appID": "",
+    "live": {
+      "enable": false
+    },
+    "audience": {
+      "enable": false
+    }
+  }
 }
