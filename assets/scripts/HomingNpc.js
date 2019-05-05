@@ -53,18 +53,62 @@ module.export = cc.Class({
     /**
     * WARNING: You should update `this.state` before calling this method. 
     */
+    let previousDiscretizedDestinaion = null;
+    let discretizedDestinaion = null;
     const self = this;
     switch (self.state) {
       case window.HOMING_NPC_STATE.MOVING_IN:
       case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_IN:
+        if (null != self.currentDestination) {
+          previousDiscretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
+        }
+
         self.currentDestination = self.grandSrc;
+        discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
       break;
       case window.HOMING_NPC_STATE.MOVING_OUT:
       case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
+        if (null != self.currentDestination) {
+          previousDiscretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
+        }
+
         self.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.grandSrc, 5);
+        discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
       break;
       default:
       break;
+    }
+    if (null != previousDiscretizedDestinaion) {
+      let previousReverseHomingNpcDestinationDictRecord = null;
+      if (null != window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x]) {
+        previousReverseHomingNpcDestinationDictRecord = window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y];
+      }
+      if (null != previousReverseHomingNpcDestinationDictRecord && null != previousReverseHomingNpcDestinationDictRecord[self.node.uuid]) {
+        delete previousReverseHomingNpcDestinationDictRecord[self.node.uuid];
+        // Lazy clearance.
+        if (0 >= Object.keys(previousReverseHomingNpcDestinationDictRecord).length) {
+          window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y] = null;
+          delete window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y]; 
+          if (0 >= Object.keys(window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x]).length) {
+            window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x] = null;
+            delete window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x]; 
+          }
+        } 
+      }
+    }
+
+    if (null != discretizedDestinaion) {
+      let reverseHomingNpcDestinationDictRecord = null;
+      // Lazy init.
+      if (null == window.reverseHomingNpcDestinationDict[discretizedDestinaion.x]) {
+        window.reverseHomingNpcDestinationDict[discretizedDestinaion.x] = {};
+      } 
+      if (null == window.reverseHomingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]) {
+        window.reverseHomingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y] = {};
+      }
+
+      reverseHomingNpcDestinationDictRecord = window.reverseHomingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]; 
+      reverseHomingNpcDestinationDictRecord[self.node.uuid] = self;
     }
   },
 
