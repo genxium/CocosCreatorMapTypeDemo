@@ -508,7 +508,7 @@ cc.Class({
         "type": 1,
         "discreteWidth": 2,
         "discreteHeight": 2,
-        "displayName": "Farmland",
+        "displayName": "Barn",
         "levelConfs": [
           {
             "id": 4,
@@ -517,7 +517,7 @@ cc.Class({
               "type": 1,
               "discreteWidth": 2,
               "discreteHeight": 2,
-              "displayName": "Farmland"
+              "displayName": "Barn"
             },
             "level": 1,
             "buildingOrUpgradingDuration": 30,
@@ -531,7 +531,7 @@ cc.Class({
               "type": 1,
               "discreteWidth": 2,
               "discreteHeight": 2,
-              "displayName": "Farmland"
+              "displayName": "Barn"
             },
             "level": 2,
             "buildingOrUpgradingDuration": 60,
@@ -546,7 +546,7 @@ cc.Class({
               "type": 1,
               "discreteWidth": 2,
               "discreteHeight": 2,
-              "displayName": "Farmland"
+              "displayName": "Barn"
             },
             "level": 3,
             "buildingOrUpgradingDuration": 300,
@@ -661,57 +661,6 @@ cc.Class({
           }
         ]
       },
-      {
-        "id": 5,
-        "type": 2,
-        "discreteWidth": 1,
-        "discreteHeight": 1,
-        "displayName": "Rifleman",
-        "levelConfs": [
-          {
-            "id": 13,
-            "buildable": {
-              "id": 5,
-              "type": 2,
-              "discreteWidth": 1,
-              "discreteHeight": 1,
-              "displayName": "Rifleman"
-            },
-            "level": 1,
-            "buildingOrUpgradingRequiredResidentsCount": 1,
-            "baseRiflemanProductionRequiredGold": 25,
-            "baseRiflemanProductionDuration": 5
-          },
-          {
-            "id": 14,
-            "buildable": {
-              "id": 5,
-              "type": 2,
-              "discreteWidth": 1,
-              "discreteHeight": 1,
-              "displayName": "Rifleman"
-            },
-            "level": 2,
-            "buildingOrUpgradingRequiredResidentsCount": 1,
-            "baseRiflemanProductionRequiredGold": 40,
-            "baseRiflemanProductionDuration": 5
-          },
-          {
-            "id": 15,
-            "buildable": {
-              "id": 5,
-              "type": 2,
-              "discreteWidth": 1,
-              "discreteHeight": 1,
-              "displayName": "Rifleman"
-            },
-            "level": 3,
-            "buildingOrUpgradingRequiredResidentsCount": 1,
-            "baseRiflemanProductionRequiredGold": 60,
-            "baseRiflemanProductionDuration": 5
-          }
-        ]
-      }
     ];
     self.refreshStatelessBuildableInstances(self.AllStatelessBuildableInstances);
     let playerBuildableBindingList = cc.sys.localStorage.getItem("playerBuildableBindingList");
