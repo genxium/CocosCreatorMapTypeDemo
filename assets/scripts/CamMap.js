@@ -23,7 +23,6 @@ cc.Class({
     }
   },
 
-
   ctor() {
     this.ctrl = null;
     this.statelessBuildableInstanceCardListNode = null;
@@ -61,13 +60,13 @@ cc.Class({
     self.startedAtMillis = Date.now();
     self.setupInputControls();
 
-    cc.loader.loadResDir(constants.BUILDING_SOURCE_PATH.ROOT_PATH, cc.SpriteAtlas, function(err, altas) {
+    cc.loader.loadResDir(constants.STATELESS_BUILDABLE_RESOURCE_PATH.ROOT_PATH, cc.SpriteAtlas, function(err, altasArray) {
       self.widgetsAboveAllScriptIns.buildButton.node.active = true;
       if (err) {
         cc.error(err);
         return;
       }
-      self.statelessBuildableInstanceSpriteAltasArray = altas;
+      self.statelessBuildableInstanceSpriteAltasArray = altasArray;
       self.sendGlobalBuildableLevelConfQuery();
     });
   },
@@ -439,7 +438,7 @@ cc.Class({
       for (let i in this.statelessBuildableInstanceSpriteAltasArray) {
         const theAltas = this.statelessBuildableInstanceSpriteAltasArray[i];
         if (singleStatelessBuildableInstance.displayName + ".plist" == theAltas.name) {
-          statelessBuildableInstanceScriptIns.init(this, singleStatelessBuildableInstance, theAltas)
+          statelessBuildableInstanceScriptIns.init(this, singleStatelessBuildableInstance, theAltas);
           this.statelessBuildableInstanceList.push(statelessBuildableInstanceScriptIns);
           break;
         }
@@ -509,7 +508,7 @@ cc.Class({
         "type": 1,
         "discreteWidth": 2,
         "discreteHeight": 2,
-        "displayName": "Barn",
+        "displayName": "Laboratory",
         "levelConfs": [
           {
             "id": 4,
@@ -518,7 +517,7 @@ cc.Class({
               "type": 1,
               "discreteWidth": 2,
               "discreteHeight": 2,
-              "displayName": "Barn"
+              "displayName": "Laboratory"
             },
             "level": 1,
             "buildingOrUpgradingDuration": 30,
@@ -532,7 +531,7 @@ cc.Class({
               "type": 1,
               "discreteWidth": 2,
               "discreteHeight": 2,
-              "displayName": "Barn"
+              "displayName": "Laboratory"
             },
             "level": 2,
             "buildingOrUpgradingDuration": 60,
@@ -547,7 +546,7 @@ cc.Class({
               "type": 1,
               "discreteWidth": 2,
               "discreteHeight": 2,
-              "displayName": "Barn"
+              "displayName": "Laboratory"
             },
             "level": 3,
             "buildingOrUpgradingDuration": 300,

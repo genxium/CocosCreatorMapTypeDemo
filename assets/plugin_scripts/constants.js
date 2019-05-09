@@ -241,8 +241,8 @@ var constants = {
     WORK_FOR_VICTIM_RESTAURANT:3,
   },
   GEN_GUEST_DURATION_MILLIS: 3000,
-  BUILDING_SOURCE_PATH: {
-    ROOT_PATH: "textures/Building",
+  STATELESS_BUILDABLE_RESOURCE_PATH: {
+    ROOT_PATH: "textures/StatelessBuildable",
   },
 };
 window.language = "en";

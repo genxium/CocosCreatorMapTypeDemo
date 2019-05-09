@@ -1,3 +1,6 @@
+plugin_scripts/conf.js
+plugin_scripts/conf.js.meta
+
 *.sw*
 *.swo
 *.swp
