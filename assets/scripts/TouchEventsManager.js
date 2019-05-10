@@ -183,6 +183,13 @@ cc.Class({
         self.mainCameraNode.setPosition(cameraPos);
       } else {
         if (null != self.mapScriptIns.onMovingBuildableInstance) {
+          /*
+          * WARNING: The following equations might NOT take into account "mainCamera.zoomRatio", you should print the value of "touchLocation" roughly at the same
+          * position on your screen before and after a zooming/pinch to see wheterh the values are different. If the printed values are the same then the following
+          * equations are definitely wrong for "1 != mainCamera.zoomRatio".
+          *
+          * -- YFLu
+          */
           const touchLocation = event.currentTouch.getLocation();
           const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY));
           self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, immediateDiffVec);

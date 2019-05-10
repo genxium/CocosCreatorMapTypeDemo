@@ -116,7 +116,7 @@ cc.Class({
       const roughSpriteCentreInitialContinuousPosWrtMapNode = cc.v2(mainCameraContinuousPos.x, mainCameraContinuousPos.y).mul(1 / self.mainCamera.zoomRatio);
       const initialSpriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, roughSpriteCentreInitialContinuousPosWrtMapNode, cc.v2(0, 0));
       const initialSpriteCentreContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, initialSpriteCentreDiscretePosWrtMapNode.x, initialSpriteCentreDiscretePosWrtMapNode.y);
-      statefulBuildableInstanceNode.setPosition(initialSpriteCentreDiscretePosWrtMapNode);
+      statefulBuildableInstanceNode.setPosition(initialSpriteCentreContinuousPosWrtMapNode);
     } else {
       statefulBuildableInstanceNode.setPosition(statefulBuildableInstance.fixedSpriteCentreContinuousPos);
     }
