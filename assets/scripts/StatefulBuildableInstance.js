@@ -55,16 +55,9 @@ const StatefulBuildableInstance = cc.Class({
         if (!self.playerBuildableBinding) return;
         switch (val) {
           case STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE:
-            this.editBuildButton.node.width = this.node.width;
-            this.editBuildButton.node.height = this.node.height;
-            this.editBuildButton.interactable = true;
             this.playerBuildableBinding.state = val;
             break;
           case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
-            //使建筑能响应点击事件
-            this.editBuildButton.node.width = this.node.width;
-            this.editBuildButton.node.height = this.node.height;
-            this.editBuildButton.interactable = true;
             this.playerBuildableBinding.state = val;
             // 状态变更为建造中时显示ProgressBar
             if (!this.buildingOrUpgradingStartedAt) {
@@ -76,24 +69,13 @@ const StatefulBuildableInstance = cc.Class({
             });
             break;
           case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
-            //以防止editBuildButton”遮盖“了touchEventManger的控制。
-            this.editBuildButton.node.width = 0;
-            this.editBuildButton.node.height = 0;
-            this.editBuildButton.interactable = false;
             break;
           case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-            //以防止editBuildButton”遮盖“了touchEventManger的控制。
-            this.editBuildButton.node.width = 0;
-            this.editBuildButton.node.height = 0;
-            this.editBuildButton.interactable = false;
             setTimeout(() => {  
               self.showProgressBar();
             });
             break;
           default:
-            this.editBuildButton.node.width = 0;
-            this.editBuildButton.node.height = 0;
-            this.editBuildButton.interactable = false;
             break;
         }
       },
@@ -123,16 +105,6 @@ const StatefulBuildableInstance = cc.Class({
 
   onLoad() {
     const self = this;
-    // Initialization of the `editBuildButton` [begins].
-    const editBuildBtnHandler = new cc.Component.EventHandler();
-    editBuildBtnHandler.target = this.mapIns.node;
-    editBuildBtnHandler.component = this.mapIns.node.name;
-    editBuildBtnHandler.handler = "onStatefulBuildableBuildingEditButtonClicked";
-    editBuildBtnHandler.customEventData = self;
-    self.editBuildButton.clickEvents = [
-      editBuildBtnHandler
-    ];
-    // Initialization of the `editBuildButton` [ends].
 
     self.node.on(cc.Node.EventType.POSITION_CHANGED, (evt) => {
       // Temporarily left blank, but could be useful soon. -- YFLu

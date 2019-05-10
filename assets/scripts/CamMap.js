@@ -132,7 +132,11 @@ cc.Class({
         break;
     }
 
-    safelyAddChild(self.node, statefulBuildableInstanceNode); // Using `statefulBuildableInstanceNode` as a direct child under `mapNode`, but NOT UNDER `mainCameraNode`, for the convenience of zooming and translating. 
+    safelyAddChild(self.node, statefulBuildableInstanceNode); // Using `statefulBuildableInstanceNode` as a direct child under `mapNode`, but NOT UNDER `mainCameraNode`, for the convenience of zooming and translating.
+    
+    // 使statefulBuildableInstanceNode.zIndex具有一个初始值
+    setLocalZOrder(statefulBuildableInstanceNode, window.CORE_LAYER_Z_INDEX.UN_HIGHLIGHTED_STATEFUL_BUILDABLE_INSTANCE);
+
   },
 
   startPositioningExistingStatefulBuildableInstance(statefulBuildableInstance) {
@@ -178,7 +182,11 @@ cc.Class({
     const statefulBuildableInstanceNode = statefulBuildableInstance.node;
     self.renderPerStatefulBuildableInstanceNode(statefulBuildableInstance);
     statefulBuildableInstance.isNew = true;
-
+    /*
+     * WARNING: 这里的setLocalZOrder应该在renderPerStatefulBuildableInstanceNode
+     * 之后进行,因为renderPerStatefulBuildableInstanceNode中也有设置zIndex的操作.
+     */
+    // 
     setLocalZOrder(statefulBuildableInstanceNode, window.CORE_LAYER_Z_INDEX.HIGHLIGHTED_STATEFUL_BUILDABLE_INSTANCE);
 
     self.editingStatefulBuildableInstance = statefulBuildableInstance;
@@ -193,6 +201,10 @@ cc.Class({
     let statefulBuildableInstanceList = self.statefulBuildableInstanceList;
     const editingStatefulBuildableInstance = self.editingStatefulBuildableInstance;
     self.cancelHighlightingStatefulBuildableInstance(self.tiledMapIns);
+
+    // 重置editingStatefulBuildableInstanceNode.zIndex,防止其zIndex与移动中的建筑物相同而遮挡移动中的建筑物
+    setLocalZOrder(editingStatefulBuildableInstance.node, window.CORE_LAYER_Z_INDEX.UN_HIGHLIGHTED_STATEFUL_BUILDABLE_INSTANCE);
+
     if (null != editingStatefulBuildableInstance) {
       const editingStatefulBuildableInstanceNode = editingStatefulBuildableInstance.node;
       self.removePositioningNewStatefulBuildableInstance();
@@ -367,7 +379,7 @@ cc.Class({
       return;
     }
     const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
-    const roughImmediateContinuousPos = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y))).mul(1 / mapIns.mainCamera.zoomRatio);
+    const roughImmediateContinuousPos = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
     const immediateDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPos, cc.v2(0, 0));
     const immediateContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, immediateDiscretePosWrtMapNode.x, immediateDiscretePosWrtMapNode.y);
 
@@ -375,6 +387,31 @@ cc.Class({
     mapIns.refreshHighlightedTileGridForEditingStatefulBuildableInstance(mapIns.tiledMapIns);
 
   // TODO: Handle the case where `mapIns.editingStatefulBuildableInstance` is moving out of the current visible area of `mapIns.mainCamera`.
+  },
+
+  onSingleFingerClick(touchPosInCamera) {
+    const mapIns = this;
+    const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
+    const roughImmediateContinuousPos = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
+    const immediateDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPos, cc.v2(0, 0));
+    let targetBuildableBinding = null, minDistance = 9999;
+    // WARNING: in FoodieClansLoop, there has a statefulBuildableInstanceCpnList(?) to record the statefulBuildableInstance's component 
+    mapIns.statefulBuildableInstanceList.forEach((statefulBuildableBinding, index) => {
+        let point = cc.v2(statefulBuildableBinding.topmostTileDiscretePositionX, statefulBuildableBinding.topmostTileDiscretePositionY);
+        let distance = point.sub(immediateDiscretePosWrtMapNode).mag();
+        if (minDistance > distance) {
+          targetBuildableBinding = statefulBuildableBinding;
+          minDistance = distance;
+        }
+      }
+    );
+    if (targetBuildableBinding != null && minDistance < 2) {
+      let targetNode = mapIns.node.children.find((node) => {
+        return node.name == "StatefulBuildableInstance" && node.getComponent('StatefulBuildableInstance').playerBuildableBinding == targetBuildableBinding;
+      });
+      let targetCpn = targetNode.getComponent('StatefulBuildableInstance');
+      mapIns.onStatefulBuildableBuildingClicked(targetNode, targetCpn);
+    }
   },
 
   onCancelBuildButtonClicked(evt) {
@@ -390,8 +427,7 @@ cc.Class({
     }
     self.endPositioningStatefulBuildableInstance(true);
   },
-
-  onStatefulBuildableBuildingEditButtonClicked(evt, statefulBuildableInstance) {
+  onStatefulBuildableBuildingClicked(statefulBuildableInstanceNode, statefulBuildableInstance) {
     const self = this;
     if (!self.isPurelyVisual()
       || (

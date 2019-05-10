@@ -175,8 +175,12 @@ cc.Class({
 
     if (false == this._isUsingJoystick()) {
       const immediateDiffVec = event.currentTouch.getDelta(); // On screen coordinates, reference https://docs.cocos.com/creator/2.1/api/en/?q=touch.
+
+        // Guoyl6: I think the translation of mainCameraNode should care about it's zoomRatio too
+        const transformedImmediateDiffVec = immediateDiffVec.div(self.mainCamera.zoomRatio);
+
       if (self.mapScriptIns.isPurelyVisual()) {
-        const cameraPos = self.mainCameraNode.position.sub(immediateDiffVec);
+        const cameraPos = self.mainCameraNode.position.sub(transformedImmediateDiffVec);
         if (self.isMapOverMoved(cameraPos)) {
           return;
         }
@@ -191,7 +195,7 @@ cc.Class({
           * -- YFLu
           */
           const touchLocation = event.currentTouch.getLocation();
-          const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY));
+          const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
           self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, immediateDiffVec);
         }
       }
@@ -257,6 +261,7 @@ cc.Class({
   },
 
   _touchEndEvent(event) {
+    const self = this;
     const theListenerNode = event.target;
     if (!theListenerNode || !theListenerNode.inTouchPoints) return;
     do {
@@ -273,7 +278,10 @@ cc.Class({
       }
       // Only triggers map-state-switch when `diffVecMag` is sufficiently small.
 
-    // TODO: Handle single-finger-click event.
+      // TODO: Handle single-finger-click event.
+      const touchLocation = event.currentTouch.getLocation();
+      const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
+      self.mapScriptIns.onSingleFingerClick(touchPosInCamera);
     } while (false);
     this.cachedStickHeadPosition = cc.v2(0.0, 0.0);
     const previousInTouchPointsSetSize = theListenerNode.inTouchPoints.size;
