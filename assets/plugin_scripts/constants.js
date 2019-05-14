@@ -244,6 +244,12 @@ var constants = {
   STATELESS_BUILDABLE_RESOURCE_PATH: {
     ROOT_PATH: "textures/StatelessBuildable",
   },
+  CAMERA_AUTO_TRANSLATION: {
+    BOUNDARY_WEIGHT: 0.2,
+    MOVE_PIXELS: 20,
+    MOVE_INTERVAL_MILLS: 30,
+    FAST_MOVE_BOUNDARY_WEIGHT: 0.3,
+  },
 };
 window.language = "en";
 window.constants = constants;

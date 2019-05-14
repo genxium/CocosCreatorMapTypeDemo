@@ -88,8 +88,10 @@ cc.Class({
       dx: 0.0,
       dy: 0.0
     };
-
+    
     this.maxHeadDistance = (0.5 * this.base.width);
+
+    this.initCameraAutoTranslationData();
 
     this._initTouchEvent();
 
@@ -196,7 +198,10 @@ cc.Class({
           */
           const touchLocation = event.currentTouch.getLocation();
           const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
-          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, immediateDiffVec);
+          if (!self.tryStartCameraAutoMove(touchLocation, touchPosInCamera)) {
+            self.cancelCameraAutoMove();
+            self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec);
+          }
         }
       }
     } else {
@@ -262,6 +267,7 @@ cc.Class({
 
   _touchEndEvent(event) {
     const self = this;
+    self.cancelCameraAutoMove();
     const theListenerNode = event.target;
     if (!theListenerNode || !theListenerNode.inTouchPoints) return;
     do {
@@ -299,10 +305,13 @@ cc.Class({
 
   _touchCancelEvent(event) {
     this.mapNode.dispatchEvent(event);
+    this.cancelCameraAutoMove();
   },
 
   update(dt) {
+    const self = this;
     if (true != this.initialized) return;
+    this.cameraAutoTranslationTick();
     if (1 < this.zoomingListenerNode.inTouchPoints.size) return;
     if (!this._isUsingJoystick()) return;
     this.stickhead.setPosition(this.cachedStickHeadPosition);
@@ -347,5 +356,84 @@ cc.Class({
       }
     }
     return ret;
+  },
+
+  initCameraAutoTranslationData() {
+    const self = this; 
+    self.cameraAutoTranslation = constants.CAMERA_AUTO_TRANSLATION;
+    self.cameraAutoTranslationData = {
+      lastCalledAt: null,
+      diffVec: cc.v2(0, 0),
+      touchPosInCamera: cc.v2(0, 0),
+      getNextCameraPos() {
+        return self.mainCameraNode.getPosition().add(self.cameraAutoTranslationData.diffVec);
+      },
+    };
+  },
+
+  cameraAutoTranslationTick() {
+    const self = this;
+    if (
+        self.cameraAutoTranslationData.lastCalledAt
+     && self.cameraAutoTranslationData.lastCalledAt + self.cameraAutoTranslation.MOVE_INTERVAL_MILLS <= Date.now()
+    ) {
+      self.cameraAutoTranslationData.lastCalledAt = Date.now();
+      let { diffVec, touchPosInCamera, getNextCameraPos } = self.cameraAutoTranslationData;
+      let nextCameraPos = getNextCameraPos();
+      if (self.isMapOverMoved(nextCameraPos)) {
+        return;
+      }
+      self.mainCameraNode.setPosition(nextCameraPos);
+      self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec);
+    }
+  },
+  /*
+   * return: true if in boundary, false else.
+   * */
+  tryStartCameraAutoMove(touchLocation, touchPosInCamera) {
+    const self = this;
+    const { BOUNDARY_WEIGHT, FAST_MOVE_BOUNDARY_WEIGHT, MOVE_PIXELS } = self.cameraAutoTranslation;
+    let percentage = {
+      vertical: touchLocation.y / self.canvasNode.height,
+      horizontal: touchLocation.x / self.canvasNode.width,
+    };
+    let isOverBoundary = {
+      top: (1 - percentage.vertical) <= BOUNDARY_WEIGHT,
+      bottom: percentage.vertical <= BOUNDARY_WEIGHT,
+      left: percentage.horizontal <= BOUNDARY_WEIGHT,
+      right: (1 - percentage.horizontal) <= BOUNDARY_WEIGHT,
+    };
+    if (!(isOverBoundary.top || isOverBoundary.bottom || isOverBoundary.left || isOverBoundary.right)) {
+      return false;
+    }
+    let isFastMove = {
+      top: (1 - percentage.vertical) / BOUNDARY_WEIGHT <= FAST_MOVE_BOUNDARY_WEIGHT,
+      bottom: percentage.vertical / BOUNDARY_WEIGHT <= FAST_MOVE_BOUNDARY_WEIGHT,
+      left: percentage.horizontal / BOUNDARY_WEIGHT <= FAST_MOVE_BOUNDARY_WEIGHT,
+      right: (1 - percentage.horizontal) / BOUNDARY_WEIGHT <= FAST_MOVE_BOUNDARY_WEIGHT,
+    };
+    let diffVec = cc.v2(0, 0);
+    if (isOverBoundary.left) {
+      diffVec.x -= MOVE_PIXELS * (isFastMove.left ? 2 : 1);
+    }
+    if (isOverBoundary.right) {
+      diffVec.x += MOVE_PIXELS * (isFastMove.right ? 2 : 1);
+    }
+    if (isOverBoundary.top) {
+      diffVec.y += MOVE_PIXELS * (isFastMove.top ? 2 : 1);
+    }
+    if (isOverBoundary.bottom) {
+      diffVec.y -= MOVE_PIXELS * (isFastMove.bottom ? 2 : 1);
+    }
+    diffVec = diffVec.div(self.mainCamera.zoomRatio);
+    
+    self.cameraAutoTranslationData.lastCalledAt = self.cameraAutoTranslationData.lastCalledAt || Date.now();
+    self.cameraAutoTranslationData.diffVec = diffVec;
+    self.cameraAutoTranslationData.touchPosInCamera = touchPosInCamera;
+    return true;
+  },
+  cancelCameraAutoMove() {
+    const self = this;
+    self.cameraAutoTranslationData.lastCalledAt = null;
   },
 });
