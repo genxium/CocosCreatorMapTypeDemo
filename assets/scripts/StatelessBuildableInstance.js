@@ -70,6 +70,11 @@ module.export = cc.Class({
         // NOT used when positioning anchor for `StatefulBuildableInstance`.
         this.topmostAnchorTileCentreWrtBoundingBoxCentre = cc.v2(0.5 * boundingBoxContinuousWidth - this.discreteWidth * tileSizeUnifiedLength * cosineThetaRadian, 0.5 * (boundingBoxContinuousHeight - mapTileRectilinearSize.height));
 
+        this.spriteCentreTileToAnchorTileDiscreteOffset = cc.v2(
+          (this.discreteWidth >> 1),
+          (this.discreteHeight >> 1)
+        );
+
         // Used when positioning anchor for `StatefulBuildableInstance`.
         this.estimatedSpriteCentreToAnchorTileCentreContinuousOffset = cc.v2(
           -(this.discreteWidth >> 1)*tileSizeUnifiedLength*cosineThetaRadian + (this.discreteHeight >> 1)*tileSizeUnifiedLength*cosineThetaRadian,

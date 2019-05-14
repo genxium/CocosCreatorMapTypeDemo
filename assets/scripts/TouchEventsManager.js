@@ -200,8 +200,8 @@ cc.Class({
           const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
           if (!self.tryStartCameraAutoMove(touchLocation, touchPosInCamera)) {
             self.cancelCameraAutoMove();
-            self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec);
           }
+          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec);
         }
       }
     } else {
@@ -380,7 +380,7 @@ cc.Class({
       self.cameraAutoTranslationData.lastCalledAt = Date.now();
       let { diffVec, touchPosInCamera, getNextCameraPos } = self.cameraAutoTranslationData;
       let nextCameraPos = getNextCameraPos();
-      if (self.isMapOverMoved(nextCameraPos)) {
+      if (self.isMapOverMoved(nextCameraPos) || self.mapScriptIns.isEditingStatefulBuildableInstanceNodeOnBoundary()) {
         return;
       }
       self.mainCameraNode.setPosition(nextCameraPos);
@@ -425,8 +425,7 @@ cc.Class({
     if (isOverBoundary.bottom) {
       diffVec.y -= MOVE_PIXELS * (isFastMove.bottom ? 2 : 1);
     }
-    diffVec = diffVec.div(self.mainCamera.zoomRatio);
-    
+    diffVec = diffVec.div(self.mainCamera.zoomRatio); 
     self.cameraAutoTranslationData.lastCalledAt = self.cameraAutoTranslationData.lastCalledAt || Date.now();
     self.cameraAutoTranslationData.diffVec = diffVec;
     self.cameraAutoTranslationData.touchPosInCamera = touchPosInCamera;

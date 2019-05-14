@@ -115,7 +115,11 @@ cc.Class({
       const mainCameraContinuousPos = self.ctrl.mainCameraNode.position; // With respect to CanvasNode.
       // Guoyl6: mainCameraNode 和 camMapNode 的坐标比例是 1 : 1,所以这里不用考虑缩放
       const roughSpriteCentreInitialContinuousPosWrtMapNode = cc.v2(mainCameraContinuousPos.x, mainCameraContinuousPos.y);
-      const initialSpriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, roughSpriteCentreInitialContinuousPosWrtMapNode, cc.v2(0, 0));
+      let initialSpriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, roughSpriteCentreInitialContinuousPosWrtMapNode, cc.v2(0, 0));
+      initialSpriteCentreDiscretePosWrtMapNode = cc.v2(initialSpriteCentreDiscretePosWrtMapNode);
+      let initialAnchorTileDiscretePosWrtMapNode = initialSpriteCentreDiscretePosWrtMapNode.sub(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
+      initialAnchorTileDiscretePosWrtMapNode = self.correctDiscretePositionToWithinMap(statefulBuildableInstance, initialAnchorTileDiscretePosWrtMapNode);
+      initialSpriteCentreDiscretePosWrtMapNode = initialAnchorTileDiscretePosWrtMapNode.add(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
       const initialSpriteCentreContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, initialSpriteCentreDiscretePosWrtMapNode.x, initialSpriteCentreDiscretePosWrtMapNode.y);
       statefulBuildableInstanceNode.setPosition(initialSpriteCentreContinuousPosWrtMapNode);
     } else {
@@ -380,10 +384,14 @@ cc.Class({
       return;
     }
     const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
-    const roughImmediateContinuousPos = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
-    const immediateDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPos, cc.v2(0, 0));
-    const immediateContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, immediateDiscretePosWrtMapNode.x, immediateDiscretePosWrtMapNode.y);
-
+    const {spriteCentreTileToAnchorTileDiscreteOffset} = mapIns.editingStatefulBuildableInstance;
+    const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
+    let immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
+    immediateDiscretePosOfCameraOnMapNode = cc.v2(immediateDiscretePosOfCameraOnMapNode);
+    let immediateAnchorDiscretePos = immediateDiscretePosOfCameraOnMapNode.sub(spriteCentreTileToAnchorTileDiscreteOffset);
+    immediateAnchorDiscretePos = mapIns.correctDiscretePositionToWithinMap(mapIns.editingStatefulBuildableInstance, immediateDiscretePosOfCameraOnMapNode);
+    immediateDiscretePosOfCameraOnMapNode = immediateAnchorDiscretePos.add(spriteCentreTileToAnchorTileDiscreteOffset);
+    const immediateContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, immediateDiscretePosOfCameraOnMapNode.x, immediateDiscretePosOfCameraOnMapNode.y);
     mapIns.editingStatefulBuildableInstance.node.setPosition(immediateContinuousPosWrtMapNode);
     mapIns.refreshHighlightedTileGridForEditingStatefulBuildableInstance(mapIns.tiledMapIns);
 
@@ -393,13 +401,13 @@ cc.Class({
   onSingleFingerClick(touchPosInCamera) {
     const mapIns = this;
     const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
-    const roughImmediateContinuousPos = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
-    const immediateDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPos, cc.v2(0, 0));
+    const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
+    const immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
     let targetBuildableBinding = null, minDistance = 9999;
     // WARNING: in FoodieClansLoop, there has a statefulBuildableInstanceCpnList(?) to record the statefulBuildableInstance's component 
     mapIns.statefulBuildableInstanceList.forEach((statefulBuildableBinding, index) => {
         let point = cc.v2(statefulBuildableBinding.topmostTileDiscretePositionX, statefulBuildableBinding.topmostTileDiscretePositionY);
-        let distance = point.sub(immediateDiscretePosWrtMapNode).mag();
+        let distance = point.sub(immediateDiscretePosOfCameraOnMapNode).mag();
         if (minDistance > distance) {
           targetBuildableBinding = statefulBuildableBinding;
           minDistance = distance;
@@ -489,8 +497,8 @@ cc.Class({
       {
         "id": 1,
         "type": 1,
-        "discreteWidth": 2,
-        "discreteHeight": 2,
+        "discreteWidth": 3,
+        "discreteHeight": 3,
         "displayName": "Headquarter",
         "levelConfs": [
           {
@@ -811,4 +819,41 @@ cc.Class({
 
     }
   },
+
+  isStatefulBuildableOutOfMap(statefulBuildableInstance, spriteCentreDiscretePosWrtMapNode) {
+    const self = this;
+    const anchorTileDiscretePosWrtMap = spriteCentreDiscretePosWrtMapNode.sub(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
+    // TODO: Return true or false based on whether `anchorTileDiscretePosWrtMap` is out of the discrete map bound.
+    let { discreteWidth, discreteHeight } = statefulBuildableInstance;
+    let currentLayerSize = self.highlighterLayer.getLayerSize();
+    return 0 < anchorTileDiscretePosWrtMap.x || 0 < anchorTileDiscretePosWrtMap.y || currentLayerSize.width - discreteWidth > anchorTileDiscretePosWrtMap.x + 1 || currentLayerSize.height - discreteHeight > anchorTileDiscretePosWrtMap.y + 1;
+  },
+
+  correctDiscretePositionToWithinMap(statefulBuildableInstance, discretePos) {
+    let mapIns = this;
+    let { discreteWidth, discreteHeight } = statefulBuildableInstance;
+    let currentLayerSize = mapIns.highlighterLayer.getLayerSize();
+    let toRet = cc.v2();
+    toRet.x = Math.max(0, discretePos.x);
+    toRet.x = Math.min(toRet.x, currentLayerSize.width - discreteWidth);
+    toRet.y = Math.max(0, discretePos.y);
+    toRet.y = Math.min(toRet.y, currentLayerSize.height - discreteHeight);
+    return toRet;
+  },
+  
+  isEditingStatefulBuildableInstanceNodeOnBoundary() {
+    const self = this, mapIns = self;
+    if (null == self.editingStatefulBuildableInstance) {
+      return false;
+    }
+    let statefulBuildableInstance = self.editingStatefulBuildableInstance;
+    let editingStatefulBuildableInstanceNode = statefulBuildableInstance.node;
+    let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, editingStatefulBuildableInstanceNode.position, cc.v2(0, 0));
+    spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
+    const anchorTileDiscretePosWrtMap = spriteCentreDiscretePosWrtMapNode.sub(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
+    let { discreteWidth, discreteHeight } = statefulBuildableInstance;
+    let currentLayerSize = self.highlighterLayer.getLayerSize();
+    return anchorTileDiscretePosWrtMap.x == 0 || anchorTileDiscretePosWrtMap.y == 0 || anchorTileDiscretePosWrtMap.x + discreteWidth == currentLayerSize.width - 1 || anchorTileDiscretePosWrtMap.y + discreteHeight == currentLayerSize.height - 1;
+  },
+
 });

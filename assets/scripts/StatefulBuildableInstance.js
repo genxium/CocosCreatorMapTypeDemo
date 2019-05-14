@@ -153,6 +153,7 @@ const StatefulBuildableInstance = cc.Class({
     self.boundingBoxContinuousWidth = singleStatelessBuildableInstance.boundingBoxContinuousWidth;
     self.boundingBoxContinuousHeight = singleStatelessBuildableInstance.boundingBoxContinuousHeight;
     self.topmostAnchorTileCentreWrtBoundingBoxCentre = singleStatelessBuildableInstance.topmostAnchorTileCentreWrtBoundingBoxCentre;
+    self.spriteCentreTileToAnchorTileDiscreteOffset = singleStatelessBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset;
     self.estimatedSpriteCentreToAnchorTileCentreContinuousOffset = singleStatelessBuildableInstance.estimatedSpriteCentreToAnchorTileCentreContinuousOffset;
     self.boundaryPoints = singleStatelessBuildableInstance.boundaryPoints;
 
