@@ -199,7 +199,7 @@ cc.Class({
   },
 
   endPositioningStatefulBuildableInstance(successfullyPlacedOrNot) {
-    const self = this;
+    const self = this, mapIns = self;
     const mapNode = self.node;
     self.statelefulBuildableController.active = false;
     self.buildButton.node.active = true;
@@ -231,8 +231,13 @@ cc.Class({
           self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
         }
       } else {
+        let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, editingStatefulBuildableInstanceNode.position, cc.v2(0, 0));
+        spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
+        if (self.isStatefulBuildableOutOfMap(editingStatefulBuildableInstance, spriteCentreDiscretePosWrtMapNode)) {
+          // TODO: refresh here
+          cc.warn('statefulBuildableInstance out of map');
+        }
         self.removeEditingExistingStatefulBuildableInstance();
-
         if (editingStatefulBuildableInstance.isNew) {
           self.statefulBuildableInstanceList.push(editingStatefulBuildableInstance.playerBuildableBinding);
         }
@@ -826,7 +831,7 @@ cc.Class({
     // TODO: Return true or false based on whether `anchorTileDiscretePosWrtMap` is out of the discrete map bound.
     let { discreteWidth, discreteHeight } = statefulBuildableInstance;
     let currentLayerSize = self.highlighterLayer.getLayerSize();
-    return 0 < anchorTileDiscretePosWrtMap.x || 0 < anchorTileDiscretePosWrtMap.y || currentLayerSize.width - discreteWidth > anchorTileDiscretePosWrtMap.x + 1 || currentLayerSize.height - discreteHeight > anchorTileDiscretePosWrtMap.y + 1;
+    return 0 > anchorTileDiscretePosWrtMap.x || 0 > anchorTileDiscretePosWrtMap.y || currentLayerSize.width - discreteWidth < anchorTileDiscretePosWrtMap.x || currentLayerSize.height - discreteHeight < anchorTileDiscretePosWrtMap.y;
   },
 
   correctDiscretePositionToWithinMap(statefulBuildableInstance, discretePos) {
