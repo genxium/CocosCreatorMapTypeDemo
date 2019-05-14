@@ -113,7 +113,8 @@ cc.Class({
     const statefulBuildableInstanceNode = statefulBuildableInstance.node;
     if (null == statefulBuildableInstance.fixedSpriteCentreContinuousPos) {
       const mainCameraContinuousPos = self.ctrl.mainCameraNode.position; // With respect to CanvasNode.
-      const roughSpriteCentreInitialContinuousPosWrtMapNode = cc.v2(mainCameraContinuousPos.x, mainCameraContinuousPos.y).mul(1 / self.mainCamera.zoomRatio);
+      // Guoyl6: mainCameraNode 和 camMapNode 的坐标比例是 1 : 1,所以这里不用考虑缩放
+      const roughSpriteCentreInitialContinuousPosWrtMapNode = cc.v2(mainCameraContinuousPos.x, mainCameraContinuousPos.y);
       const initialSpriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, roughSpriteCentreInitialContinuousPosWrtMapNode, cc.v2(0, 0));
       const initialSpriteCentreContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, initialSpriteCentreDiscretePosWrtMapNode.x, initialSpriteCentreDiscretePosWrtMapNode.y);
       statefulBuildableInstanceNode.setPosition(initialSpriteCentreContinuousPosWrtMapNode);
