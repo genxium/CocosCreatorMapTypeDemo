@@ -395,10 +395,11 @@ TileCollisionManager.prototype.extractBoundaryObjects = function(withTiledMapNod
     for (let tileIdx = 0; tileIdx < currentTiles.length; ++tileIdx) {
       let currentTile = currentTiles[tileIdx];
       let parentGID = parseInt(firstGid) + parseInt(currentTile.getAttribute('id') || 0);
+      let childrenOfCurrentTile = null;
       if (cc.sys.isNative) {
-        let childrenOfCurrentTile = currentTile.getElementsByTagName("objectgroup");
+        childrenOfCurrentTile = currentTile.getElementsByTagName("objectgroup");
       } else {
-        let childrenOfCurrentTile = currentTile.children;
+        childrenOfCurrentTile = currentTile.children;
       }
       for (let childIdx = 0; childIdx < childrenOfCurrentTile.length; ++childIdx) {
         let ch = childrenOfCurrentTile[childIdx];

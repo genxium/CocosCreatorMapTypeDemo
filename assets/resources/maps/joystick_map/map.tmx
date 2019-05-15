@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.2" orientation="isometric" renderorder="right-down" width="62" height="62" tilewidth="256" tileheight="128" infinite="0" nextlayerid="42" nextobjectid="189">
+ <tileset firstgid="1" source="Tile_W256_H128_S00.tsx"/>
+ <tileset firstgid="49" source="Tile_W256_H256_S00.tsx"/>
+ <tileset firstgid="65" source="Tile_W256_H256_S01.tsx"/>
+ <tileset firstgid="81" source="Tile_W256_H256_S02.tsx"/>
+ <tileset firstgid="97" source="Tile_W256_H256_S03.tsx"/>
+ <tileset firstgid="113" source="Tile_W256_H256_S04.tsx"/>
+ <tileset firstgid="129" source="Tile_W256_H256_S05.tsx"/>
+ <tileset firstgid="145" source="Tile_W512_H512_S00.tsx"/>
+ <tileset firstgid="161" source="Tile_W512_H512_S01.tsx"/>
+ <tileset firstgid="165" source="Tile_W256_H128_S01.tsx"/>
+ <tileset firstgid="213" source="Tile_W256_H256_S06.tsx"/>
+ <tileset firstgid="277" source="Tile_W256_H128_S02.tsx"/>
+ <objectgroup id="38" name="SomeObjectGadgets"/>
+ <layer id="39" name="GroundFloor" width="62" height="62">
+  <data encoding="base64" compression="zlib">
+   eJztz7EBABAQwMBnGxr7b0dhBLziiuuTEhEFAAAAAHimbtkdvn379u3bt2/fvn379p3d4RsA4L7+QUOGtowPOgAAAABOmeZFD6I=
+  </data>
+ </layer>
+ <layer id="37" name="SomeTileGadgets" width="62" height="62">
+  <data encoding="base64" compression="zlib">
+   eJzt1TEKgDAMBdAeRDt5Nr3/DaRQFwdRqLQ070HIkiGfDEkJAAAAxnD0XqCD/dajkDuWp9xrrRm5dyxfc+daM7j+9/JitsxsP+4yMrljkRsAAAAAAAAAgNZOHBcHxQ==
+  </data>
+ </layer>
+ <layer id="40" name="SomeOtherTileGadgets" width="62" height="62">
+  <data encoding="base64" compression="zlib">
+   eJztzsENgCAQRUFqFAT7r0QOhlCAuIbMJD+7x5cSAAAAAADAu47oAD5VogMAWOKa7rydtb78/DUy5CfO6AAAAAAAAACGG5+vA7Q=
+  </data>
+ </layer>
+ <objectgroup id="41" name="BarrierAndShelterMarkers">
+  <properties>
+   <property name="type" value="barrier_and_shelter"/>
+  </properties>
+  <object id="188" x="706" y="1910">
+   <properties>
+    <property name="boundary_type" value="barrier"/>
+   </properties>
+   <polyline points="0,0 42,1174 622,1226 506,-10"/>
+  </object>
+ </objectgroup>
+</map>
