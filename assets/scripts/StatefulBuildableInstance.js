@@ -4,7 +4,9 @@ window.STATEFUL_BUILDABLE_INSTANCE_STATE = {
   IDLE: 1, 
   BUILDING: 2,
   EDITING: 3,
-  EDITING_WHILE_BUILDING_OR_UPGRADING: 4
+  EDITING_WHILE_BUILDING_OR_UPGRADING: 4,
+  EDITING_PANEL: 5,
+  EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING: 6, 
 }; 
 
 const StatefulBuildableInstance = cc.Class({
@@ -223,6 +225,10 @@ const StatefulBuildableInstance = cc.Class({
             break;
           case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
             self.state = STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING;
+            break;
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING:
+            self.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL, self.fixedSpriteCentreContinuousPos);
+            break;
           default:
             cc.warn("unknown state founded when buildingOrUpgrade operation done: ", self.state);
             break;

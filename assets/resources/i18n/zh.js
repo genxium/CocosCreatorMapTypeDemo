@@ -279,5 +279,8 @@ window.i18n.languages['en'] = {
       Restaurant: "Restaurant"
     },
   },
+  StateBuildableInstanceInfoPanel: {
+   Level: "Level: ",
+ },
 };
 

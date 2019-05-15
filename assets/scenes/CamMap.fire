@@ -511,6 +511,9 @@
       "__uuid__": "d603b359-c602-4d9c-8751-acce02222312"
     },
     "isUsingJoystick": false,
+    "statelessBuildableInstanceCardPrefab": {
+      "__uuid__": "1fe1af52-ca00-445f-a7d4-3d006ab2a427"
+    },
     "statefulBuildableInstancePrefab": {
       "__uuid__": "ec3c97e2-9ae1-456f-b710-abd7d1d361e5"
     },
@@ -610,7 +613,7 @@
       "a": 255
     },
     "_depth": -1,
-    "_zoomRatio": 0.5,
+    "_zoomRatio": 1,
     "_targetTexture": null,
     "_id": "33H7avvt9NkI1GtVri/cpZ"
   },

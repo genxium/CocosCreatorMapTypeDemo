@@ -13,6 +13,10 @@ cc.Class({
   extends: NarrativeSceneManagerDelegate,
 
   properties: {
+    statelessBuildableInstanceCardPrefab: {
+      type: cc.Prefab,
+      default: null,
+    },
     statefulBuildableInstancePrefab: {
       type: cc.Prefab,
       default: null,
@@ -47,6 +51,7 @@ cc.Class({
     * - When talking about "localStorage" or "remote MySQLServer" stored, to be recovered data, we use mostly "playerBuildableBinding".
     */
     self.statefulBuildableInstanceList = [];
+    self.statefulBuildableInstanceCompList = [];
     window.handleNetworkDisconnected = () => {
       //TODO
     };
@@ -104,6 +109,39 @@ cc.Class({
       statefulBuildableInstance.initOrUpdateFromPlayerBuildableBinding(playerBuildableBinding, targetedStatelessBuildableInstance, self);
     }
 
+    // Initialize "statefulInstanceInfoPanelNode" [begins] 
+    let statefulInstanceInfoPanelNode = statefulBuildableInstanceNode.statefulInstanceInfoPanelNode;
+    if (null == statefulInstanceInfoPanelNode) {
+      statefulInstanceInfoPanelNode = cc.instantiate(self.statefulBuildableInstanceInfoPanelPrefab);
+      statefulInstanceInfoPanelNode.setPosition(cc.v2(0, 0));
+      statefulBuildableInstanceNode.statefulInstanceInfoPanelNode = statefulInstanceInfoPanelNode;
+    }
+
+    const statefulInfoPanelScriptIns = statefulInstanceInfoPanelNode.getComponent("StatefulBuildableInstanceInfoPanel");
+    statefulInfoPanelScriptIns.setInfo(statefulBuildableInstance);
+    statefulInfoPanelScriptIns.onCloseDelegate = () => {
+      self.removeShowingModalPopup();
+      if (statefulBuildableInstance.isNew) {
+        self.addPositioningNewStatefulBuildableInstance();
+      } else {
+        self.addEditingExistingStatefulBuildableInstance();
+      }
+      //重置状态.
+      switch (statefulBuildableInstance.state) {
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL:
+          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING:
+          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+          break;
+        default:
+          cc.warn("Show statefulBuildableInstancePanelNode not in editing state.")
+          break;
+      }
+      self.statelefulBuildableController.active = true;
+    };
+
+    // Initialize "statefulInstanceInfoPanelNode" [ends] 
     return statefulBuildableInstance;
   },
 
@@ -150,7 +188,7 @@ cc.Class({
     const tiledMapIns = mapIns.tiledMapIns;
     mapIns.statelefulBuildableController.active = true;
     mapIns.buildButton.node.active = false;
-    if (false == self.addPositioningNewStatefulBuildableInstance()) return;
+    if (false == self.addEditingExistingStatefulBuildableInstance()) return;
 
     let statefulBuildableInstanceNode = statefulBuildableInstance.node;
     if (null == statefulBuildableInstanceNode) {
@@ -212,12 +250,13 @@ cc.Class({
 
     if (null != editingStatefulBuildableInstance) {
       const editingStatefulBuildableInstanceNode = editingStatefulBuildableInstance.node;
-      self.removePositioningNewStatefulBuildableInstance();
       if (!successfullyPlacedOrNot && null != editingStatefulBuildableInstanceNode && null != editingStatefulBuildableInstanceNode.parent) {
         if (editingStatefulBuildableInstance.isNew && window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING == editingStatefulBuildableInstance.state) {
+          self.removePositioningNewStatefulBuildableInstance();
           editingStatefulBuildableInstanceNode.parent.removeChild(editingStatefulBuildableInstanceNode);
           self.onBuildButtonClicked(); //重新打开statelessBuildableInstanceCardListNode
         } else if (!editingStatefulBuildableInstance.isNew) {
+          self.removeEditingExistingStatefulBuildableInstance();
           editingStatefulBuildableInstanceNode.setPosition(editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
           switch (editingStatefulBuildableInstance.state) {
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
@@ -236,12 +275,27 @@ cc.Class({
         if (self.isStatefulBuildableOutOfMap(editingStatefulBuildableInstance, spriteCentreDiscretePosWrtMapNode)) {
           // TODO: refresh here
           cc.warn('statefulBuildableInstance out of map');
+          return;
         }
-        self.removeEditingExistingStatefulBuildableInstance();
+
         if (editingStatefulBuildableInstance.isNew) {
           self.statefulBuildableInstanceList.push(editingStatefulBuildableInstance.playerBuildableBinding);
+          self.statefulBuildableInstanceCompList.push(editingStatefulBuildableInstance);
+          self.removePositioningNewStatefulBuildableInstance();
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
+        } else {
+          self.removeEditingExistingStatefulBuildableInstance();
+          switch (editingStatefulBuildableInstance.state) {
+            case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
+              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstanceNode.position);
+              break;
+            case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
+              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
+              break;
+            default:
+              cc.warn('unknown state when setted statefulBuildableInstance(not isNew)', editingStatefulBuildableInstance.state);
+          }
         }
-        editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position /* which is assigned only conditionally within `this.onMovingBuildableInstance` */ );
 
         self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
         self.renderPerStatefulBuildableInstanceNode(editingStatefulBuildableInstance);
@@ -404,7 +458,7 @@ cc.Class({
   },
 
   onSingleFingerClick(touchPosInCamera) {
-    const mapIns = this;
+    const self = this, mapIns = this;
     const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
     const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
     const immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
@@ -723,6 +777,7 @@ cc.Class({
         const statefulBuildableInstance = self.createPerStatefulBuildableInstanceNodes(playerBuildableBinding, targetedStatelessBuildableInstance);
         self.createBoundaryColliderForStatefulBuildableInsatnce(statefulBuildableInstance, self.tiledMapIns);
         self.statefulBuildableInstanceList.push(statefulBuildableInstance.playerBuildableBinding);
+        self.statefulBuildableInstanceCompList.push(statefulBuildableInstance);
         self.renderPerStatefulBuildableInstanceNode(statefulBuildableInstance);
       }
     }
@@ -859,6 +914,38 @@ cc.Class({
     let { discreteWidth, discreteHeight } = statefulBuildableInstance;
     let currentLayerSize = self.highlighterLayer.getLayerSize();
     return anchorTileDiscretePosWrtMap.x == 0 || anchorTileDiscretePosWrtMap.y == 0 || anchorTileDiscretePosWrtMap.x + discreteWidth == currentLayerSize.width - 1 || anchorTileDiscretePosWrtMap.y + discreteHeight == currentLayerSize.height - 1;
+  },
+
+  onStatefulBuildableInstanceInfoButtonClicked(evt) {
+    const self = this;
+    const statefulBuildableInstance = self.editingStatefulBuildableInstance;
+    if (!statefulBuildableInstance) {
+      cc.warn("The expected `mapIns.editingStatefulBuildableInstance` doesn't exist.")
+      return;
+    }
+    const statefulBuildableInstanceNode = self.editingStatefulBuildableInstance.node;
+    if (statefulBuildableInstance.isNew) {
+      self.removePositioningNewStatefulBuildableInstance();
+    } else {
+      self.removeEditingExistingStatefulBuildableInstance();
+    }
+    if (!self.addShowingModalPopup()) return;
+    self.statelefulBuildableController.active = false;
+    switch (statefulBuildableInstance.state) {
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        break;
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        break;
+      default:
+        cc.warn("Show statefulBuildableInstancePanelNode not in editing state.")
+        break;
+    }
+    const statefulInstanceInfoPanelNode = statefulBuildableInstanceNode.statefulInstanceInfoPanelNode;
+    const statefulInstanceInfoPanelScriptIns = statefulInstanceInfoPanelNode.getComponent("StatefulBuildableInstanceInfoPanel");
+    statefulInstanceInfoPanelScriptIns.setInfo(self.editingStatefulBuildableInstance);
+    window.safelyAddChild(self.widgetsAboveAllNode, statefulBuildableInstanceNode.statefulInstanceInfoPanelNode);
   },
 
 });

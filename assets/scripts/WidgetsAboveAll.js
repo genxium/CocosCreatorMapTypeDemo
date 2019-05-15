@@ -22,6 +22,10 @@ cc.Class({
       type: cc.Node,
       default: null,
     },
+    statefulBuildableInstanceInfoButton: {
+      type: cc.Button,
+      default: null,
+    },
     statelefulBuildableController: {
        type:cc.Node,
        default: null,
@@ -67,6 +71,17 @@ cc.Class({
     ];
     mapScriptIns.cancelBuildButton = this.cancelBuildButton;
     // Initialization of the `cancelBuildButton` [ends].
+    
+    // Initialization of the `statefulBuildableInstanceInfoButton` [begins].
+    const statefulBuildableInstanceInfoBtnHandler = new cc.Component.EventHandler();
+    statefulBuildableInstanceInfoBtnHandler.target = mapNode;
+    statefulBuildableInstanceInfoBtnHandler.component = mapNode.name;
+    statefulBuildableInstanceInfoBtnHandler.handler = "onStatefulBuildableInstanceInfoButtonClicked";
+    this.statefulBuildableInstanceInfoButton.clickEvents = [
+      statefulBuildableInstanceInfoBtnHandler
+    ];
+    mapScriptIns.statefulBuildableInstanceInfoButton = this.statefulBuildableInstanceInfoButton;
+    // Initialization of the `statefulBuildableInstanceInfoButton` [begins].
 
     // Initialization of the `confirmBuildButton` [begins].
     const confirmBuildBtnHandler = new cc.Component.EventHandler();
