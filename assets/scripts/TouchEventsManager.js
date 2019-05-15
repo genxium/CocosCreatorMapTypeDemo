@@ -198,7 +198,7 @@ cc.Class({
           */
           const touchLocation = event.currentTouch.getLocation();
           const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
-          if (!self.tryStartCameraAutoMove(touchLocation, touchPosInCamera)) {
+          if (!self.mapScriptIns.cameraAutoMove || !self.tryStartCameraAutoMove(touchLocation, touchPosInCamera)) {
             self.cancelCameraAutoMove();
           }
           self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec);

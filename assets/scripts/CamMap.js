@@ -24,7 +24,8 @@ cc.Class({
     buildOrUpgradeProgressBarPrefab: {
       type: cc.Prefab,
       default: null
-    }
+    },
+    cameraAutoMove: true,
   },
 
   ctor() {
