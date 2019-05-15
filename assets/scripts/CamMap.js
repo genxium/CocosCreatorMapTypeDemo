@@ -462,22 +462,17 @@ cc.Class({
     const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
     const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
     const immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
-    let targetBuildableBinding = null, minDistance = 9999;
-    // WARNING: in FoodieClansLoop, there has a statefulBuildableInstanceCpnList(?) to record the statefulBuildableInstance's component 
-    mapIns.statefulBuildableInstanceList.forEach((statefulBuildableBinding, index) => {
-        let point = cc.v2(statefulBuildableBinding.topmostTileDiscretePositionX, statefulBuildableBinding.topmostTileDiscretePositionY);
-        let distance = point.sub(immediateDiscretePosOfCameraOnMapNode).mag();
-        if (minDistance > distance) {
-          targetBuildableBinding = statefulBuildableBinding;
-          minDistance = distance;
-        }
-      }
-    );
-    if (targetBuildableBinding != null && minDistance < 2) {
-      let targetNode = mapIns.node.children.find((node) => {
-        return node.name == "StatefulBuildableInstance" && node.getComponent('StatefulBuildableInstance').playerBuildableBinding == targetBuildableBinding;
-      });
-      let targetCpn = targetNode.getComponent('StatefulBuildableInstance');
+    const targetCpn = mapIns.statefulBuildableInstanceCompList.filter((statefulBuildableInstance) => {
+      let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, statefulBuildableInstance.node.position, cc.v2(0, 0));
+      spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
+      let anchorTileDiscretePosWrtMapNode = spriteCentreDiscretePosWrtMapNode.sub(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
+      return anchorTileDiscretePosWrtMapNode.x <= immediateDiscretePosOfCameraOnMapNode.x
+          && anchorTileDiscretePosWrtMapNode.x + statefulBuildableInstance.discreteWidth > immediateDiscretePosOfCameraOnMapNode.x
+          && anchorTileDiscretePosWrtMapNode.y <= immediateDiscretePosOfCameraOnMapNode.y
+          && anchorTileDiscretePosWrtMapNode.y + statefulBuildableInstance.discreteHeight > immediateDiscretePosOfCameraOnMapNode.y;
+    })[0];
+    if (targetCpn != null) {
+      let targetNode = targetCpn.node; 
       mapIns.onStatefulBuildableBuildingClicked(targetNode, targetCpn);
     }
   },
@@ -913,7 +908,7 @@ cc.Class({
     const anchorTileDiscretePosWrtMap = spriteCentreDiscretePosWrtMapNode.sub(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
     let { discreteWidth, discreteHeight } = statefulBuildableInstance;
     let currentLayerSize = self.highlighterLayer.getLayerSize();
-    return anchorTileDiscretePosWrtMap.x == 0 || anchorTileDiscretePosWrtMap.y == 0 || anchorTileDiscretePosWrtMap.x + discreteWidth == currentLayerSize.width - 1 || anchorTileDiscretePosWrtMap.y + discreteHeight == currentLayerSize.height - 1;
+    return anchorTileDiscretePosWrtMap.x == 0 || anchorTileDiscretePosWrtMap.y == 0 || anchorTileDiscretePosWrtMap.x + discreteWidth == currentLayerSize.width || anchorTileDiscretePosWrtMap.y + discreteHeight == currentLayerSize.height;
   },
 
   onStatefulBuildableInstanceInfoButtonClicked(evt) {
