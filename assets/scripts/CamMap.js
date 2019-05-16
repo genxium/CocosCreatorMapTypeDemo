@@ -959,8 +959,12 @@ cc.Class({
     window.safelyAddChild(self.widgetsAboveAllNode, statefulBuildableInstanceNode.statefulInstanceInfoPanelNode);
   },
 
-  upgradeStatefulBuildable(evt, statefulBuildableInstance) {
+  upgradeStatefulBuildableInstance(evt, statefulBuildableInstance) {
     const self = this;
+    if (!statefulBuildableInstance.isUpgradable()) {
+      cc.warn("upgrade StatefulBuildableInstance when it isn't upgradeable", statefulBuildableInstance);
+      return;
+    }
     const targetedStatelessBuildableInstance = self._findStatelessBuildableInstance(statefulBuildableInstance.playerBuildableBinding);
     const statefulBuildableInstanceNode = statefulBuildableInstance.node;
     // TODO: correct the dependency of upgrade.

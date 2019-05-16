@@ -250,6 +250,10 @@ const StatefulBuildableInstance = cc.Class({
       return cpn;
     }
   },
+  isUpgradable() {
+    const self = this;
+    return !!self.appearance[self.currentLevel+1];
+  },
   // Warning: upgrade内部不检查约束条件
   upgrade() {
     const self = this;

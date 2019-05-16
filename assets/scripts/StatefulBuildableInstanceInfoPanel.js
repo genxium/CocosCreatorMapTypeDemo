@@ -87,7 +87,7 @@ module.export = cc.Class({
     let upgradeHandler = new cc.Component.EventHandler();
     upgradeHandler.target = self.statefulBuildableInstance.mapIns.node;
     upgradeHandler.component = self.statefulBuildableInstance.mapIns.node.name;
-    upgradeHandler.handler = 'upgradeStatefulBuildable';
+    upgradeHandler.handler = 'upgradeStatefulBuildableInstance';
     upgradeHandler.customEventData = self.statefulBuildableInstance;
     self.upgradeButton.clickEvents = [
       upgradeHandler,
@@ -103,7 +103,7 @@ module.export = cc.Class({
 
   refreshUpgradeButton() {
     const self = this;
-    if (!self.buildingOrUpgradingStartedAt) {
+    if (!self.buildingOrUpgradingStartedAt || !self.statefulBuildableInstance.isUpgradable()) {
       self.upgradeButton.node.active = false;
     } else {
       let nextLevel = self.statefulBuildableInstance.currentLevel + 1;
