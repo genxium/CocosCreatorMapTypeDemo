@@ -9,7 +9,7 @@ if (!window.i18n.languages) {
   window.i18n.languages = {};
 }
 
-window.i18n.languages['en'] = {
+window.i18n.languages['zh'] = {
   "InsufficientResource": {
     "Gold": "Insufficient gold!",
     "Diamond": "Insufficient diamond!",
@@ -280,7 +280,9 @@ window.i18n.languages['en'] = {
     },
   },
   StateBuildableInstanceInfoPanel: {
-   Level: "Level: ",
- },
+    Level: "Level: ",
+    Upgrade: "Upgrade",
+    Cancel: "Cancel",
+  },
 };
 

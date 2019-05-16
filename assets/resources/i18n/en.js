@@ -280,8 +280,10 @@ window.i18n.languages['en'] = {
     },
   },
   StateBuildableInstanceInfoPanel: {
-   Level: "Level: ",
- },
+    Level: "Level: ",
+    Upgrade: "Upgrade",
+    Cancel: "Cancel",
+  },
 
 
 };
