@@ -563,7 +563,8 @@ cc.Class({
 
   sendGlobalBuildableLevelConfQuery(queryParam) {
     const self = this;
-    self.AllStatelessBuildableInstances = [
+    // 设置全局变量以查看数值配置表
+    window.AllStatelessBuildableInstances = self.AllStatelessBuildableInstances = [
       {
         "id": 1,
         "type": 1,
@@ -596,7 +597,7 @@ cc.Class({
               "displayName": "Headquarter"
             },
             "level": 2,
-            "buildingOrUpgradingDuration": 300,
+            "buildingOrUpgradingDuration": 10,
             "buildingOrUpgradingRequiredGold": 2000,
             "buildingOrUpgradingRequiredResidentsCount": 10,
             "baseFoodProductionRate": 400
@@ -611,7 +612,7 @@ cc.Class({
               "displayName": "Headquarter"
             },
             "level": 3,
-            "buildingOrUpgradingDuration": 10800,
+            "buildingOrUpgradingDuration": 20,
             "buildingOrUpgradingRequiredGold": 6000,
             "buildingOrUpgradingRequiredResidentsCount": 20,
             "baseFoodProductionRate": 600
@@ -635,40 +636,10 @@ cc.Class({
               "displayName": "Laboratory"
             },
             "level": 1,
-            "buildingOrUpgradingDuration": 30,
+            "buildingOrUpgradingDuration": 10,
             "buildingOrUpgradingRequiredResidentsCount": 3,
             "baseFoodProductionRate": 80
           },
-          {
-            "id": 5,
-            "buildable": {
-              "id": 2,
-              "type": 1,
-              "discreteWidth": 2,
-              "discreteHeight": 2,
-              "displayName": "Laboratory"
-            },
-            "level": 2,
-            "buildingOrUpgradingDuration": 60,
-            "buildingOrUpgradingRequiredGold": 100,
-            "buildingOrUpgradingRequiredResidentsCount": 5,
-            "baseFoodProductionRate": 150
-          },
-          {
-            "id": 6,
-            "buildable": {
-              "id": 2,
-              "type": 1,
-              "discreteWidth": 2,
-              "discreteHeight": 2,
-              "displayName": "Laboratory"
-            },
-            "level": 3,
-            "buildingOrUpgradingDuration": 300,
-            "buildingOrUpgradingRequiredGold": 200,
-            "buildingOrUpgradingRequiredResidentsCount": 7,
-            "baseFoodProductionRate": 220
-          }
         ]
       },
       {
@@ -688,7 +659,7 @@ cc.Class({
               "displayName": "Restaurant"
             },
             "level": 1,
-            "buildingOrUpgradingDuration": 60,
+            "buildingOrUpgradingDuration": 6,
             "buildingOrUpgradingRequiredGold": 150,
             "buildingOrUpgradingRequiredResidentsCount": 5,
             "baseGoldProductionRate": 0.05
@@ -703,7 +674,7 @@ cc.Class({
               "displayName": "Restaurant"
             },
             "level": 2,
-            "buildingOrUpgradingDuration": 300,
+            "buildingOrUpgradingDuration": 30,
             "buildingOrUpgradingRequiredGold": 300,
             "buildingOrUpgradingRequiredResidentsCount": 10,
             "baseGoldProductionRate": 0.11
@@ -718,7 +689,7 @@ cc.Class({
               "displayName": "Restaurant"
             },
             "level": 3,
-            "buildingOrUpgradingDuration": 900,
+            "buildingOrUpgradingDuration": 40,
             "buildingOrUpgradingRequiredGold": 700,
             "buildingOrUpgradingRequiredResidentsCount": 15,
             "baseGoldProductionRate": 0.17
@@ -742,7 +713,7 @@ cc.Class({
               "displayName": "Barrack"
             },
             "level": 1,
-            "buildingOrUpgradingDuration": 180,
+            "buildingOrUpgradingDuration": 18,
             "buildingOrUpgradingRequiredGold": 250,
             "buildingOrUpgradingRequiredResidentsCount": 5
           },
@@ -756,7 +727,7 @@ cc.Class({
               "displayName": "Barrack"
             },
             "level": 2,
-            "buildingOrUpgradingDuration": 1800,
+            "buildingOrUpgradingDuration": 25,
             "buildingOrUpgradingRequiredGold": 1500,
             "buildingOrUpgradingRequiredResidentsCount": 10
           },
@@ -770,7 +741,7 @@ cc.Class({
               "displayName": "Barrack"
             },
             "level": 3,
-            "buildingOrUpgradingDuration": 3600,
+            "buildingOrUpgradingDuration": 36,
             "buildingOrUpgradingRequiredGold": 4000,
             "buildingOrUpgradingRequiredResidentsCount": 15
           }

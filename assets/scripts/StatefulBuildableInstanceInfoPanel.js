@@ -47,7 +47,11 @@ module.export = cc.Class({
     this.displayNameLabel.string = statefulBuildableInstance.displayName;
     this.currentLevelLabel.string = statefulBuildableInstance.currentLevel;
     this.activeAppearanceSprite.spriteFrame = statefulBuildableInstance.activeAppearance;
-    this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel];
+    if (statefulBuildableInstance.isUpgrading()) {
+      this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel+1];
+    } else {
+      this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel];
+    }
     this.buildingOrUpgradingStartedAt = statefulBuildableInstance.buildingOrUpgradingStartedAt;
     this.buildingOrUpgradingInfo.active = true;
     this.statefulBuildableInstance = statefulBuildableInstance;
@@ -106,20 +110,22 @@ module.export = cc.Class({
     if (!self.buildingOrUpgradingStartedAt || !self.statefulBuildableInstance.isUpgradable()) {
       self.upgradeButton.node.active = false;
     } else {
-      let nextLevel = self.statefulBuildableInstance.currentLevel + 1;
       if (
         self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING
-     || !(nextLevel in self.statefulBuildableInstance.buildingOrUpgradingDuration)
       ) {
         self.upgradeButton.node.active = false;
-      } else {
+      } else if (self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL) {
         self.upgradeButton.node.active = true;
-      } 
+      } else {
+        cc.warn(`unknown state when refresh upgrade button: ${self.statefulBuildableInstance.state}`);
+      }
     }
   },
 
   refreshCancelButton() {
     const self = this;
+    self.cancelButton.node.active = false; // 不显示cancel按钮
+    return;
     if (!self.buildingOrUpgradingStartedAt) {
       self.cancelButton.node.active = false;
     } else {

@@ -100,7 +100,8 @@ module.export = cc.Class({
         return;
     }
     this.displayName = statelessBuildableInstance.displayName;
-//    this.codeName = statelessBuildableInstance.codeName;
+    // this.codeName = statelessBuildableInstance.codeName;
+    self.levelConfs = statelessBuildableInstance.levelConfs;
     this.id = statelessBuildableInstance.id;  
     for (let singleLvConf of statelessBuildableInstance.levelConfs) {
       const lv = singleLvConf.level;
