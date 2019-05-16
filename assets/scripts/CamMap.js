@@ -165,16 +165,6 @@ cc.Class({
       statefulBuildableInstanceNode.setPosition(statefulBuildableInstance.fixedSpriteCentreContinuousPos);
     }
 
-    switch (statefulBuildableInstance.state) {
-      case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-      case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING_OR_UPGRADING:
-        setTimeout(() => {
-          statefulBuildableInstance.showProgressBar();
-        });
-        break;
-      default:
-        break;
-    }
 
     safelyAddChild(self.node, statefulBuildableInstanceNode); // Using `statefulBuildableInstanceNode` as a direct child under `mapNode`, but NOT UNDER `mainCameraNode`, for the convenience of zooming and translating.
     
@@ -264,8 +254,13 @@ cc.Class({
               editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
               break;
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
-              break;
+              // WARNING: 如果判断建造中或者升级中的条件变更,这里也需更改
+              if (editingStatefulBuildableInstance.createdAt == editingStatefulBuildableInstance.updatedAt) {
+                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
+              } else {
+                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
+              }
+             break;
           }
 
           self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
@@ -274,7 +269,7 @@ cc.Class({
         let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, editingStatefulBuildableInstanceNode.position, cc.v2(0, 0));
         spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
         if (self.isStatefulBuildableOutOfMap(editingStatefulBuildableInstance, spriteCentreDiscretePosWrtMapNode)) {
-          // TODO: refresh here
+          // TODO: if should refresh here?
           cc.warn('statefulBuildableInstance out of map');
           return;
         }
@@ -291,7 +286,12 @@ cc.Class({
               editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstanceNode.position);
               break;
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
+              // WARNING: 如果判断建造中或者升级中的条件变更,这里也需更改
+              if (editingStatefulBuildableInstance.createdAt == editingStatefulBuildableInstance.updatedAt) {
+                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
+              } else {
+                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstanceNode.position);
+              }
               break;
             default:
               cc.warn('unknown state when setted statefulBuildableInstance(not isNew)', editingStatefulBuildableInstance.state);
@@ -491,12 +491,14 @@ cc.Class({
     }
     self.endPositioningStatefulBuildableInstance(true);
   },
+
   onStatefulBuildableBuildingClicked(statefulBuildableInstanceNode, statefulBuildableInstance) {
     const self = this;
     if (!self.isPurelyVisual()
       || (
       window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE != statefulBuildableInstance.state
       && window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING != statefulBuildableInstance.state
+      && window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING != statefulBuildableInstance.state
       )) {
       return;
     }
@@ -504,6 +506,19 @@ cc.Class({
     // remove statefulBuildableInstance.oldBarrierColliders if statefulBuildableInstance.barrierColliderIns exits.
     if (statefulBuildableInstance.barrierColliderIns) {
       self.clearTheBoundaryColliderInfoForStatefulBuildableInstance(statefulBuildableInstance, self.tiledMapIns);
+    }
+    
+    switch(statefulBuildableInstance.state) {
+      case STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE:
+        statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        break;
+      case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
+      case STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING:
+        statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        break;
+      default:
+        cc.warn(`statefulInstanceNode clicked on illegal State: ${statefulBuildableInstance.state}`);
+        break;
     }
 
     self.startPositioningExistingStatefulBuildableInstance(statefulBuildableInstance);
@@ -942,6 +957,17 @@ cc.Class({
     const statefulInstanceInfoPanelScriptIns = statefulInstanceInfoPanelNode.getComponent("StatefulBuildableInstanceInfoPanel");
     statefulInstanceInfoPanelScriptIns.setInfo(self.editingStatefulBuildableInstance);
     window.safelyAddChild(self.widgetsAboveAllNode, statefulBuildableInstanceNode.statefulInstanceInfoPanelNode);
+  },
+
+  upgradeStatefulBuildable(evt, statefulBuildableInstance) {
+    const self = this;
+    const targetedStatelessBuildableInstance = self._findStatelessBuildableInstance(statefulBuildableInstance.playerBuildableBinding);
+    const statefulBuildableInstanceNode = statefulBuildableInstance.node;
+    // TODO: correct the dependency of upgrade.
+    const statefulInstanceInfoPanelNode = statefulBuildableInstanceNode.statefulInstanceInfoPanelNode;
+    const statefulInstanceInfoPanelScriptIns = statefulInstanceInfoPanelNode.getComponent("StatefulBuildableInstanceInfoPanel");
+    statefulBuildableInstance.upgrade();
+    statefulInstanceInfoPanelScriptIns.setInfo(statefulBuildableInstance);
   },
 
 });

@@ -42,7 +42,6 @@ cc.Class({
 
   onLoad() {
     const self = this;
-    self.node.active = false;
   },
 
   setData(startedAtMillis, durationMillis) {

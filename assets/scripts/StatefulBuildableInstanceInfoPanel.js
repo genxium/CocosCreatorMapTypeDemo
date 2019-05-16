@@ -27,6 +27,20 @@ module.export = cc.Class({
       type:cc.Node,
       default: null,
     },
+    upgradeButton: {
+      type: cc.Button,
+      default: null,
+    },
+    cancelButton: {
+      type: cc.Button,
+      default: null,
+    },
+  },
+
+  onLoad() {
+    CloseableDialog.prototype.onLoad.call(this);
+    this.initButtonListener();
+    this.refreshInteractableButton();
   },
 
   setInfo(statefulBuildableInstance) {
@@ -36,12 +50,14 @@ module.export = cc.Class({
     this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel];
     this.buildingOrUpgradingStartedAt = statefulBuildableInstance.buildingOrUpgradingStartedAt;
     this.buildingOrUpgradingInfo.active = true;
+    this.statefulBuildableInstance = statefulBuildableInstance;
   },
 
   update(){
     if(!this.buildingOrUpgradingStartedAt){ //还未建造。
       this.buildingOrUpgradeRemainingTime.progress = 0;
       this.remaingLabel.string = secondsToNaturalExp(this.buildingOrUpgradingDuration);
+      this.refreshInteractableButton();
       return;
     }
     const durationMillis = this.buildingOrUpgradingDuration * 1000; //this.buildingOrUpgradingDuration 单位: second
@@ -61,6 +77,57 @@ module.export = cc.Class({
       this.remaingLabel.string = secondsToNaturalExp(remainingMillis / 1000);
     }else {
       this.remaingLabel.string = "";
-    } 
-  }
+    }
+    this.refreshInteractableButton();
+  },
+
+  initButtonListener() {
+    const self = this;
+    // Initialization of the 'upgradeButton' [begins].
+    let upgradeHandler = new cc.Component.EventHandler();
+    upgradeHandler.target = self.statefulBuildableInstance.mapIns.node;
+    upgradeHandler.component = self.statefulBuildableInstance.mapIns.node.name;
+    upgradeHandler.handler = 'upgradeStatefulBuildable';
+    upgradeHandler.customEventData = self.statefulBuildableInstance;
+    self.upgradeButton.clickEvents = [
+      upgradeHandler,
+    ];
+    
+    // Initialization of the 'upgradeHandler' [ends].
+  },
+
+  refreshInteractableButton() {
+    this.refreshUpgradeButton();
+    this.refreshCancelButton();
+  },
+
+  refreshUpgradeButton() {
+    const self = this;
+    if (!self.buildingOrUpgradingStartedAt) {
+      self.upgradeButton.node.active = false;
+    } else {
+      let nextLevel = self.statefulBuildableInstance.currentLevel + 1;
+      if (
+        self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING
+     || !(nextLevel in self.statefulBuildableInstance.buildingOrUpgradingDuration)
+      ) {
+        self.upgradeButton.node.active = false;
+      } else {
+        self.upgradeButton.node.active = true;
+      } 
+    }
+  },
+
+  refreshCancelButton() {
+    const self = this;
+    if (!self.buildingOrUpgradingStartedAt) {
+      self.cancelButton.node.active = false;
+    } else {
+      if (self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING) {
+        self.cancelButton.node.active = true;
+      } else {
+        self.cancelButton.node.active = false;
+      }
+    }
+  },
 });
