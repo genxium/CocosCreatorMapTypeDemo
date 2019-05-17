@@ -81,7 +81,7 @@ cc.Class({
       statefulBuildableInstanceInfoBtnHandler
     ];
     mapScriptIns.statefulBuildableInstanceInfoButton = this.statefulBuildableInstanceInfoButton;
-    // Initialization of the `statefulBuildableInstanceInfoButton` [begins].
+    // Initialization of the `statefulBuildableInstanceInfoButton` [ends].
 
     // Initialization of the `confirmBuildButton` [begins].
     const confirmBuildBtnHandler = new cc.Component.EventHandler();

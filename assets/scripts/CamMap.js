@@ -255,10 +255,10 @@ cc.Class({
               break;
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
               // WARNING: 如果判断建造中或者升级中的条件变更,这里也需更改
-              if (editingStatefulBuildableInstance.createdAt == editingStatefulBuildableInstance.updatedAt) {
-                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
-              } else {
+              if (editingStatefulBuildableInstance.isUpgrading()) {
                 editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
+              } else {
+                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
               }
              break;
           }
@@ -287,10 +287,10 @@ cc.Class({
               break;
             case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
               // WARNING: 如果判断建造中或者升级中的条件变更,这里也需更改
-              if (editingStatefulBuildableInstance.createdAt == editingStatefulBuildableInstance.updatedAt) {
-                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
-              } else {
+              if (editingStatefulBuildableInstance.isUpgrading()) {
                 editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstanceNode.position);
+              } else {
+                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
               }
               break;
             default:

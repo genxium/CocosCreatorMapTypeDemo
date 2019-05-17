@@ -41,8 +41,8 @@
     },
     "_scale": {
       "__type__": "cc.Vec3",
-      "x": 0.20833333333333334,
-      "y": 0.20833333333333334,
+      "x": 0.19947916666666668,
+      "y": 0.19947916666666668,
       "z": 1
     },
     "_quat": {
@@ -520,7 +520,7 @@
     "buildOrUpgradeProgressBarPrefab": {
       "__uuid__": "a4fff44d-7dd4-49a9-89be-4e0d26b47948"
     },
-    "cameraAutoMove": false,
+    "cameraAutoMove": true,
     "_id": "2cDcj+4P5DDLPLj1cN4zXr"
   },
   {
