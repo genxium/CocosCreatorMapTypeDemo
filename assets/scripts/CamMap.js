@@ -105,7 +105,7 @@ cc.Class({
     const statefulBuildableInstance = statefulBuildableInstanceNode.getComponent("StatefulBuildableInstance");
     if (null == playerBuildableBinding) {
       statefulBuildableInstance.initFromStatelessBuildableBinding(targetedStatelessBuildableInstance, self);
-      statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+      statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, null /* The field `buildingOrUpgradingStartedAt` will be set within `endPositioningStatefulBuildableInstance`. */);
     } else {
       statefulBuildableInstance.initOrUpdateFromPlayerBuildableBinding(playerBuildableBinding, targetedStatelessBuildableInstance, self);
     }
@@ -122,18 +122,22 @@ cc.Class({
     statefulInfoPanelScriptIns.setInfo(statefulBuildableInstance);
     statefulInfoPanelScriptIns.onCloseDelegate = () => {
       self.removeShowingModalPopup();
-      if (statefulBuildableInstance.isNew) {
-        self.addPositioningNewStatefulBuildableInstance();
-      } else {
-        self.addEditingExistingStatefulBuildableInstance();
-      }
-      //重置状态.
       switch (statefulBuildableInstance.state) {
-        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL:
-          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_NEW:
+          self.addPositioningNewStatefulBuildableInstance();
+          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
           break;
-        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING:
-          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL:
+          self.addEditingExistingStatefulBuildableInstance();
+          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUILDING:
+          self.addEditingExistingStatefulBuildableInstance();
+          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_UPGRADING:
+          self.addEditingExistingStatefulBuildableInstance();
+          statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
           break;
         default:
           cc.warn("Show statefulBuildableInstancePanelNode not in editing state.")
@@ -187,13 +191,16 @@ cc.Class({
       return;
     }
 
-    statefulBuildableInstance.isNew = false;
     switch (statefulBuildableInstance.state) {
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE:
-        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
         break;
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
-        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING, statefulBuildableInstanceNode.fixedSpriteCentreContinuousPos);
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+        break;
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING:
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+        break;
       default:
         break;
     }
@@ -215,7 +222,6 @@ cc.Class({
     const statefulBuildableInstance = self.createPerStatefulBuildableInstanceNodes(null, statelessBuildableInstance);
     const statefulBuildableInstanceNode = statefulBuildableInstance.node;
     self.renderPerStatefulBuildableInstanceNode(statefulBuildableInstance);
-    statefulBuildableInstance.isNew = true;
     /*
      * WARNING: 这里的setLocalZOrder应该在renderPerStatefulBuildableInstanceNode
      * 之后进行,因为renderPerStatefulBuildableInstanceNode中也有设置zIndex的操作.
@@ -236,71 +242,72 @@ cc.Class({
     const editingStatefulBuildableInstance = self.editingStatefulBuildableInstance;
     self.cancelHighlightingStatefulBuildableInstance(self.tiledMapIns);
 
-    // 重置editingStatefulBuildableInstanceNode.zIndex,防止其zIndex与移动中的建筑物相同而遮挡移动中的建筑物
-    setLocalZOrder(editingStatefulBuildableInstance.node, window.CORE_LAYER_Z_INDEX.UN_HIGHLIGHTED_STATEFUL_BUILDABLE_INSTANCE);
-
-    if (null != editingStatefulBuildableInstance) {
-      const editingStatefulBuildableInstanceNode = editingStatefulBuildableInstance.node;
-      if (!successfullyPlacedOrNot && null != editingStatefulBuildableInstanceNode && null != editingStatefulBuildableInstanceNode.parent) {
-        if (editingStatefulBuildableInstance.isNew && window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING == editingStatefulBuildableInstance.state) {
+    const editingStatefulBuildableInstanceNode = editingStatefulBuildableInstance.node;
+    if (null == editingStatefulBuildableInstance || null == editingStatefulBuildableInstanceNode.parent) {
+      console.warn("Invalid `editingStatefulBuildableInstance` and `editingStatefulBuildableInstanceNode` found within `endPositioningStatefulBuildableInstance`: ", editingStatefulBuildableInstance, editingStatefulBuildableInstanceNode);
+      return; 
+    }
+    setLocalZOrder(editingStatefulBuildableInstanceNode, window.CORE_LAYER_Z_INDEX.UN_HIGHLIGHTED_STATEFUL_BUILDABLE_INSTANCE);
+    if (false == successfullyPlacedOrNot) {
+      switch (editingStatefulBuildableInstance.state) {
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW:
           self.removePositioningNewStatefulBuildableInstance();
           editingStatefulBuildableInstanceNode.parent.removeChild(editingStatefulBuildableInstanceNode);
-          self.onBuildButtonClicked(); //重新打开statelessBuildableInstanceCardListNode
-        } else if (!editingStatefulBuildableInstance.isNew) {
+          self.onBuildButtonClicked(); // 重新打开`StatelessBuildableInstanceCardListNode`
+          return; // Note that it's returning instead breaking here -- YFLu.
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
           self.removeEditingExistingStatefulBuildableInstance();
-          editingStatefulBuildableInstanceNode.setPosition(editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
-          switch (editingStatefulBuildableInstance.state) {
-            case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
-              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
-              break;
-            case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-              // WARNING: 如果判断建造中或者升级中的条件变更,这里也需更改
-              if (editingStatefulBuildableInstance.isUpgrading()) {
-                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
-              } else {
-                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
-              }
-             break;
-          }
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos, editingStatefulBuildableInstance.currentLevel, editingStatefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING:
+          self.removeEditingExistingStatefulBuildableInstance();
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos, editingStatefulBuildableInstance.currentLevel, editingStatefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING:
+          self.removeEditingExistingStatefulBuildableInstance();
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos, editingStatefulBuildableInstance.currentLevel, editingStatefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        default:
+          console.warn("Invalid `StatefulBuildableInstance.state` when positioning is cancelled: ", editingStatefulBuildableInstance);
+          break;
+      }
 
-          self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
-        }
-      } else {
-        let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, editingStatefulBuildableInstanceNode.position, cc.v2(0, 0));
-        spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
-        if (self.isStatefulBuildableOutOfMap(editingStatefulBuildableInstance, spriteCentreDiscretePosWrtMapNode)) {
-          // TODO: if should refresh here?
-          cc.warn('statefulBuildableInstance out of map');
-          return;
-        }
+      editingStatefulBuildableInstanceNode.setPosition(editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
+      self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
+    } else {
+      let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, editingStatefulBuildableInstanceNode.position, cc.v2(0, 0));
+      spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
+      if (self.isStatefulBuildableOutOfMap(editingStatefulBuildableInstance, spriteCentreDiscretePosWrtMapNode)) {
+        console.warn("The positioned `StatefulBuildableInstance` is out of map: ", editingStatefulBuildableInstance);
+        return;
+      }
 
-        if (editingStatefulBuildableInstance.isNew) {
+      switch (editingStatefulBuildableInstance.state) {
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW:
+          self.removePositioningNewStatefulBuildableInstance();
           self.statefulBuildableInstanceList.push(editingStatefulBuildableInstance.playerBuildableBinding);
           self.statefulBuildableInstanceCompList.push(editingStatefulBuildableInstance);
-          self.removePositioningNewStatefulBuildableInstance();
-          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
-        } else {
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position, editingStatefulBuildableInstance.currentLevel, Date.now());
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
           self.removeEditingExistingStatefulBuildableInstance();
-          switch (editingStatefulBuildableInstance.state) {
-            case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
-              editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstanceNode.position);
-              break;
-            case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-              // WARNING: 如果判断建造中或者升级中的条件变更,这里也需更改
-              if (editingStatefulBuildableInstance.isUpgrading()) {
-                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstanceNode.position);
-              } else {
-                editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position);
-              }
-              break;
-            default:
-              cc.warn('unknown state when setted statefulBuildableInstance(not isNew)', editingStatefulBuildableInstance.state);
-          }
-        }
-
-        self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
-        self.renderPerStatefulBuildableInstanceNode(editingStatefulBuildableInstance);
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, editingStatefulBuildableInstanceNode.position, editingStatefulBuildableInstance.currentLevel, editingStatefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING:
+          self.removeEditingExistingStatefulBuildableInstance();
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, editingStatefulBuildableInstanceNode.position, editingStatefulBuildableInstance.currentLevel, editingStatefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING:
+          self.removeEditingExistingStatefulBuildableInstance();
+          editingStatefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, editingStatefulBuildableInstanceNode.position, editingStatefulBuildableInstance.currentLevel, editingStatefulBuildableInstance.buildingOrUpgradingStartedAt);
+          break;
+        default:
+          console.warn("Invalid `StatefulBuildableInstance.state` when positioning is confirmed: ", editingStatefulBuildableInstance);
+          break;
       }
+
+      self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
+      self.renderPerStatefulBuildableInstanceNode(editingStatefulBuildableInstance);
     }
     self.editingStatefulBuildableInstance = null;
   },
@@ -510,11 +517,12 @@ cc.Class({
     
     switch(statefulBuildableInstance.state) {
       case STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE:
-        statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
         break;
       case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
+        statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
       case STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING:
-        statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+        statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
         break;
       default:
         cc.warn(`statefulInstanceNode clicked on illegal State: ${statefulBuildableInstance.state}`);
@@ -906,19 +914,24 @@ cc.Class({
       return;
     }
     const statefulBuildableInstanceNode = self.editingStatefulBuildableInstance.node;
-    if (statefulBuildableInstance.isNew) {
-      self.removePositioningNewStatefulBuildableInstance();
-    } else {
-      self.removeEditingExistingStatefulBuildableInstance();
-    }
     if (!self.addShowingModalPopup()) return;
     self.statelefulBuildableController.active = false;
     switch (statefulBuildableInstance.state) {
-      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
-        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW:
+        self.removePositioningNewStatefulBuildableInstance();
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
         break;
-      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos);
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
+        self.removeEditingExistingStatefulBuildableInstance();
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+        break;
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING:
+        self.removeEditingExistingStatefulBuildableInstance();
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUILDING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+        break;
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING:
+        self.removeEditingExistingStatefulBuildableInstance();
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
         break;
       default:
         cc.warn("Show statefulBuildableInstancePanelNode not in editing state.")
@@ -938,10 +951,9 @@ cc.Class({
     }
     const targetedStatelessBuildableInstance = self._findStatelessBuildableInstance(statefulBuildableInstance.playerBuildableBinding);
     const statefulBuildableInstanceNode = statefulBuildableInstance.node;
-    // TODO: correct the dependency of upgrade.
     const statefulInstanceInfoPanelNode = statefulBuildableInstanceNode.statefulInstanceInfoPanelNode;
     const statefulInstanceInfoPanelScriptIns = statefulInstanceInfoPanelNode.getComponent("StatefulBuildableInstanceInfoPanel");
-    statefulBuildableInstance.upgrade();
+    statefulBuildableInstance.upgradeUnconditionally();
     statefulInstanceInfoPanelScriptIns.setInfo(statefulBuildableInstance);
   },
 

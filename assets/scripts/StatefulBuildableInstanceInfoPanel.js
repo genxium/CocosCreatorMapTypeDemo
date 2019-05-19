@@ -47,10 +47,8 @@ module.export = cc.Class({
     this.displayNameLabel.string = statefulBuildableInstance.displayName;
     this.currentLevelLabel.string = statefulBuildableInstance.currentLevel;
     this.activeAppearanceSprite.spriteFrame = statefulBuildableInstance.activeAppearance;
-    if (statefulBuildableInstance.isUpgrading()) {
-      this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel+1];
-    } else {
-      this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel];
+    if (statefulBuildableInstance.isUpgrading() || statefulBuildableInstance.isBuilding()) {
+      this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel + 1];
     }
     this.buildingOrUpgradingStartedAt = statefulBuildableInstance.buildingOrUpgradingStartedAt;
     this.buildingOrUpgradingInfo.active = true;
@@ -107,33 +105,22 @@ module.export = cc.Class({
 
   refreshUpgradeButton() {
     const self = this;
-    if (!self.buildingOrUpgradingStartedAt || !self.statefulBuildableInstance.isUpgradable()) {
+    if (self.statefulBuildableInstance.isBuilding() 
+        || 
+        self.statefulBuildableInstance.isUpgrading() 
+        || 
+        false == self.statefulBuildableInstance.isUpgradable()) {
       self.upgradeButton.node.active = false;
     } else {
-      if (
-        self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING
-      ) {
-        self.upgradeButton.node.active = false;
-      } else if (self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL) {
+      if (true == self.statefulBuildableInstance.isUpgradable()) {
         self.upgradeButton.node.active = true;
-      } else {
-        cc.warn(`unknown state when refresh upgrade button: ${self.statefulBuildableInstance.state}`);
       }
     }
   },
 
   refreshCancelButton() {
     const self = this;
-    self.cancelButton.node.active = false; // 不显示cancel按钮
+    self.cancelButton.node.active = false; // Hardcoded temporarily. -- YFLu
     return;
-    if (!self.buildingOrUpgradingStartedAt) {
-      self.cancelButton.node.active = false;
-    } else {
-      if (self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING) {
-        self.cancelButton.node.active = true;
-      } else {
-        self.cancelButton.node.active = false;
-      }
-    }
   },
 });

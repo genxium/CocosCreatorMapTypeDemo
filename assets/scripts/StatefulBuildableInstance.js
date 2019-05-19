@@ -1,13 +1,23 @@
 const StatelessBuildableInstance = require("./StatelessBuildableInstance");
 
+window.INITIAL_STATEFUL_BUILDABLE_LEVEL = 0;
+
 window.STATEFUL_BUILDABLE_INSTANCE_STATE = {
+  /* 
+   * - At states "BUILDING", "EDITING_WHILE_BUILDING" and "EDITING_PANEL_WHILE_BUILDING", the field "currentLevel" should be 0.
+   * - Only states "IDLE", "BUILDING", and "UPGRADING" should be written into persistent storage, and restored from persistent storage, via `StatefulBuildableInstance.playerBuildableBinding.state`.
+   */
   IDLE: 1, 
-  BUILDING: 2,
-  UPGRADING: 3,
-  EDITING: 4,
-  EDITING_WHILE_BUILDING_OR_UPGRADING: 5,
-  EDITING_PANEL: 6,
-  EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING: 7,
+  EDITING_WHILE_NEW: 2,
+  BUILDING: 3,
+  UPGRADING: 4,
+  EDITING: 5,
+  EDITING_WHILE_BUILDING: 6,
+  EDITING_WHILE_UPGRADING: 7,
+  EDITING_PANEL_WHILE_NEW: 8,
+  EDITING_PANEL: 9,
+  EDITING_PANEL_WHILE_BUILDING: 10,
+  EDITING_PANEL_WHILE_UPGRADING: 11,
 }; 
 
 const StatefulBuildableInstance = cc.Class({
@@ -43,7 +53,7 @@ const StatefulBuildableInstance = cc.Class({
     },
     state: {
       get: function() {
-        return (null == this._state ? STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING : this._state);
+        return (null == this._state ? STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW : this._state);
       },
       set: function(val) {
         /*
@@ -58,25 +68,27 @@ const StatefulBuildableInstance = cc.Class({
         if (!self.playerBuildableBinding) return;
         switch (val) {
           case STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE:
-            this.playerBuildableBinding.state = val;
+            self.playerBuildableBinding.state = val;
             break;
           case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
-            this.playerBuildableBinding.state = val;
-            // 状态变更为建造中或升级中时显示ProgressBar
-            if (!this.buildingOrUpgradingStartedAt) {
-              // 初始建造时该属性为null
-              this.buildingOrUpgradingStartedAt = this.playerBuildableBinding.buildingOrUpgradingStartedAt = Date.now();
-            }
+            self.playerBuildableBinding.state = val;
             self.showProgressBar();
             break;
           case STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING:
-            this.playerBuildableBinding.state = val;
+            self.playerBuildableBinding.state = val;
             self.initUpgradingAnimation();
             self.showProgressBar();
             break;
           case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
+            self.playerBuildableBinding.state = STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE;
             break;
-          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING:
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUILDING:
+            self.playerBuildableBinding.state = STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING;
+            break;
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING:
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_UPGRADING:
+            self.playerBuildableBinding.state = STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING;
             self.showProgressBar();
             break;
           default:
@@ -86,24 +98,30 @@ const StatefulBuildableInstance = cc.Class({
     },
   },
 
-  updateCriticalProperties(newState, newFixedSpriteCentreContinuousPos) {
+  updateCriticalProperties(newState, newFixedSpriteCentreContinuousPos, newLevel, newBuildingOrUpgradingStartedAt) {
     const self = this;
     const anythingChanged = (
       (newState != self.state)
+      ||
+      (newLevel != self.currentLevel)
       ||
       (null == self.fixedSpriteCentreContinuousPos && null != newFixedSpriteCentreContinuousPos)
       ||
       (null != self.fixedSpriteCentreContinuousPos && (newFixedSpriteCentreContinuousPos.x != self.fixedSpriteCentreContinuousPos.x || newFixedSpriteCentreContinuousPos.y != self.fixedSpriteCentreContinuousPos.y))
     ); 
-    self.state = newState; 
     self.fixedSpriteCentreContinuousPos = newFixedSpriteCentreContinuousPos;
+    self.currentLevel = newLevel;
+    self.playerBuildableBinding.currentLevel = newLevel;
+    self.buildingOrUpgradingStartedAt = newBuildingOrUpgradingStartedAt;
+    self.playerBuildableBinding.buildingOrUpgradingStartedAt = newBuildingOrUpgradingStartedAt;
+    self.state = newState; // Will trigger the "setter" of "StatefulBuildableInstance.state" to update "StatefulBuildableInstance.playerBuildableBinding.state" appropriately.
     if (
       anythingChanged
       &&
       (
-        newState == STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE
-     || newState == STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING
-     || newState == STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING
+        self.playerBuildableBinding.state == STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE
+     || self.playerBuildableBinding.state == STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING
+     || self.playerBuildableBinding.state == STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING
       )
     ) {
       cc.sys.localStorage.setItem("playerBuildableBindingList", JSON.stringify(self.mapIns.statefulBuildableInstanceList));
@@ -113,7 +131,6 @@ const StatefulBuildableInstance = cc.Class({
 
   onLoad() {
     const self = this;
-
     self.node.on(cc.Node.EventType.POSITION_CHANGED, (evt) => {
       // Temporarily left blank, but could be useful soon. -- YFLu
     }, self);
@@ -122,7 +139,6 @@ const StatefulBuildableInstance = cc.Class({
   ctor() {
     this.mapIns = null;
     this.buildingOrUpgradingStartedAt = null; // GMT+0 milliseconds. 
-    // this.buildingOrUpgradingDuration = null;
     this.buildingOrUpgradingDuration= null; // 建筑建造所需时间
     this._progressInstance = null; // 进度条节点
     this.activeAppearance = null;
@@ -144,7 +160,16 @@ const StatefulBuildableInstance = cc.Class({
 
     self.fixedSpriteCentreContinuousPos = anchorTileContinuousPos.sub(self.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); 
 
-    self.state = playerBuildableBinding.state;
+    switch (playerBuildableBinding.state) {
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE: 
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING: 
+      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING: 
+        self.state = playerBuildableBinding.state; 
+        break;
+      default:
+        console.warn("Invalid persistent storage `playerBuildableBinding.state` found for: ", playerBuildableBinding);
+        break;
+    }
   },
 
   initFromStatelessBuildableBinding(singleStatelessBuildableInstance, mapIns, specifiedState) {
@@ -154,7 +179,7 @@ const StatefulBuildableInstance = cc.Class({
       return;
     }
     self.mapIns = mapIns;
-    self.currentLevel = (self.currentLevel ? self.currentLevel : 1);
+    self.currentLevel = (self.currentLevel ? self.currentLevel : INITIAL_STATEFUL_BUILDABLE_LEVEL);
     self.displayName = singleStatelessBuildableInstance.displayName;
     self.discreteWidth = singleStatelessBuildableInstance.discreteWidth; // Not used yet.
     self.discreteHeight = singleStatelessBuildableInstance.discreteHeight; // Not used yet.
@@ -170,17 +195,17 @@ const StatefulBuildableInstance = cc.Class({
     self.buildingOrUpgradingDuration = singleStatelessBuildableInstance.buildingOrUpgradingDuration;
     // 记录appearance
     self.appearance = singleStatelessBuildableInstance.appearance;
-    self.refreshAppearance();
+    self._refreshAppearanceResource();
     
     /*
     * You shouldn't assign anything to `self._fixedSpriteCentreContinuousPos` at the moment, because upon creation from `statelessBuildableInstance` the corresponding `statefulBuildableInstance` has NO FIXED SpriteCentre!
     */
     let curTimeMills = Date.now();
     self.playerBuildableBinding = {
-      id: 0, //WARNING: proto字段，但是目前前端逻辑不需要
+      id: 0, // Hardcoded temporarily to comply with ProtobufStruct, and might NOT be necessary. -- YFLu
       topmostTileDiscretePositionX: null,
       topmostTileDiscretePositionY: null,
-      playerId: -1, 
+      playerId: -1, // Hardcoded temporarily. -- YFLu
       buildable: {
         id: singleStatelessBuildableInstance.id,
         type: singleStatelessBuildableInstance.type,
@@ -188,31 +213,29 @@ const StatefulBuildableInstance = cc.Class({
         discreteHeight: singleStatelessBuildableInstance.discreteHeight,
         displayName: singleStatelessBuildableInstance.displayName,
       },
-      currentLevel: (self.currentLevel ? self.currentLevel : 1),
+      currentLevel: (self.currentLevel ? self.currentLevel : INITIAL_STATEFUL_BUILDABLE_LEVEL),
       state: (null == self._state ? STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING : self._state),
       createdAt: curTimeMills,
       updatedAt: curTimeMills,
       buildingOrUpgradingStartedAt: null,
-      prevPlayerBuildableBinding: null,
     };
   },
 
   showProgressBar() {
     const self = this;
-    if (self._progressInstance) {
-      // 若进度条已显示,则不进行任何操作.
+    if (null != self._progressInstance) {
       return;
     }
-    let totalSeconds;
-    if (self.buildingOrUpgradingDuration) {
-      totalSeconds = self.isUpgrading() ? self.buildingOrUpgradingDuration[self.currentLevel+1] : self.buildingOrUpgradingDuration[self.currentLevel];
+    let totalSeconds = null;
+    if (null != self.buildingOrUpgradingDuration && (self.isUpgrading() || self.isBuilding())) {
+      totalSeconds = self.buildingOrUpgradingDuration[self.currentLevel + 1];
     }
-    if (undefined != totalSeconds && self.buildingOrUpgradingStartedAt) {
+    if (null != totalSeconds && null != self.buildingOrUpgradingStartedAt) {
       let cpn = self._progressInstance || createProgressInstance();
       self._progressInstance = cpn;
-      cpn.setData(self.buildingOrUpgradingStartedAt, totalSeconds * 1000 /* 此处需要时毫秒 */);
+      cpn.setData(self.buildingOrUpgradingStartedAt, totalSeconds * 1000 /* milliseconds */);
     } else {
-      cc.warn("require not falsy value: self.buildingOrUpgradingDuration, self.buildingOrUpgradingDuration[self.currentLevel], self.buildingOrUpgradingStartedAt",
+      console.warn("Invalid values of `totalSeconds`, `self.buildingOrUpgradingStartedAt` found when calling `showProgressBar`",
         self.buildingOrUpgradingDuration,
         totalSeconds,
         self.buildingOrUpgradingStartedAt
@@ -225,53 +248,52 @@ const StatefulBuildableInstance = cc.Class({
       node.setPosition(cc.v2(0, self.node.height / 2 + 10));
       cpn.onCompleted = function() {
         let targetState = null;
-        // 建造或升级完成时会把ProgressBar移除.
         self.node.removeChild(self._progressInstance);
         self._progressInstance = null;
-        // 若建筑在移动中完成建造,则将其状态变更为EDITING
         switch (self.state) {
           case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
           case STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING:
             targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE;
             break;
-          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING:
-            // This case is entered when for example, building or upgrading is completed while we're moving the StatefulBuildableInstance on map.
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING:
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING:
             targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING;
             break;
-          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING:
-            // This case is entered when for example, building or upgrading is completed while we're viewing info panel of the StatefulBuildableInstance.
-            targetState = StatefulBuildableInstance.EDITING_PANEL;
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUILDING:
+          case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_UPGRADING:
+            targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL;
             break;
           default:
             cc.warn("unknown state founded when buildingOrUpgrade operation done: ", self.state);
             break;
         }
-        if (self.isUpgrading()) {
-          self.currentLevel = self.playerBuildableBinding.currentLevel = self.playerBuildableBinding.prevPlayerBuildableBinding.currentLevel + 1;
-          delete self.playerBuildableBinding.prevPlayerBuildableBinding;
-          if (targetState != STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE) {
-            self.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE, self.fixedSpriteCentreContinuousPos);
-          }
-        }
-        self.updateCriticalProperties(targetState, self.fixedSpriteCentreContinuousPos);
-        self.refreshAppearance();
+        const newLevel = (self.currentLevel + 1);
+        self.updateCriticalProperties(targetState, self.fixedSpriteCentreContinuousPos, newLevel, null);
+        self._refreshAppearanceResource();
       }
       // 修改: 将progressbar作为node的子元素而不是mapIns的子元素
       safelyAddChild(self.node, node);
       return cpn;
     }
   },
+
   isUpgradable() {
     const self = this;
     let nextLevel = self.currentLevel + 1;
     return !!self.levelConfs.find((levelConf) => levelConf.level == nextLevel);
   },
+
+  isBuilding() {
+    const self = this;
+    return (-1 != [STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING, STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUILDING].indexOf(self.state));
+  },
+
   isUpgrading() {
     const self = this;
-    return !!self.playerBuildableBinding.prevPlayerBuildableBinding;
+    return (-1 != [STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING, STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_UPGRADING].indexOf(self.state));
   },
-  // Warning: upgrade内部不检查约束条件
-  upgrade() {
+
+  upgradeUnconditionally() {
     const self = this;
     let targetState;
     switch (self.state) {
@@ -279,47 +301,47 @@ const StatefulBuildableInstance = cc.Class({
         targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING;
         break;
       case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
-        targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING_OR_UPGRADING;
+      case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING:
+        targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING;
         break;
       case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL:
-        targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING;
+      case STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUILDING:
+        targetState = STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_UPGRADING;
         break;
       default:
         cc.warn(`ircorrect state when upgrade: ${self.state}`);
         return;
     }
 
-    let cur = Date.now();
-    self.playerBuildableBinding.prevPlayerBuildableBinding = {
-      currentLevel: self.currentLevel,
-      buildingOrUpgradingStartedAt: self.buildingOrUpgradingStartedAt,
-    };
-    self.updatedAt = self.playerBuildableBinding.updatedAt = cur;
-    self.buildingOrUpgradingStartedAt = self.playerBuildableBinding.buildingOrUpgradingStartedAt = cur;
-    if (targetState != STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING) {
-      // 数据持久化
-      self.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING, self.fixedSpriteCentreContinuousPos);
-    }
-    self.updateCriticalProperties(targetState, self.fixedSpriteCentreContinuousPos);
+    self.updateCriticalProperties(targetState, self.fixedSpriteCentreContinuousPos, self.currentLevel, Date.now());
     self.initUpgradingAnimation();
     self.showProgressBar();
   },
 
-  refreshAppearance() {
+  _refreshAppearanceResource() {
     const self = this;
-    if (self.appearance) {
-      self.activeAppearance = self.appearance[self.currentLevel];
-      if (!self.activeAppearance) {
-        cc.warn(`loss activeAppearance`, self.appearance, self.currentLevel);
+    const shouldPlaySpriteFrame = true; // Hardcoded temporarily. -- YFLu
+    const shouldPlayAnimClip = false; // Hardcoded temporarily. -- YFLu
+    if (shouldPlaySpriteFrame) {
+      if (null == self.appearance) {
+        console.warn("Appearance resource for StatefulBuildableInstance not found for: ", "self.appearance: ", self.appearance);
+        return;
+      }
+      const effectiveLevelToFindSpriteFrame = (STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW == self.state ? (1 + INITIAL_STATEFUL_BUILDABLE_LEVEL) : self.currentLevel);
+      self.activeAppearance = self.appearance[effectiveLevelToFindSpriteFrame];
+      if (null == self.activeAppearance) {
+        console.warn("Appearance resource for StatefulBuildableInstance not found for: ", "self.appearance: ", self.appearance, "effectiveLevelToFindSpriteFrame: ", effectiveLevelToFindSpriteFrame);
+        return;
       }
       self.node.getComponent(cc.Sprite).spriteFrame = self.activeAppearance;
+    } else {
+      // TODO 
     }
   },
 
   initUpgradingAnimation() {
     const self = this;
-    //TODO: 升级动画
-    self.refreshAppearance();
+    self._refreshAppearanceResource();
   },
 
 });
