@@ -153,23 +153,24 @@ const StatefulBuildableInstance = cc.Class({
     self.mapIns = mapIns;
     self.currentLevel = playerBuildableBinding.currentLevel;
     self.buildingOrUpgradingStartedAt = playerBuildableBinding.buildingOrUpgradingStartedAt;
-    self.initFromStatelessBuildableBinding(statelessBuildableInstance, mapIns);
     self.playerBuildableBinding = playerBuildableBinding;
-
-    const anchorTileContinuousPos = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapIns.node, self.mapIns.tiledMapIns, null, playerBuildableBinding.topmostTileDiscretePositionX, playerBuildableBinding.topmostTileDiscretePositionY);
-
-    self.fixedSpriteCentreContinuousPos = anchorTileContinuousPos.sub(self.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); 
-
+    self.initFromStatelessBuildableBinding(statelessBuildableInstance, mapIns);
     switch (playerBuildableBinding.state) {
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE: 
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING: 
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING: 
-        self.state = playerBuildableBinding.state; 
+        self.state = playerBuildableBinding.state; // This assignment might trigger `self.showProgressBar()`, thus should be put AFTER `self.initFromStatelessBuildableBinding(...)` within which `self.buildingOrUpgradingDuration` is initialized. -- YFLu 
         break;
       default:
         console.warn("Invalid persistent storage `playerBuildableBinding.state` found for: ", playerBuildableBinding);
         break;
     }
+
+    const anchorTileContinuousPos = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapIns.node, self.mapIns.tiledMapIns, null, playerBuildableBinding.topmostTileDiscretePositionX, playerBuildableBinding.topmostTileDiscretePositionY);
+
+    self.fixedSpriteCentreContinuousPos = anchorTileContinuousPos.sub(self.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); 
+
+    self._refreshAppearanceResource();
   },
 
   initFromStatelessBuildableBinding(singleStatelessBuildableInstance, mapIns, specifiedState) {
@@ -195,12 +196,15 @@ const StatefulBuildableInstance = cc.Class({
     self.buildingOrUpgradingDuration = singleStatelessBuildableInstance.buildingOrUpgradingDuration;
     // 记录appearance
     self.appearance = singleStatelessBuildableInstance.appearance;
-    self._refreshAppearanceResource();
     
     /*
     * You shouldn't assign anything to `self._fixedSpriteCentreContinuousPos` at the moment, because upon creation from `statelessBuildableInstance` the corresponding `statefulBuildableInstance` has NO FIXED SpriteCentre!
     */
     let curTimeMills = Date.now();
+    if (null != self.playerBuildableBinding) {
+      // Already initialized or updated within `self.initOrUpdateFromPlayerBuildableBinding(...)`, should NOT invoke `self._refreshAppearanceResource()`.
+      return;
+    }
     self.playerBuildableBinding = {
       id: 0, // Hardcoded temporarily to comply with ProtobufStruct, and might NOT be necessary. -- YFLu
       topmostTileDiscretePositionX: null,
@@ -219,6 +223,7 @@ const StatefulBuildableInstance = cc.Class({
       updatedAt: curTimeMills,
       buildingOrUpgradingStartedAt: null,
     };
+    self._refreshAppearanceResource();
   },
 
   showProgressBar() {
@@ -336,7 +341,7 @@ const StatefulBuildableInstance = cc.Class({
         console.warn("Appearance resource for StatefulBuildableInstance not found for: ", "self.appearance: ", self.appearance);
         return;
       }
-      const effectiveLevelToFindSpriteFrame = (STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW == self.state ? (1 + INITIAL_STATEFUL_BUILDABLE_LEVEL) : self.currentLevel);
+      const effectiveLevelToFindSpriteFrame = ((self.isNewing() || self.isBuilding()) ? (1 + INITIAL_STATEFUL_BUILDABLE_LEVEL) : self.currentLevel);
       self.activeAppearance = self.appearance[effectiveLevelToFindSpriteFrame];
       if (null == self.activeAppearance) {
         console.warn("Appearance resource for StatefulBuildableInstance not found for: ", "self.appearance: ", self.appearance, "effectiveLevelToFindSpriteFrame: ", effectiveLevelToFindSpriteFrame);
