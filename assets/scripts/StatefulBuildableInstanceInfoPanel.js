@@ -109,6 +109,8 @@ module.export = cc.Class({
         || 
         self.statefulBuildableInstance.isUpgrading() 
         || 
+        self.statefulBuildableInstance.isNewing()
+        ||
         false == self.statefulBuildableInstance.isUpgradable()) {
       self.upgradeButton.node.active = false;
     } else {

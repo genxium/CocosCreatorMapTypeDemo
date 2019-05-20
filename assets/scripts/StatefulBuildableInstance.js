@@ -283,6 +283,11 @@ const StatefulBuildableInstance = cc.Class({
     return !!self.levelConfs.find((levelConf) => levelConf.level == nextLevel);
   },
 
+  isNewing() {
+    const self = this;
+    return [STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW, STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_NEW].includes(self.state);
+  },
+
   isBuilding() {
     const self = this;
     return (-1 != [STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING, STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING, STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUILDING].indexOf(self.state));
