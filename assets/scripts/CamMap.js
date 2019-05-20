@@ -253,6 +253,7 @@ cc.Class({
         case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW:
           self.removePositioningNewStatefulBuildableInstance();
           editingStatefulBuildableInstanceNode.parent.removeChild(editingStatefulBuildableInstanceNode);
+          self.editingStatefulBuildableInstance = null;
           self.onBuildButtonClicked(); // 重新打开`StatelessBuildableInstanceCardListNode`
           return; // Note that it's returning instead breaking here -- YFLu.
         case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
@@ -919,7 +920,7 @@ cc.Class({
     switch (statefulBuildableInstance.state) {
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_NEW:
         self.removePositioningNewStatefulBuildableInstance();
-        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+        statefulBuildableInstance.updateCriticalProperties(window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_NEW, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
         break;
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING:
         self.removeEditingExistingStatefulBuildableInstance();
