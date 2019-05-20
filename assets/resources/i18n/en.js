@@ -283,6 +283,7 @@ window.i18n.languages['en'] = {
     Level: "Level: ",
     Upgrade: "Upgrade",
     Cancel: "Cancel",
+    MAX_LEVEL: "LEVEL(MAX)",
   },
 
 

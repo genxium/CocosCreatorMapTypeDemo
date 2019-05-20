@@ -270,6 +270,10 @@ const StatefulBuildableInstance = cc.Class({
         const newLevel = (self.currentLevel + 1);
         self.updateCriticalProperties(targetState, self.fixedSpriteCentreContinuousPos, newLevel, null);
         self._refreshAppearanceResource();
+        // 更新InfoPanel的data
+        let statefulInstanceInfoPanelNode = self.node.statefulInstanceInfoPanelNode;
+        let statefulInstanceInfoPanelScriptIns = statefulInstanceInfoPanelNode.getComponent("StatefulBuildableInstanceInfoPanel");
+        statefulInstanceInfoPanelScriptIns.refreshData();
       }
       // 修改: 将progressbar作为node的子元素而不是mapIns的子元素
       safelyAddChild(self.node, node);

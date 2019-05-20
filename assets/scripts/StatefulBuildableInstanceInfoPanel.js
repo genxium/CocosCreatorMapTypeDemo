@@ -35,7 +35,11 @@ module.export = cc.Class({
       type: cc.Button,
       default: null,
     },
-  },
+    maxLevelLabel: {
+      type: cc.Label,
+      default: null
+    },
+ },
 
   onLoad() {
     CloseableDialog.prototype.onLoad.call(this);
@@ -47,20 +51,33 @@ module.export = cc.Class({
     this.displayNameLabel.string = statefulBuildableInstance.displayName;
     this.currentLevelLabel.string = statefulBuildableInstance.currentLevel;
     this.activeAppearanceSprite.spriteFrame = statefulBuildableInstance.activeAppearance;
-    if (statefulBuildableInstance.isUpgrading() || statefulBuildableInstance.isBuilding()) {
-      this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel + 1];
-    }
+    this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel + 1];
     this.buildingOrUpgradingStartedAt = statefulBuildableInstance.buildingOrUpgradingStartedAt;
     this.buildingOrUpgradingInfo.active = true;
     this.statefulBuildableInstance = statefulBuildableInstance;
   },
 
+  refreshData() {
+    this.setInfo(this.statefulBuildableInstance);
+  },
+
   update(){
-    if(!this.buildingOrUpgradingStartedAt){ //还未建造。
+    this.maxLevelLabel.node.active = false;
+    if (!this.buildingOrUpgradingStartedAt) {
+      //无需显示进度条
+      this.buildingOrUpgradeRemainingTime.node.active = false;
       this.buildingOrUpgradeRemainingTime.progress = 0;
-      this.remaingLabel.string = secondsToNaturalExp(this.buildingOrUpgradingDuration);
+      if (this.statefulBuildableInstance.isUpgradable()) {
+        this.remaingLabel.string = secondsToNaturalExp(this.buildingOrUpgradingDuration);
+      } else {
+        this.remaingLabel.node.active = false;
+        this.maxLevelLabel.node.active = true;
+      }
       this.refreshInteractableButton();
       return;
+    } else {
+      this.buildingOrUpgradeRemainingTime.node.active = true;
+      this.remaingLabel.node.active = true;
     }
     const durationMillis = this.buildingOrUpgradingDuration * 1000; //this.buildingOrUpgradingDuration 单位: second
     const startedAtMillis = this.buildingOrUpgradingStartedAt ;
