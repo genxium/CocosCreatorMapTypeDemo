@@ -522,6 +522,7 @@ cc.Class({
         break;
       case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
         statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_BUILDING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
+        break;
       case STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING:
         statefulBuildableInstance.updateCriticalProperties(STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_WHILE_UPGRADING, statefulBuildableInstance.fixedSpriteCentreContinuousPos, statefulBuildableInstance.currentLevel, statefulBuildableInstance.buildingOrUpgradingStartedAt);
         break;
