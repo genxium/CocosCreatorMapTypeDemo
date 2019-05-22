@@ -445,13 +445,13 @@ cc.Class({
 
   },
 
-  onMovingBuildableInstance(touchPosInCamera, immediateDiffVec, StatefulBuildableInstanceAtTouchStart) {
+  onMovingBuildableInstance(touchPosInCamera, immediateDiffVec, statefulBuildableInstanceAtTouchStart) {
     const self = this, mapIns = this;
     if (null == this.editingStatefulBuildableInstance) {
       cc.warn("Wrong map state detected in `onMovingBuildableInstance`!");
       return;
     }
-    if (StatefulBuildableInstanceAtTouchStart == self.editingStatefulBuildableInstance) {
+    if (statefulBuildableInstanceAtTouchStart == self.editingStatefulBuildableInstance) {
       // Moving StatefulBuildableInstance
       const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
         const {spriteCentreTileToAnchorTileDiscreteOffset} = mapIns.editingStatefulBuildableInstance;

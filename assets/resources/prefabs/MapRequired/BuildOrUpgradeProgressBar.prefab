@@ -12,7 +12,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "RestaurantBuildOrUpgradeProgressBar",
+    "_name": "BuildOrUpgradeProgressBar",
     "_objFlags": 0,
     "_parent": null,
     "_children": [
@@ -616,16 +616,20 @@
       "__id__": 1
     },
     "_enabled": true,
-    "hintLabel": {
+    "animationDurationMillis": 1000,
+    "indicatorLabel": {
       "__id__": 10
     },
-    "thePgrBar": {
+    "progressBar": {
       "__id__": 7
     },
-    "startedAtMillis": 0,
-    "durationMillis": 0,
+    "instantStart": true,
+    "isForElapsedTimeProgress": true,
+    "eps": 0.001,
     "onCompleted": null,
-    "boostButton": null,
+    "boostButton": {
+      "__id__": 14
+    },
     "musicEffect": null,
     "_id": ""
   },

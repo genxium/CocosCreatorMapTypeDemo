@@ -161,7 +161,7 @@ cc.Class({
     }
     const touchLocation = event._touches[0].getLocation();
     const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
-    theListenerNode.StatefulBuildableInstanceAtTouchStart = self.mapScriptIns.findStatefulBuildableInstanceAtPosition(touchPosInCamera); 
+    theListenerNode.statefulBuildableInstanceAtTouchStart = self.mapScriptIns.findStatefulBuildableInstanceAtPosition(touchPosInCamera); 
   },
 
   isMapOverMoved(cameraPos) {
@@ -205,7 +205,7 @@ cc.Class({
           if (!self.mapScriptIns.cameraAutoMove || !self.tryStartCameraAutoMove(event, touchLocation, touchPosInCamera)) {
             self.cancelCameraAutoMove();
           }
-          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec, theListenerNode.StatefulBuildableInstanceAtTouchStart);
+          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
         }
       }
     } else {
@@ -300,7 +300,7 @@ cc.Class({
         theListenerNode.inTouchPoints.delete(touch._id);
       }
     }
-    theListenerNode.StatefulBuildableInstanceAtTouchStart = null;
+    theListenerNode.statefulBuildableInstanceAtTouchStart = null;
     if (0 == theListenerNode.inTouchPoints.size && 1 == previousInTouchPointsSetSize) {
       if (this.mapScriptIns.onSignlePointTouchended) {
         this.mapScriptIns.onSignlePointTouchended(event.currentTouch._point);
@@ -385,7 +385,7 @@ cc.Class({
      && self.cameraAutoTranslationData.lastCalledAt + self.cameraAutoTranslation.MOVE_INTERVAL_MILLS <= Date.now()
     ) {
       const theListenerNode = event.target;
-      if (theListenerNode.StatefulBuildableInstanceAtTouchStart == self.mapScriptIns.editingStatefulBuildableInstance) {
+      if (theListenerNode.statefulBuildableInstanceAtTouchStart == self.mapScriptIns.editingStatefulBuildableInstance) {
         self.cameraAutoTranslationData.lastCalledAt = Date.now();
         let { diffVec, touchPosInCamera, getNextCameraPos } = self.cameraAutoTranslationData;
         let nextCameraPos = getNextCameraPos();
@@ -393,7 +393,7 @@ cc.Class({
           return;
         }
         self.mainCameraNode.setPosition(nextCameraPos);
-        self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec, theListenerNode.StatefulBuildableInstanceAtTouchStart);
+        self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
       }
     }
   },

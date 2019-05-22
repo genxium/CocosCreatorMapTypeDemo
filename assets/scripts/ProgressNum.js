@@ -58,7 +58,7 @@ cc.Class({
   },
 
   formulateIndicatorLabelStr() {
-    if (this.isforelapsedtimeprogress) {
+    if (this.isForElapsedTimeProgress) {
       const elapsedMillis = this.targetQuantity;
       const durationMillis = this.maxValue;
       let remainingMillis = (durationMillis - elapsedMillis);

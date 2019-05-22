@@ -1,4 +1,5 @@
 const CloseableDialog = require('./CloseableDialog');
+const ProgressBar = require('./BuildOrUpgradeProgressBar');
 module.export = cc.Class({
   extends: CloseableDialog,
 
@@ -15,18 +16,6 @@ module.export = cc.Class({
       type: cc.Label,
       default: null,
     },
-    buildingOrUpgradeRemainingTime: {
-      type: cc.ProgressBar,
-      default: null,
-    },
-    remaingLabel: {
-      type: cc.Label,
-      default: null,
-    },
-    buildingOrUpgradingInfo: {
-      type:cc.Node,
-      default: null,
-    },
     upgradeButton: {
       type: cc.Button,
       default: null,
@@ -37,24 +26,53 @@ module.export = cc.Class({
     },
     maxLevelLabel: {
       type: cc.Label,
-      default: null
+      default: null,
     },
- },
+    buildOrUpgradeProgressBar: {
+      type: ProgressBar,
+      default: null,
+    },
+    upgradeDurationLabel: {
+      type: cc.Label,
+      default: null,
+    },
+  },
 
   onLoad() {
     CloseableDialog.prototype.onLoad.call(this);
     this.initButtonListener();
-    this.refreshInteractableButton();
   },
 
   setInfo(statefulBuildableInstance) {
     this.displayNameLabel.string = statefulBuildableInstance.displayName;
     this.currentLevelLabel.string = statefulBuildableInstance.currentLevel;
     this.activeAppearanceSprite.spriteFrame = statefulBuildableInstance.activeAppearance;
-    this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel + 1];
+    this.buildingOrUpgradingDuration = statefulBuildableInstance.buildingOrUpgradingDuration[statefulBuildableInstance.currentLevel+1];
     this.buildingOrUpgradingStartedAt = statefulBuildableInstance.buildingOrUpgradingStartedAt;
-    this.buildingOrUpgradingInfo.active = true;
     this.statefulBuildableInstance = statefulBuildableInstance;
+
+    this.refreshLabelAndProgressBar();
+    this.refreshInteractableButton();
+  },
+
+  refreshLabelAndProgressBar() {
+    this.maxLevelLabel.node.active = false;
+    this.upgradeDurationLabel.node.active = false;
+
+    if (!this.buildingOrUpgradingStartedAt) {
+      //无需显示进度条
+      this.buildOrUpgradeProgressBar.node.active = false;
+      if (this.statefulBuildableInstance.isUpgradable()) {
+        this.upgradeDurationLabel.node.active = true;
+        this.upgradeDurationLabel.string = secondsToNaturalExp(this.buildingOrUpgradingDuration);
+      } else {
+        this.maxLevelLabel.node.active = true;
+      }
+    } else {
+      this.buildOrUpgradeProgressBar.node.active = true;
+      this.buildOrUpgradeProgressBar.setData(this.buildingOrUpgradingStartedAt, this.buildingOrUpgradingDuration * 1000);
+    }
+
   },
 
   refreshData() {
@@ -62,44 +80,8 @@ module.export = cc.Class({
   },
 
   update(){
-    this.maxLevelLabel.node.active = false;
-    if (!this.buildingOrUpgradingStartedAt) {
-      //无需显示进度条
-      this.buildingOrUpgradeRemainingTime.node.active = false;
-      this.buildingOrUpgradeRemainingTime.progress = 0;
-      if (this.statefulBuildableInstance.isUpgradable()) {
-        this.remaingLabel.string = secondsToNaturalExp(this.buildingOrUpgradingDuration);
-      } else {
-        this.remaingLabel.node.active = false;
-        this.maxLevelLabel.node.active = true;
-      }
-      this.refreshInteractableButton();
-      return;
-    } else {
-      this.buildingOrUpgradeRemainingTime.node.active = true;
-      this.remaingLabel.node.active = true;
-    }
-    const durationMillis = this.buildingOrUpgradingDuration * 1000; //this.buildingOrUpgradingDuration 单位: second
-    const startedAtMillis = this.buildingOrUpgradingStartedAt ;
-    const currentGMTMillis = Date.now();
-    const elapsedMillis = currentGMTMillis - startedAtMillis; 
-    let remainingMillis = durationMillis - elapsedMillis;
-    if(0 >= remainingMillis) {
-      remainingMillis = 0;
-     }
-    let currentProgress = parseFloat(elapsedMillis / durationMillis); 
-    if (1 <= currentProgress){
-      currentProgress = 1.0;
-    }
-    this.buildingOrUpgradeRemainingTime.progress= currentProgress;  
-    if(1 > currentProgress){
-      this.remaingLabel.string = secondsToNaturalExp(remainingMillis / 1000);
-    }else {
-      this.remaingLabel.string = "";
-    }
-    this.refreshInteractableButton();
-  },
 
+  },
   initButtonListener() {
     const self = this;
     // Initialization of the 'upgradeButton' [begins].
@@ -111,7 +93,7 @@ module.export = cc.Class({
     self.upgradeButton.clickEvents = [
       upgradeHandler,
     ];
-    
+
     // Initialization of the 'upgradeHandler' [ends].
   },
 
@@ -122,16 +104,15 @@ module.export = cc.Class({
 
   refreshUpgradeButton() {
     const self = this;
-    if (self.statefulBuildableInstance.isBuilding() 
-        || 
-        self.statefulBuildableInstance.isUpgrading() 
-        || 
-        self.statefulBuildableInstance.isNewing()
-        ||
-        false == self.statefulBuildableInstance.isUpgradable()) {
+    if (
+      self.statefulBuildableInstance.isBuilding()
+   || self.statefulBuildableInstance.isUpgrading()
+   || self.statefulBuildableInstance.isNewing()
+   || !self.statefulBuildableInstance.isUpgradable()
+    ) {
       self.upgradeButton.node.active = false;
     } else {
-      if (true == self.statefulBuildableInstance.isUpgradable()) {
+      if (self.statefulBuildableInstance.isUpgradable()) {
         self.upgradeButton.node.active = true;
       }
     }
@@ -139,7 +120,16 @@ module.export = cc.Class({
 
   refreshCancelButton() {
     const self = this;
-    self.cancelButton.node.active = false; // Hardcoded temporarily. -- YFLu
+    self.cancelButton.node.active = false; // 不显示cancel按钮
     return;
+    if (!self.buildingOrUpgradingStartedAt) {
+      self.cancelButton.node.active = false;
+    } else {
+      if (self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING) {
+        self.cancelButton.node.active = true;
+      } else {
+        self.cancelButton.node.active = false;
+      }
+    }
   },
 });

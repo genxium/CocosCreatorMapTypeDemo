@@ -228,7 +228,7 @@ const StatefulBuildableInstance = cc.Class({
 
   showProgressBar() {
     const self = this;
-    if (null != self._progressInstance) {
+    if (null != self._progressInstance && self._progressInstance.node.active) {
       return;
     }
     let totalSeconds = null;
@@ -238,6 +238,7 @@ const StatefulBuildableInstance = cc.Class({
     if (null != totalSeconds && null != self.buildingOrUpgradingStartedAt) {
       let cpn = self._progressInstance || createProgressInstance();
       self._progressInstance = cpn;
+      self._progressInstance.node.active = true;
       cpn.setData(self.buildingOrUpgradingStartedAt, totalSeconds * 1000 /* milliseconds */);
     } else {
       console.warn("Invalid values of `totalSeconds`, `self.buildingOrUpgradingStartedAt` found when calling `showProgressBar`",
@@ -253,8 +254,7 @@ const StatefulBuildableInstance = cc.Class({
       node.setPosition(cc.v2(0, self.node.height / 2 + 10));
       cpn.onCompleted = function() {
         let targetState = null;
-        self.node.removeChild(self._progressInstance);
-        self._progressInstance = null;
+        self._progressInstance.node.active = false;
         switch (self.state) {
           case STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING:
           case STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING:
