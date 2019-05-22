@@ -120,16 +120,7 @@ module.export = cc.Class({
 
   refreshCancelButton() {
     const self = this;
-    self.cancelButton.node.active = false; // 不显示cancel按钮
+    self.cancelButton.node.active = false; // Hardcoded temporarily. -- YFLu
     return;
-    if (!self.buildingOrUpgradingStartedAt) {
-      self.cancelButton.node.active = false;
-    } else {
-      if (self.statefulBuildableInstance.state == window.STATEFUL_BUILDABLE_INSTANCE_STATE.EDITING_PANEL_WHILE_BUIDLING_OR_UPGRADING) {
-        self.cancelButton.node.active = true;
-      } else {
-        self.cancelButton.node.active = false;
-      }
-    }
   },
 });
