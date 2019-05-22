@@ -153,11 +153,15 @@ cc.Class({
   },
 
   _touchStartEvent(event) {
+    const self = this;
     const theListenerNode = event.target;
     if (!theListenerNode || !theListenerNode.inTouchPoints) return;
     for (let touch of event._touches) {
       theListenerNode.inTouchPoints.set(touch._id, touch);
     }
+    const touchLocation = event._touches[0].getLocation();
+    const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
+    theListenerNode.StatefulBuildableInstanceAtTouchStart = self.mapScriptIns.findStatefulBuildableInstanceAtPosition(touchPosInCamera); 
   },
 
   isMapOverMoved(cameraPos) {
@@ -198,10 +202,10 @@ cc.Class({
           */
           const touchLocation = event.currentTouch.getLocation();
           const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
-          if (!self.mapScriptIns.cameraAutoMove || !self.tryStartCameraAutoMove(touchLocation, touchPosInCamera)) {
+          if (!self.mapScriptIns.cameraAutoMove || !self.tryStartCameraAutoMove(event, touchLocation, touchPosInCamera)) {
             self.cancelCameraAutoMove();
           }
-          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec);
+          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec, theListenerNode.StatefulBuildableInstanceAtTouchStart);
         }
       }
     } else {
@@ -296,6 +300,7 @@ cc.Class({
         theListenerNode.inTouchPoints.delete(touch._id);
       }
     }
+    theListenerNode.StatefulBuildableInstanceAtTouchStart = null;
     if (0 == theListenerNode.inTouchPoints.size && 1 == previousInTouchPointsSetSize) {
       if (this.mapScriptIns.onSignlePointTouchended) {
         this.mapScriptIns.onSignlePointTouchended(event.currentTouch._point);
@@ -368,29 +373,34 @@ cc.Class({
       getNextCameraPos() {
         return self.mainCameraNode.getPosition().add(self.cameraAutoTranslationData.diffVec);
       },
+      event: null, 
     };
   },
 
   cameraAutoTranslationTick() {
-    const self = this;
+    const self = this, event = self.cameraAutoTranslationData.event;
     if (
-        self.cameraAutoTranslationData.lastCalledAt
+        event
+     && self.cameraAutoTranslationData.lastCalledAt
      && self.cameraAutoTranslationData.lastCalledAt + self.cameraAutoTranslation.MOVE_INTERVAL_MILLS <= Date.now()
     ) {
-      self.cameraAutoTranslationData.lastCalledAt = Date.now();
-      let { diffVec, touchPosInCamera, getNextCameraPos } = self.cameraAutoTranslationData;
-      let nextCameraPos = getNextCameraPos();
-      if (self.isMapOverMoved(nextCameraPos) || self.mapScriptIns.isEditingStatefulBuildableInstanceNodeOnBoundary()) {
-        return;
+      const theListenerNode = event.target;
+      if (theListenerNode.StatefulBuildableInstanceAtTouchStart == self.mapScriptIns.editingStatefulBuildableInstance) {
+        self.cameraAutoTranslationData.lastCalledAt = Date.now();
+        let { diffVec, touchPosInCamera, getNextCameraPos } = self.cameraAutoTranslationData;
+        let nextCameraPos = getNextCameraPos();
+        if (self.isMapOverMoved(nextCameraPos) || self.mapScriptIns.isEditingStatefulBuildableInstanceNodeOnBoundary()) {
+          return;
+        }
+        self.mainCameraNode.setPosition(nextCameraPos);
+        self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec, theListenerNode.StatefulBuildableInstanceAtTouchStart);
       }
-      self.mainCameraNode.setPosition(nextCameraPos);
-      self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec);
     }
   },
   /*
    * return: true if in boundary, false else.
    * */
-  tryStartCameraAutoMove(touchLocation, touchPosInCamera) {
+  tryStartCameraAutoMove(event, touchLocation, touchPosInCamera) {
     const self = this;
     const { BOUNDARY_WEIGHT, FAST_MOVE_BOUNDARY_WEIGHT, MOVE_PIXELS } = self.cameraAutoTranslation;
     let percentage = {
@@ -429,10 +439,12 @@ cc.Class({
     self.cameraAutoTranslationData.lastCalledAt = self.cameraAutoTranslationData.lastCalledAt || Date.now();
     self.cameraAutoTranslationData.diffVec = diffVec;
     self.cameraAutoTranslationData.touchPosInCamera = touchPosInCamera;
+    self.cameraAutoTranslationData.event = event;
     return true;
   },
   cancelCameraAutoMove() {
     const self = this;
     self.cameraAutoTranslationData.lastCalledAt = null;
+    self.cameraAutoTranslationData.event = null;
   },
 });

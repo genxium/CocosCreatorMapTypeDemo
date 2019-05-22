@@ -445,41 +445,39 @@ cc.Class({
 
   },
 
-  onMovingBuildableInstance(touchPosInCamera, immediateDiffVec) {
-    const mapIns = this;
+  onMovingBuildableInstance(touchPosInCamera, immediateDiffVec, StatefulBuildableInstanceAtTouchStart) {
+    const self = this, mapIns = this;
     if (null == this.editingStatefulBuildableInstance) {
       cc.warn("Wrong map state detected in `onMovingBuildableInstance`!");
       return;
     }
-    const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
-    const {spriteCentreTileToAnchorTileDiscreteOffset} = mapIns.editingStatefulBuildableInstance;
-    const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
-    let immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
-    immediateDiscretePosOfCameraOnMapNode = cc.v2(immediateDiscretePosOfCameraOnMapNode);
-    let immediateAnchorDiscretePos = immediateDiscretePosOfCameraOnMapNode.sub(spriteCentreTileToAnchorTileDiscreteOffset);
-    immediateAnchorDiscretePos = mapIns.correctDiscretePositionToWithinMap(mapIns.editingStatefulBuildableInstance, immediateDiscretePosOfCameraOnMapNode);
-    immediateDiscretePosOfCameraOnMapNode = immediateAnchorDiscretePos.add(spriteCentreTileToAnchorTileDiscreteOffset);
-    const immediateContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, immediateDiscretePosOfCameraOnMapNode.x, immediateDiscretePosOfCameraOnMapNode.y);
-    mapIns.editingStatefulBuildableInstance.node.setPosition(immediateContinuousPosWrtMapNode);
-    mapIns.refreshHighlightedTileGridForEditingStatefulBuildableInstance(mapIns.tiledMapIns);
+    if (StatefulBuildableInstanceAtTouchStart == self.editingStatefulBuildableInstance) {
+      // Moving StatefulBuildableInstance
+      const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
+        const {spriteCentreTileToAnchorTileDiscreteOffset} = mapIns.editingStatefulBuildableInstance;
+        const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
+      let immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
+      immediateDiscretePosOfCameraOnMapNode = cc.v2(immediateDiscretePosOfCameraOnMapNode);
+      let immediateAnchorDiscretePos = immediateDiscretePosOfCameraOnMapNode.sub(spriteCentreTileToAnchorTileDiscreteOffset);
+      immediateAnchorDiscretePos = mapIns.correctDiscretePositionToWithinMap(mapIns.editingStatefulBuildableInstance, immediateDiscretePosOfCameraOnMapNode);
+      immediateDiscretePosOfCameraOnMapNode = immediateAnchorDiscretePos.add(spriteCentreTileToAnchorTileDiscreteOffset);
+      const immediateContinuousPosWrtMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapIns.node, mapIns.tiledMapIns, null, immediateDiscretePosOfCameraOnMapNode.x, immediateDiscretePosOfCameraOnMapNode.y);
+      mapIns.editingStatefulBuildableInstance.node.setPosition(immediateContinuousPosWrtMapNode);
+      mapIns.refreshHighlightedTileGridForEditingStatefulBuildableInstance(mapIns.tiledMapIns);
+    } else {
+      // Moving Camera
+      const cameraPos = mapIns.ctrl.mainCameraNode.position.sub(immediateDiffVec);
+      if (tileCollisionManager.cameraIsOutOfGrandBoundary(mapIns.node, cameraPos.sub(mapIns.node.position))) {
+        return;
+      }
+      mapIns.ctrl.mainCameraNode.setPosition(cameraPos);
 
-  // TODO: Handle the case where `mapIns.editingStatefulBuildableInstance` is moving out of the current visible area of `mapIns.mainCamera`.
+    }
   },
 
   onSingleFingerClick(touchPosInCamera) {
     const self = this, mapIns = this;
-    const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
-    const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
-    const immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
-    const targetCpn = mapIns.statefulBuildableInstanceCompList.filter((statefulBuildableInstance) => {
-      let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, statefulBuildableInstance.node.position, cc.v2(0, 0));
-      spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
-      let anchorTileDiscretePosWrtMapNode = spriteCentreDiscretePosWrtMapNode.sub(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
-      return anchorTileDiscretePosWrtMapNode.x <= immediateDiscretePosOfCameraOnMapNode.x
-          && anchorTileDiscretePosWrtMapNode.x + statefulBuildableInstance.discreteWidth > immediateDiscretePosOfCameraOnMapNode.x
-          && anchorTileDiscretePosWrtMapNode.y <= immediateDiscretePosOfCameraOnMapNode.y
-          && anchorTileDiscretePosWrtMapNode.y + statefulBuildableInstance.discreteHeight > immediateDiscretePosOfCameraOnMapNode.y;
-    })[0];
+    let targetCpn = self.findStatefulBuildableInstanceAtPosition(touchPosInCamera);
     if (targetCpn != null) {
       let targetNode = targetCpn.node; 
       mapIns.onStatefulBuildableBuildingClicked(targetNode, targetCpn);
@@ -958,5 +956,32 @@ cc.Class({
     statefulBuildableInstance.upgradeUnconditionally();
     statefulInstanceInfoPanelScriptIns.setInfo(statefulBuildableInstance);
   },
-
+  findStatefulBuildableInstanceAtPosition(touchPosInCamera) {
+    const self = this, mapIns = this;
+    const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
+    const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
+    const immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));
+    const targetCpns = mapIns.statefulBuildableInstanceCompList.concat(self.editingStatefulBuildableInstance).filter((statefulBuildableInstance) => {
+      if (!statefulBuildableInstance) {
+        return false;
+      }
+      let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, statefulBuildableInstance.node.position, cc.v2(0, 0));
+      spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
+      let anchorTileDiscretePosWrtMapNode = spriteCentreDiscretePosWrtMapNode.sub(statefulBuildableInstance.spriteCentreTileToAnchorTileDiscreteOffset);
+      return anchorTileDiscretePosWrtMapNode.x <= immediateDiscretePosOfCameraOnMapNode.x
+          && anchorTileDiscretePosWrtMapNode.x + statefulBuildableInstance.discreteWidth > immediateDiscretePosOfCameraOnMapNode.x
+          && anchorTileDiscretePosWrtMapNode.y <= immediateDiscretePosOfCameraOnMapNode.y
+          && anchorTileDiscretePosWrtMapNode.y + statefulBuildableInstance.discreteHeight > immediateDiscretePosOfCameraOnMapNode.y;
+    });
+    if (targetCpns != null) {
+      // editingStatefulBuildableInstance has higher priority.
+      if (self.editingStatefulBuildableInstance && targetCpns.includes(self.editingStatefulBuildableInstance)) {
+        return self.editingStatefulBuildableInstance;
+      } else {
+        return targetCpns[0];
+      }
+    } else {
+      return null;
+    } 
+  },
 });
