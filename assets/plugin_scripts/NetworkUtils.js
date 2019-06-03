@@ -326,7 +326,10 @@ NetworkUtils.ajax = function(o) {
     progress: null,
     contentType: "application/x-www-form-urlencoded"
   }, o);
-  if (o.progress) NetworkUtils.Progress.start(o.progress);
+
+  if (o.progress) {
+    NetworkUtils.Progress.start(o.progress);
+  }
 
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
@@ -360,8 +363,7 @@ NetworkUtils.ajax = function(o) {
         }
       }
     }
-  }; //if("withCredentials" in xhr) xhr.withCredentials = true;
-
+  }; 
 
   var url = o.url,
     data = null;
@@ -818,77 +820,6 @@ NetworkUtils.setCookie = function(name, value, options) {
     }
 
     return kvps.join('&');
-  };
-
-  NetworkUtils.ajax = function(o) {
-    var xhr = cc.loader.getXMLHttpRequest();
-    o = Object.assign({
-      type: "GET",
-      data: null,
-      dataType: 'json',
-      progress: null,
-      contentType: "application/x-www-form-urlencoded"
-    }, o);
-    if (o.progress) NetworkUtils.Progress.start(o.progress);
-
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState == 4) {
-        if (xhr.status < 300) {
-          var res;
-
-          if (o.dataType == 'json') {
-            if (xhr.responseText) {
-              res = window.JSON ? window.JSON.parse(xhr.responseText) : eval(xhr.responseText);
-            }
-          } else {
-            res = xhr.responseText;
-          }
-
-          if (!!res) o.success(res);
-          if (o.progress) NetworkUtils.Progress.done();
-        } else {
-          if (o.error) o.error(xhr, xhr.status, xhr.statusText);
-        }
-      } else {
-        if (o.error) o.error(xhr, xhr.status, xhr.statusText);
-      }
-    }; //if("withCredentials" in xhr) xhr.withCredentials = true;
-
-
-    var url = o.url,
-      data = null;
-    var isPost = o.type === "POST" || o.type === "PUT";
-
-    if (o.data) {
-      if (!isPost) {
-        url += "?" + NetworkUtils.formData(o.data);
-        data = null;
-      } else if (isPost && _typeof(o.data) === 'object') {
-        // o.data.token = cc.sys.localStorage.getItem('token');
-        //data = JSON.stringify(o.data);
-        data = NetworkUtils.formData(o.data);
-      } else {
-        data = o.data;
-      }
-    }
-
-    xhr.open(o.type, url, true);
-
-    if (isPost) {
-      xhr.setRequestHeader("Content-Type", o.contentType);
-    }
-
-    xhr.timeout = 3000;
-
-    xhr.ontimeout = function() {
-      // XMLHttpRequest 超时
-      if ('function' === typeof o.timeout) {
-        o.timeout();
-      }
-    };
-
-    xhr.send(data);
-    return xhr;
   };
 
   NetworkUtils.get = function(url, data, success, error) {
