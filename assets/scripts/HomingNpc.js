@@ -57,6 +57,8 @@ module.export = cc.Class({
       case window.HOMING_NPC_STATE.MOVING_OUT:
         this.state = window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_OUT; 
       break;
+      default:
+      break;
     }
   },
 
@@ -67,6 +69,8 @@ module.export = cc.Class({
       break;
       case window.HOMING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
         this.state = window.HOMING_NPC_STATE.MOVING_OUT; 
+      break;
+      default:
       break;
     }
   },
