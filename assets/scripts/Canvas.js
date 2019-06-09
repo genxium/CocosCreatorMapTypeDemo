@@ -15,6 +15,7 @@ const hamiltonDistance = function(p1, p2) {
 };
 
 window.reverseHomingNpcDestinationDict = {};
+window.reverseStatefulBuildableFollowingNpcDestinationDict = {};
 window.cachedKnownBarrierGridDict = {};
 window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, thisPlayerCollider) {
   cachedKnownBarrierGridDict = {};

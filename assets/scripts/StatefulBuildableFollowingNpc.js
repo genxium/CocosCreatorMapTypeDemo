@@ -27,7 +27,7 @@ module.export = cc.Class({
     currentDestination: {
       type: cc.v2,
       default: null
-    }
+    },
     boundStatefulBuildable: {
       type: Object,
       default: null, 
@@ -71,22 +71,35 @@ module.export = cc.Class({
 
   transitToStaying() {
     const self = this;
-    let discretizedSelfNodePos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
-    let discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
+    // Don't execute the calculation of "continuous -> discrete coordinate" before checking the current state.
+    let discretizedSelfNodePos = null;
+    let discretizedDestinaion = null;
 
     switch(this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
+        discretizedSelfNodePos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
+        discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
         if (discretizedSelfNodePos.x == discretizedDestinaion.x && discretizedSelfNodePos.y == discretizedDestinaion.y) {
           this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN; 
         } else {
           this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_IN; 
         }
+        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
+          this.animComp = this.stayingAnimComp;
+          this.animComp.play();
+        }
       break;
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
+        discretizedSelfNodePos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
+        discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
         if (discretizedSelfNodePos.x == discretizedDestinaion.x && discretizedSelfNodePos.y == discretizedDestinaion.y) {
           this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT; 
         } else {
           this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT; 
+        }
+        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
+          this.animComp = this.stayingAnimComp;
+          this.animComp.play();
         }
       break;
       default:
@@ -95,12 +108,21 @@ module.export = cc.Class({
   },
 
   transitToStuck() {
+    const self = this;
     switch(this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
         this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_IN; 
+        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
+          this.animComp = this.stayingAnimComp;
+          this.animComp.play();
+        }
       break;
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
         this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT; 
+        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
+          this.animComp = this.stayingAnimComp;
+          this.animComp.play();
+        }
       break;
       default:
       break;
@@ -109,17 +131,34 @@ module.export = cc.Class({
 
   transitToMoving() {
     switch(this.state) {
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT:
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_IN:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_IN:
         this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN; 
+        if (this.animComp.uuid != this.walkingAnimComp.uuid) {
+          this.animComp = this.walkingAnimComp;
+          this.animComp.play();
+        }
       break;
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN:
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
         this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT; 
+        if (this.animComp.uuid != this.walkingAnimComp.uuid) {
+          this.animComp = this.walkingAnimComp;
+          this.animComp.play();
+        }
+      break;
+      default:
       break;
     }
   },
 
-  refreshGrandSrc() {
-    // TBD.
+  refreshGrandSrcAndCurrentDestination() {
+    const self = this;
+    self.preGrandSrc = self.grandSrc;
+    self.grandSrc = self.boundStatefulBuildable.fixedSpriteCentreContinuousPos.add(self.boundStatefulBuildable.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); // Temporarily NOT seeing the "barrier grids occupied by `boundStatefulBuildable`" as a barrier to its own following NPCs. -- YFLu
+    self.refreshCurrentDestination();
   },
 
   refreshCurrentDestination() {
@@ -133,6 +172,8 @@ module.export = cc.Class({
     switch (self.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_IN:
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_IN:
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT:
         if (null != self.currentDestination) {
           previousDiscretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
         }
@@ -142,6 +183,8 @@ module.export = cc.Class({
       break;
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT:
+      case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN:
         if (null != self.currentDestination) {
           previousDiscretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
         }
@@ -158,35 +201,35 @@ module.export = cc.Class({
     }
     if (null != previousDiscretizedDestinaion) {
       let previousReverseHomingNpcDestinationDictRecord = null;
-      if (null != window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x]) {
-        previousReverseHomingNpcDestinationDictRecord = window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y];
+      if (null != window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x]) {
+        previousReverseHomingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y];
       }
       if (null != previousReverseHomingNpcDestinationDictRecord && null != previousReverseHomingNpcDestinationDictRecord[self.node.uuid]) {
         delete previousReverseHomingNpcDestinationDictRecord[self.node.uuid];
         // Lazy clearance.
         if (0 >= Object.keys(previousReverseHomingNpcDestinationDictRecord).length) {
-          window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y] = null;
-          delete window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y]; 
-          if (0 >= Object.keys(window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x]).length) {
-            window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x] = null;
-            delete window.reverseHomingNpcDestinationDict[previousDiscretizedDestinaion.x]; 
+          window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y] = null;
+          delete window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y]; 
+          if (0 >= Object.keys(window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x]).length) {
+            window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x] = null;
+            delete window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x]; 
           }
         } 
       }
     }
 
     if (null != discretizedDestinaion) {
-      let reverseHomingNpcDestinationDictRecord = null;
+      let reverseStatefulBuildableFollowingNpcDestinationDictRecord = null;
       // Lazy init.
-      if (null == window.reverseHomingNpcDestinationDict[discretizedDestinaion.x]) {
-        window.reverseHomingNpcDestinationDict[discretizedDestinaion.x] = {};
+      if (null == window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x]) {
+        window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x] = {};
       } 
-      if (null == window.reverseHomingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]) {
-        window.reverseHomingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y] = {};
+      if (null == window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]) {
+        window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y] = {};
       }
 
-      reverseHomingNpcDestinationDictRecord = window.reverseHomingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]; 
-      reverseHomingNpcDestinationDictRecord[self.node.uuid] = self;
+      reverseStatefulBuildableFollowingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]; 
+      reverseStatefulBuildableFollowingNpcDestinationDictRecord[self.node.uuid] = self;
     }
   },
 

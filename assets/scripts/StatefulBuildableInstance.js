@@ -156,7 +156,7 @@ const StatefulBuildableInstance = cc.Class({
     self.playerBuildableBinding = playerBuildableBinding;
     self.initFromStatelessBuildableBinding(statelessBuildableInstance, mapIns);
     switch (playerBuildableBinding.state) {
-      case window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE: 
+  // Temporarily hardcoded. -- YFLu     case window.STATEFUL_BUILDABLE_INSTANCE_STATE.IDLE: 
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.BUILDING: 
       case window.STATEFUL_BUILDABLE_INSTANCE_STATE.UPGRADING: 
         self.state = playerBuildableBinding.state; // This assignment might trigger `self.showProgressBar()`, thus should be put AFTER `self.initFromStatelessBuildableBinding(...)` within which `self.buildingOrUpgradingDuration` is initialized. -- YFLu 

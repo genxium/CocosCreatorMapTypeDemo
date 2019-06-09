@@ -7,7 +7,7 @@
   "premultiplyAlpha": false,
   "subMetas": {
     "Tile_W256_H256_S00": {
-      "ver": "1.0.3",
+      "ver": "1.0.4",
       "uuid": "ec51e9af-643f-4c65-8266-c0b3fa7abde2",
       "rawTextureUuid": "f1e76d38-4a5e-4f25-be72-85b1224beca8",
       "trimType": "auto",
