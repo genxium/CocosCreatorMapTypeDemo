@@ -32,6 +32,7 @@ cc.Class({
     this.ctrl = null;
     this.statelessBuildableInstanceCardListNode = null;
     this.homingNpcScriptInsDict = {}; // Used at least for refreshing the whole collection of `HomingNpc`s.
+    this.statefulBuildableFollowingNpcScriptInsDict = {}; // Used at least for refreshing the whole collection of `StatefulBuildableFollowingNpc`s.
   },
 
   // LIFE-CYCLE CALLBACKS:
@@ -774,7 +775,8 @@ cc.Class({
       }
     }
 
-    self.spawnHomingNpcs();
+    // self.spawnHomingNpcs();
+    self.spawnOrRefreshStatefulBuildableFollowingNpcs();
   },
 
   sendPlayerSyncDataUpsync(queryParam) {
@@ -871,6 +873,29 @@ cc.Class({
 
     }
   },
+
+  spawnOrRefreshStatefulBuildableFollowingNpcs() {
+    const self = this;
+    if (!self.statefulBuildableFollowingNpcPrefab) {
+      cc.warn(`There's no "statefulBuildableFollowingNpcPrefab" yet!`);
+      return;
+    }
+    const tiledMapIns = self.tiledMapIns;
+    
+    for (let indice = 0; indice < self.statefulBuildableInstanceCompList.length; ++indice) {
+      const statefulBuildableInstanceComp = self.statefulBuildableInstanceCompList[indice];
+      const npcNode = cc.instantiate(self.statefulBuildableFollowingNpcPrefab);
+      const npcScriptIns = npcNode.getComponent("StatefulBuildableFollowingNpc");
+      npcScriptIns.mapNode = self.node;
+      npcScriptIns.mapIns = self;
+      npcScriptIns.boundStatefulBuildable = statefulBuildableInstanceComp;
+      const npcSrcContinuousPosWrtMapNode = statefulBuildableInstanceComp.fixedSpriteCentreContinuousPos;
+      npcNode.setPosition(npcSrcContinuousPosWrtMapNode);
+      safelyAddChild(self.node, npcNode);
+      setLocalZOrder(npcNode, window.CORE_LAYER_Z_INDEX.PLAYER);
+      npcScriptIns.refreshGrandSrcAndCurrentDestination();
+    }
+  },
 
   isStatefulBuildableOutOfMap(statefulBuildableInstance, spriteCentreDiscretePosWrtMapNode) {
     const self = this;
@@ -959,9 +984,10 @@ cc.Class({
     statefulBuildableInstance.upgradeUnconditionally();
     statefulInstanceInfoPanelScriptIns.setInfo(statefulBuildableInstance);
   },
+
   findStatefulBuildableInstanceAtPosition(touchPosInCamera) {
-    const self = this,
-      mapIns = this;
+    const self = this;
+    const mapIns = this;
     const mainCameraContinuousPos = mapIns.ctrl.mainCameraNode.position; // With respect to CanvasNode.
     const roughImmediateContinuousPosOfCameraOnMapNode = (mainCameraContinuousPos.add(cc.v2(touchPosInCamera.x, touchPosInCamera.y)));
     const immediateDiscretePosOfCameraOnMapNode = tileCollisionManager._continuousToDiscrete(mapIns.node, mapIns.tiledMapIns, roughImmediateContinuousPosOfCameraOnMapNode, cc.v2(0, 0));

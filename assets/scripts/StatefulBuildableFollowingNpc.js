@@ -29,6 +29,7 @@ module.export = cc.Class({
       default: null
     },
     boundStatefulBuildable: {
+      // It's a pointer to an instance of class "StatefulBuildableInstance" a.k.a. a "cc.Component class script instance".
       type: Object,
       default: null, 
     },
@@ -65,6 +66,17 @@ module.export = cc.Class({
     *
     * -- YFLu
     */
+
+    self.clips = {
+      '01': 'TopRight',
+      '0-1': 'BottomLeft',
+      '-20': 'TopLeft',
+      '20': 'BottomRight',
+      '-21': 'TopLeft',
+      '21': 'TopRight',
+      '-2-1': 'BottomLeft',
+      '2-1': 'BottomRight'
+    };
     self.animComp = self.stayingAnimComp;
     self.animComp.play();
   },
