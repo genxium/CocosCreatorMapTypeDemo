@@ -235,8 +235,8 @@ cc.Class({
   },
 
   endPositioningStatefulBuildableInstance(successfullyPlacedOrNot) {
-    const self = this,
-      mapIns = self;
+    const self = this;
+    const mapIns = self;
     const mapNode = self.node;
     self.statelefulBuildableController.active = false;
     self.buildButton.node.active = true;
@@ -365,6 +365,7 @@ cc.Class({
       newBarrierColliderIns.points.push(cc.v2(p).add(halfBarrierAnchorToBoundingBoxCentre));
     }
     statefulBuildableInstance.barrierColliderIns = newBarrierColliderIns;
+    newBarrierColliderIns.boundStatefulBuildable = statefulBuildableInstance; 
     statefulBuildableInstance.barrierColliderNode = newBarrier;
     mapScriptIns.barrierColliders.push(newBarrierColliderIns);
     mapScriptIns.node.addChild(newBarrier);

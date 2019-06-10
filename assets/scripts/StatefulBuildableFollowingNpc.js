@@ -12,10 +12,15 @@ window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE = {
   STAYING_AT_DESTINATION_AFTER_MOVING_IN: 11, // A.k.a. staying at "grandSrc".
 };
 
+const WALKING_SPEED = 200;
+
 module.export = cc.Class({
   extends: BasePlayer,
-    
+
   properties: {
+    speciesName: {
+      default: "DUCK",
+    },
     preGrandSrc: {
       type: cc.v2,
       default: null
@@ -31,15 +36,7 @@ module.export = cc.Class({
     boundStatefulBuildable: {
       // It's a pointer to an instance of class "StatefulBuildableInstance" a.k.a. a "cc.Component class script instance".
       type: Object,
-      default: null, 
-    },
-    stayingAnimNode: {
-      type: cc.Node,
-      default: null, 
-    },
-    walkingAnimNode: {
-      type: cc.Node,
-      default: null, 
+      default: null,
     },
   },
 
@@ -47,16 +44,17 @@ module.export = cc.Class({
     this.state = STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN;
     this.movementStops = null;
     this.drawer = null;
+    this.speed = 0;
+    this.stayingAnimClips = null;
+    this.walkingAnimClips = null;
   },
 
   start() {
     BasePlayer.prototype.start.call(this);
   },
 
-  onLoad() { 
+  onLoad() {
     const self = this;
-    self.stayingAnimComp = this.stayingAnimNode.getComponent(cc.Animation);
-    self.walkingAnimComp = this.walkingAnimNode.getComponent(cc.Animation);
     /*
     * Deliberately NOT calling "BasePlayer.prototype.onLoad".
     *
@@ -77,8 +75,11 @@ module.export = cc.Class({
       '-2-1': 'BottomLeft',
       '2-1': 'BottomRight'
     };
-    self.animComp = self.stayingAnimComp;
-    self.animComp.play();
+    self.setAnim(self.speciesName, () => {
+      self.scheduleNewDirection(self._generateRandomDirection());
+      const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
+      self.animComp.play(clipKey);
+    });
   },
 
   transitToStaying() {
@@ -87,83 +88,67 @@ module.export = cc.Class({
     let discretizedSelfNodePos = null;
     let discretizedDestinaion = null;
 
-    switch(this.state) {
+    switch (this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
         discretizedSelfNodePos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
         discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
         if (discretizedSelfNodePos.x == discretizedDestinaion.x && discretizedSelfNodePos.y == discretizedDestinaion.y) {
-          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN; 
+          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN;
         } else {
-          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_IN; 
+          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_IN;
         }
-        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
-          this.animComp = this.stayingAnimComp;
-          this.animComp.play();
-        }
-      break;
+        break;
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
         discretizedSelfNodePos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
         discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
         if (discretizedSelfNodePos.x == discretizedDestinaion.x && discretizedSelfNodePos.y == discretizedDestinaion.y) {
-          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT; 
+          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT;
         } else {
-          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT; 
+          this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT;
         }
-        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
-          this.animComp = this.stayingAnimComp;
-          this.animComp.play();
-        }
-      break;
+        break;
       default:
-      break;
+        break;
     }
+
+    this.speed = 0;
+    this.setAnim(this.speciesName, null);
   },
 
   transitToStuck() {
     const self = this;
-    switch(this.state) {
+    switch (this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
-        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_IN; 
-        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
-          this.animComp = this.stayingAnimComp;
-          this.animComp.play();
-        }
-      break;
+        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_IN;
+        break;
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
-        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT; 
-        if (this.animComp.uuid != this.stayingAnimComp.uuid) {
-          this.animComp = this.stayingAnimComp;
-          this.animComp.play();
-        }
-      break;
+        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT;
+        break;
       default:
-      break;
+        break;
     }
+
+    this.speed = 0;
+    this.setAnim(this.speciesName, null);
   },
 
   transitToMoving() {
-    switch(this.state) {
+    switch (this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_IN:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_IN:
-        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN; 
-        if (this.animComp.uuid != this.walkingAnimComp.uuid) {
-          this.animComp = this.walkingAnimComp;
-          this.animComp.play();
-        }
-      break;
+        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN;
+        break;
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
-        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT; 
-        if (this.animComp.uuid != this.walkingAnimComp.uuid) {
-          this.animComp = this.walkingAnimComp;
-          this.animComp.play();
-        }
-      break;
+        this.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT;
+        break;
       default:
-      break;
+        break;
     }
+    this.speed = WALKING_SPEED;
+    this.setAnim(this.speciesName, null);
   },
 
   refreshGrandSrcAndCurrentDestination() {
@@ -192,7 +177,7 @@ module.export = cc.Class({
 
         self.currentDestination = self.grandSrc;
         discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
-      break;
+        break;
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT:
@@ -203,13 +188,13 @@ module.export = cc.Class({
 
         self.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.grandSrc, 5);
         if (null == self.currentDestination) {
-          self.transitToStuck();  
+          self.transitToStuck();
         } else {
           discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
         }
-      break;
+        break;
       default:
-      break;
+        break;
     }
     if (null != previousDiscretizedDestinaion) {
       let previousReverseHomingNpcDestinationDictRecord = null;
@@ -221,12 +206,12 @@ module.export = cc.Class({
         // Lazy clearance.
         if (0 >= Object.keys(previousReverseHomingNpcDestinationDictRecord).length) {
           window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y] = null;
-          delete window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y]; 
+          delete window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y];
           if (0 >= Object.keys(window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x]).length) {
             window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x] = null;
-            delete window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x]; 
+            delete window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x];
           }
-        } 
+        }
       }
     }
 
@@ -235,12 +220,12 @@ module.export = cc.Class({
       // Lazy init.
       if (null == window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x]) {
         window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x] = {};
-      } 
+      }
       if (null == window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]) {
         window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y] = {};
       }
 
-      reverseStatefulBuildableFollowingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y]; 
+      reverseStatefulBuildableFollowingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[discretizedDestinaion.x][discretizedDestinaion.y];
       reverseStatefulBuildableFollowingNpcDestinationDictRecord[self.node.uuid] = self;
     }
   },
@@ -251,7 +236,7 @@ module.export = cc.Class({
       self.movementStops = null;
     } else {
       const npcBarrierCollider = self.node.getComponent(cc.CircleCollider);
-      self.movementStops = window.findPathWithMapDiscretizingAStar(self.node.position, self.currentDestination, 0.01 /* Hardcoded temporarily */, npcBarrierCollider, self.mapIns.barrierColliders, null, self.mapNode);
+      self.movementStops = window.findPathWithMapDiscretizingAStar(self.node.position, self.currentDestination, 0.01 /* Hardcoded temporarily */ , npcBarrierCollider, self.mapIns.barrierColliders, null, self.mapNode);
     }
     return self.movementStops;
   },
@@ -273,6 +258,7 @@ module.export = cc.Class({
     setLocalZOrder(drawer, 20);
     let g = drawer.getComponent(cc.Graphics);
     g.lineWidth = 2;
+    g.strokeColor = cc.Color.WHITE;
     if (CC_DEBUG) {
       g.moveTo(self.node.position.x, self.node.position.y);
     }
@@ -320,19 +306,19 @@ module.export = cc.Class({
           self.refreshCurrentDestination();
           self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
           self.restartPatrolling();
-        break;
+          break;
         case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
           self.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN;
           self.refreshCurrentDestination();
           self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
           self.restartPatrolling();
-        break;
+          break;
         default:
-        break;
-      } 
+          break;
+      }
     }, self));
 
-    self.node.runAction(cc.sequence(ccSeqActArray)); 
+    self.node.runAction(cc.sequence(ccSeqActArray));
   },
 
   onCollisionEnter(otherCollider, selfCollider) {
@@ -340,14 +326,20 @@ module.export = cc.Class({
     const self = this.getComponent(this.node.name);
     switch (otherCollider.node.name) {
       case "PolygonBoundaryBarrier":
+        let collidingWithAssociatedStatefulBuildable = false;
+        const boundStatefulBuildableOfCollider = otherCollider.boundStatefulBuildable; 
+        collidingWithAssociatedStatefulBuildable = (null != boundStatefulBuildableOfCollider && (boundStatefulBuildableOfCollider.uuid == self.boundStatefulBuildable.uuid));
+        if (collidingWithAssociatedStatefulBuildable) {
+          return;
+        }
         self.node.stopAllActions();
         const availableNewPositionNearby = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.node.position, 1);
         if (null == availableNewPositionNearby) {
           self.currentDestination = self.grandSrc;
-          self.node.setPosition(self.grandSrc);  
+          self.node.setPosition(self.grandSrc);
           self.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN;
         } else {
-          self.node.setPosition(availableNewPositionNearby);  
+          self.node.setPosition(availableNewPositionNearby);
         }
         self.refreshCurrentDestination();
         self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
@@ -372,5 +364,54 @@ module.export = cc.Class({
       default:
         break;
     }
+  },
+
+  setAnim(speciesName, cb) {
+    const self = this;
+    let dirPath = null;
+
+    switch (self.state) {
+      case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
+      case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
+        if (null != self.walkingAnimClips) {
+          if (cb) {
+            cb(false);
+          }
+          return;
+        }
+        dirPath = constants.NPC_ANIM[speciesName].WALKING;
+        break;
+      default:
+        if (null != self.stayingAnimClips) {
+          if (cb) {
+            cb(false);
+          }
+          return;
+        }
+        dirPath = constants.NPC_ANIM[speciesName].STAYING;
+        break;
+    }
+
+    cc.loader.loadResDir(dirPath, cc.AnimationClip, function(err, animClips, urls) {
+      if (null != err) {
+        cc.warn(err);
+      }
+      if (!self.animComp) {
+        self.animComp = self.node.getComponent(cc.Animation);
+      }
+      self.animComp._clips = animClips;
+      switch (self.state) {
+        case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
+        case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
+          self.walkingAnimClips = animClips;
+          break;
+        default:
+          self.stayingAnimClips = animClips;
+          break;
+      }
+      if (cb) {
+        cb(true);
+      }
+    });
   },
 });

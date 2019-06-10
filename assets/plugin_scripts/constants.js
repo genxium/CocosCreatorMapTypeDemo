@@ -34,53 +34,12 @@ var constants = {
   },
   NPC_NUM: 60,
   NPC_ANIM: {
-    GUEST01: {
-      NAME: "GUEST01", // Used for indexing to this object, same for others.
-      DIR_PATH: "animation/Guest_1"
-    },
-    GUEST02: {
-      NAME: "GUEST02",
-      DIR_PATH: "animation/Guest_2"
-    },
-    GUEST03: {
-      NAME: "GUEST03",
-      DIR_PATH: "animation/Guest_3"
-    },
-    GUEST04: {
-      NAME: "GUEST04",
-      DIR_PATH: "animation/Guest_4"
-    },
-  },
-  WANDERING_NPC_ANIM: {
-    DOG: {
-      WALKING: "animation/Dog/Walking",
-      STOPPED: "animation/Dog/Resting",
-    },
-    HEN: {
-      WALKING: "animation/Hen/Walking",
-      STOPPED: "animation/Hen/StoppedEating",
+    SPECIES: {
+      DUCK: "DUCK",
     },
     DUCK: {
       WALKING: "animation/Duck/Walking",
-      STOPPED: "animation/Duck/Flying",
-    },
-  },
-  PATROL_NPC_ANIM: {
-    PATROL_NPC01: {
-      NAME: "PATROL_NPC1",
-      DIR_PATH: "animation/PatrolNpc_1"
-    },
-    GUEST02: {
-      NAME: "GUEST02",
-      DIR_PATH: "animation/Guest_2"
-    },
-    GUEST03: {
-      NAME: "GUEST03",
-      DIR_PATH: "animation/Guest_3"
-    },
-    GUEST04: {
-      NAME: "GUEST04",
-      DIR_PATH: "animation/Guest_4"
+      STAYING: "animation/Duck/Flying",
     },
   },
   SOCKET_EVENT: {
