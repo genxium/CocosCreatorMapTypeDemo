@@ -462,7 +462,7 @@
       "__id__": 1
     },
     "_enabled": true,
-    "speed": 33,
+    "speed": 300,
     "lastMovedAt": 0,
     "eps": 0.1,
     "magicLeanLowerBound": 0.414,

@@ -59,14 +59,31 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
               }
             }  
           } 
+
+          if (null != window.reverseStatefulBuildableFollowingNpcDestinationDict && null != window.reverseStatefulBuildableFollowingNpcDestinationDict[discretePosXInMap]) {
+            const reverseStatefulBuildableFollowingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[discretePosXInMap][discretePosYInMap];
+            if (null != reverseStatefulBuildableFollowingNpcDestinationDictRecord) {
+              const statefulBuildableFollowingNpcsBoundForThisGrid = Object.values(reverseStatefulBuildableFollowingNpcDestinationDictRecord);  
+              for (let statefulBuildableFollowingNpc of statefulBuildableFollowingNpcsBoundForThisGrid) {
+                statefulBuildableFollowingNpc.refreshCurrentDestination();
+              }
+            }  
+          } 
         }
       }
     }
   }
+
   for (let k in window.mapIns.homingNpcScriptInsDict) {
     const homingNpc = window.mapIns.homingNpcScriptInsDict[k]; 
     homingNpc.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
     homingNpc.restartPatrolling();
+  }  
+
+  for (let k in window.mapIns.statefulBuildableFollowingNpcScriptInsDict) {
+    const statefulBuildableFollowingNpc = window.mapIns.statefulBuildableFollowingNpcScriptInsDict[k]; 
+    statefulBuildableFollowingNpc.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
+    statefulBuildableFollowingNpc.restartPatrolling();
   }  
 };
 
@@ -96,7 +113,7 @@ const NEIGHBOUR_DISCRETE_OFFSETS = [{
   dy: 1
 }];
 
-window.findPathWithMapDiscretizingAStar = function(continuousSrcPtInMapNode, continuousDstPtInMapNode, eps, thisPlayerCollider, barrierColliders, controlledPlayerColliders, mapNode, maxExpanderTrialCount) {
+window.findPathWithMapDiscretizingAStar = function(continuousSrcPtInMapNode, continuousDstPtInMapNode, eps, thisPlayerCollider, barrierColliders, controlledPlayerColliders, mapNode, maxExpanderTrialCount, discreteBarrierGridsToIgnore) {
   const tiledMapIns = mapNode.getComponent(cc.TiledMap); // This is a magic name.
   const mapSizeDiscrete = tiledMapIns.getMapSize();
   if (null == maxExpanderTrialCount) {
@@ -198,7 +215,12 @@ window.findPathWithMapDiscretizingAStar = function(continuousSrcPtInMapNode, con
       if (true == closedSet.has(discreteNeighbourPosDesc)) {
         continue;
       }
-      if (cachedKnownBarrierGridDict[discreteNeighbourPos.x] && true == cachedKnownBarrierGridDict[discreteNeighbourPos.x][discreteNeighbourPos.y]) {
+
+      if (
+        (cachedKnownBarrierGridDict[discreteNeighbourPos.x] && true == cachedKnownBarrierGridDict[discreteNeighbourPos.x][discreteNeighbourPos.y])
+        && 
+        (null == discreteBarrierGridsToIgnore || null == discreteBarrierGridsToIgnore[discreteNeighbourPos.x] || true != discreteBarrierGridsToIgnore[discreteNeighbourPos.x][discreteNeighbourPos.y])
+        ) {
         // cc.log(`discreteNeighbourPos == (${discreteNeighbourPos.x}, ${discreteNeighbourPos.y}) is a knownBarrierGrid.`);
         continue;
       }

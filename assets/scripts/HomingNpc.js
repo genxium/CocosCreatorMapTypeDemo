@@ -172,6 +172,7 @@ module.export = cc.Class({
     let g = drawer.getComponent(cc.Graphics);
     g.lineWidth = 2;
     if (CC_DEBUG) {
+      g.clear();
       g.moveTo(self.node.position.x, self.node.position.y);
     }
     for (let i = 0; i < stops.length; ++i) {

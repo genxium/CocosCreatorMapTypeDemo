@@ -161,7 +161,9 @@ cc.Class({
     }
     const touchLocation = event._touches[0].getLocation();
     const touchPosInCamera = cc.v2(touchLocation.x, touchLocation.y).sub(cc.v2(self.canvasNode.width * self.canvasNode.anchorX, self.canvasNode.height * self.canvasNode.anchorY)).div(self.mainCamera.zoomRatio);
-    theListenerNode.statefulBuildableInstanceAtTouchStart = self.mapScriptIns.findStatefulBuildableInstanceAtPosition(touchPosInCamera); 
+    if (null != self.mapScriptIns.findStatefulBuildableInstanceAtPosition) {
+      theListenerNode.statefulBuildableInstanceAtTouchStart = self.mapScriptIns.findStatefulBuildableInstanceAtPosition(touchPosInCamera); 
+    }
   },
 
   isMapOverMoved(cameraPos) {

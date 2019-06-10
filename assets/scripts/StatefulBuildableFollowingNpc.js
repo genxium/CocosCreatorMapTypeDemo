@@ -12,8 +12,6 @@ window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE = {
   STAYING_AT_DESTINATION_AFTER_MOVING_IN: 11, // A.k.a. staying at "grandSrc".
 };
 
-const WALKING_SPEED = 200;
-
 module.export = cc.Class({
   extends: BasePlayer,
 
@@ -44,7 +42,6 @@ module.export = cc.Class({
     this.state = STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN;
     this.movementStops = null;
     this.drawer = null;
-    this.speed = 0;
     this.stayingAnimClips = null;
     this.walkingAnimClips = null;
   },
@@ -111,8 +108,10 @@ module.export = cc.Class({
         break;
     }
 
-    this.speed = 0;
-    this.setAnim(this.speciesName, null);
+    self.setAnim(self.speciesName, () => {
+      const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
+      self.animComp.play();
+    });
   },
 
   transitToStuck() {
@@ -128,11 +127,14 @@ module.export = cc.Class({
         break;
     }
 
-    this.speed = 0;
-    this.setAnim(this.speciesName, null);
+    self.setAnim(self.speciesName, () => {
+      const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
+      self.animComp.play();
+    });
   },
 
   transitToMoving() {
+    const self = this;
     switch (this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_IN:
@@ -147,14 +149,18 @@ module.export = cc.Class({
       default:
         break;
     }
-    this.speed = WALKING_SPEED;
-    this.setAnim(this.speciesName, null);
+    self.setAnim(self.speciesName, () => {
+      const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
+      self.animComp.play();
+    });
   },
 
   refreshGrandSrcAndCurrentDestination() {
     const self = this;
     self.preGrandSrc = self.grandSrc;
     self.grandSrc = self.boundStatefulBuildable.fixedSpriteCentreContinuousPos.add(self.boundStatefulBuildable.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); // Temporarily NOT seeing the "barrier grids occupied by `boundStatefulBuildable`" as a barrier to its own following NPCs. -- YFLu
+
+    self.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN; 
     self.refreshCurrentDestination();
   },
 
@@ -182,29 +188,21 @@ module.export = cc.Class({
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_WHILE_MOVING_OUT:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN:
-        if (null != self.currentDestination) {
-          previousDiscretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
-        }
-
-        self.currentDestination = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.grandSrc, 5);
-        if (null == self.currentDestination) {
-          self.transitToStuck();
-        } else {
-          discretizedDestinaion = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentDestination, cc.v2(0, 0));
-        }
+        // Deliberately left blank. -- YFLu
         break;
       default:
         break;
     }
+
     if (null != previousDiscretizedDestinaion) {
-      let previousReverseHomingNpcDestinationDictRecord = null;
+      let previousStatefulBuildableFollowingNpcDestinationDictRecord = null;
       if (null != window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x]) {
-        previousReverseHomingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y];
+        previousStatefulBuildableFollowingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y];
       }
-      if (null != previousReverseHomingNpcDestinationDictRecord && null != previousReverseHomingNpcDestinationDictRecord[self.node.uuid]) {
-        delete previousReverseHomingNpcDestinationDictRecord[self.node.uuid];
+      if (null != previousStatefulBuildableFollowingNpcDestinationDictRecord && null != previousStatefulBuildableFollowingNpcDestinationDictRecord[self.node.uuid]) {
+        delete previousStatefulBuildableFollowingNpcDestinationDictRecord[self.node.uuid];
         // Lazy clearance.
-        if (0 >= Object.keys(previousReverseHomingNpcDestinationDictRecord).length) {
+        if (0 >= Object.keys(previousStatefulBuildableFollowingNpcDestinationDictRecord).length) {
           window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y] = null;
           delete window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x][previousDiscretizedDestinaion.y];
           if (0 >= Object.keys(window.reverseStatefulBuildableFollowingNpcDestinationDict[previousDiscretizedDestinaion.x]).length) {
@@ -236,89 +234,97 @@ module.export = cc.Class({
       self.movementStops = null;
     } else {
       const npcBarrierCollider = self.node.getComponent(cc.CircleCollider);
-      self.movementStops = window.findPathWithMapDiscretizingAStar(self.node.position, self.currentDestination, 0.01 /* Hardcoded temporarily */ , npcBarrierCollider, self.mapIns.barrierColliders, null, self.mapNode);
+      let discreteBarrierGridsToIgnore = {};
+      const discreteWidth = self.boundStatefulBuildable.discreteWidth;
+      const discreteHeight = self.boundStatefulBuildable.discreteHeight;
+      const anchorTileDiscretePos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.boundStatefulBuildable.node.position.add(self.boundStatefulBuildable.estimatedSpriteCentreToAnchorTileCentreContinuousOffset), cc.v2(0, 0));
+
+      for (let discreteX = anchorTileDiscretePos.x; discreteX < (anchorTileDiscretePos.x + discreteWidth); ++discreteX) {
+        if (null == discreteBarrierGridsToIgnore[discreteX]) {
+          discreteBarrierGridsToIgnore[discreteX] = {};
+        }
+        for (let discreteY = anchorTileDiscretePos.y; discreteY < (anchorTileDiscretePos.y + discreteHeight); ++discreteY) {
+          discreteBarrierGridsToIgnore[discreteX][discreteY] = true;
+        }  
+      }  
+      
+      self.movementStops = window.findPathWithMapDiscretizingAStar(self.node.position, self.currentDestination, 0.01 /* Hardcoded temporarily */ , npcBarrierCollider, self.mapIns.barrierColliders, null, self.mapNode, null, discreteBarrierGridsToIgnore);
     }
+    console.log("For statefulBuildableFollowingNpcComp.uuid == ", self.uuid, ", found steps from ", self.node.position, " to ", self.currentDestination, " :", self.movementStops);
+
     return self.movementStops;
   },
 
   restartPatrolling() {
     const self = this;
-    self.node.stopAllActions();
-    const stops = self.movementStops;
-    if (null == stops || 0 >= stops.length) {
-      return;
-    }
-    let ccSeqActArray = [];
-    if (null == self.drawer) {
-      self.drawer = self.node.getChildByName("Drawer");
-      self.drawer.parent = self.mapNode;
-    }
-    const drawer = self.drawer;
-    drawer.setPosition(cc.v2(0, 0));
-    setLocalZOrder(drawer, 20);
-    let g = drawer.getComponent(cc.Graphics);
-    g.lineWidth = 2;
-    g.strokeColor = cc.Color.WHITE;
-    if (CC_DEBUG) {
-      g.moveTo(self.node.position.x, self.node.position.y);
-    }
-    for (let i = 0; i < stops.length; ++i) {
-      const stop = cc.v2(stops[i]);
-      if (i > 0) {
-        const preStop = cc.v2(stops[i - 1]);
-        ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / self.speed, stop));
-      } else {
-        const preStop = self.node.position;
-        ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / self.speed, stop));
+    const actualExecution = () => {
+      self.node.stopAllActions();
+      const stops = self.movementStops;
+      if (null == stops || 0 >= stops.length) {
+        return;
       }
-
-      if (i < stops.length - 1) {
-        const nextStop = cc.v2(stops[i + 1]);
-        const tmpVec = nextStop.sub(stop);
-        const diffVec = {
-          dx: tmpVec.x,
-          dy: tmpVec.y,
-        };
-
-        const discretizedDirection = self.mapIns.ctrl.discretizeDirection(diffVec.dx, diffVec.dy, self.mapIns.ctrl.joyStickEps);
-
-        if (CC_DEBUG) {
-          g.lineTo(nextStop.x, nextStop.y);
-          g.circle(nextStop.x, nextStop.y, 5);
+      let ccSeqActArray = [];
+      if (null == self.drawer) {
+        self.drawer = self.node.getChildByName("Drawer");
+        self.drawer.parent = self.mapNode;
+      }
+      const drawer = self.drawer;
+      drawer.setPosition(cc.v2(0, 0));
+      setLocalZOrder(drawer, 20);
+      let g = drawer.getComponent(cc.Graphics);
+      g.lineWidth = 2;
+      g.strokeColor = cc.Color.WHITE;
+      if (CC_DEBUG) {
+        g.clear();
+        g.moveTo(self.node.position.x, self.node.position.y);
+      }
+      for (let i = 0; i < stops.length; ++i) {
+        const stop = cc.v2(stops[i]);
+        if (i > 0) {
+          const preStop = cc.v2(stops[i - 1]);
+          ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / self.speed, stop));
+        } else {
+          const preStop = self.node.position;
+          ccSeqActArray.push(cc.moveTo(stop.sub(preStop).mag() / self.speed, stop));
         }
-        ccSeqActArray.push(cc.callFunc(() => {
-          self.scheduleNewDirection(discretizedDirection);
-        }, self));
+
+        if (i < stops.length - 1) {
+          const nextStop = cc.v2(stops[i + 1]);
+          const tmpVec = nextStop.sub(stop);
+          const diffVec = {
+            dx: tmpVec.x,
+            dy: tmpVec.y,
+          };
+
+          const discretizedDirection = self.mapIns.ctrl.discretizeDirection(diffVec.dx, diffVec.dy, self.mapIns.ctrl.joyStickEps);
+
+          if (CC_DEBUG) {
+            g.lineTo(nextStop.x, nextStop.y);
+            g.circle(nextStop.x, nextStop.y, 5);
+          }
+          ccSeqActArray.push(cc.callFunc(() => {
+            self.scheduleNewDirection(discretizedDirection);
+          }, self));
+        }
       }
+      if (CC_DEBUG) {
+        g.stroke();
+      }
+
+      ccSeqActArray.push(cc.callFunc(() => {
+        if (CC_DEBUG) {
+          g.clear();
+        }
+        self.transitToStaying();
+      }, self));
+
+      self.node.runAction(cc.sequence(ccSeqActArray));
+    };
+    if (null == self.animComp._clips || 0 >= self.animComp._clips.length) {
+      self.setAnim(self.speciesName, actualExecution);
+    } else {
+      actualExecution();
     }
-    if (CC_DEBUG) {
-      g.stroke();
-    }
-
-    ccSeqActArray.push(cc.callFunc(() => {
-      if (cc.isValid(self.node)) {
-        drawer.getComponent(cc.Graphics).clear();
-      }
-
-      switch (self.state) {
-        case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
-          self.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT;
-          self.refreshCurrentDestination();
-          self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
-          self.restartPatrolling();
-          break;
-        case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
-          self.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN;
-          self.refreshCurrentDestination();
-          self.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
-          self.restartPatrolling();
-          break;
-        default:
-          break;
-      }
-    }, self));
-
-    self.node.runAction(cc.sequence(ccSeqActArray));
   },
 
   onCollisionEnter(otherCollider, selfCollider) {
@@ -370,6 +376,9 @@ module.export = cc.Class({
     const self = this;
     let dirPath = null;
 
+    if (!self.animComp) {
+      self.animComp = self.node.getComponent(cc.Animation);
+    }
     switch (self.state) {
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
@@ -395,9 +404,6 @@ module.export = cc.Class({
     cc.loader.loadResDir(dirPath, cc.AnimationClip, function(err, animClips, urls) {
       if (null != err) {
         cc.warn(err);
-      }
-      if (!self.animComp) {
-        self.animComp = self.node.getComponent(cc.Animation);
       }
       self.animComp._clips = animClips;
       switch (self.state) {
