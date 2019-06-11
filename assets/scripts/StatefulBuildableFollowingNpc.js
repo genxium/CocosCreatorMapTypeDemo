@@ -391,6 +391,7 @@ module.export = cc.Class({
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
         if (null != self.walkingAnimClips) {
+          self.animComp.stop();
           for (let clip of self.animComp.getClips()) {
             self.animComp.removeClip(clip);
           }
@@ -406,6 +407,7 @@ module.export = cc.Class({
         break;
       default:
         if (null != self.stayingAnimClips) {
+          self.animComp.stop();
           for (let clip of self.animComp.getClips()) {
             self.animComp.removeClip(clip);
           }
@@ -429,6 +431,7 @@ module.export = cc.Class({
         case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
         case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
           self.walkingAnimClips = animClips;
+          self.animComp.stop();
           for (let clip of self.animComp.getClips()) {
             self.animComp.removeClip(clip);
           }
@@ -438,6 +441,7 @@ module.export = cc.Class({
           break;
         default:
           self.stayingAnimClips = animClips;
+          self.animComp.stop();
           for (let clip of self.animComp.getClips()) {
             self.animComp.removeClip(clip);
           }
