@@ -79,7 +79,7 @@ module.export = cc.Class({
     });
   },
 
-  transitToStaying() {
+  transitToStaying(cb) {
     const self = this;
     // Don't execute the calculation of "continuous -> discrete coordinate" before checking the current state.
     let discretizedSelfNodePos = null;
@@ -110,11 +110,14 @@ module.export = cc.Class({
 
     self.setAnim(self.speciesName, () => {
       const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
-      self.animComp.play();
+      self.animComp.play(clipKey);
+      if (cb) {
+        cb();
+      }
     });
   },
 
-  transitToStuck() {
+  transitToStuck(cb) {
     const self = this;
     switch (this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
@@ -129,11 +132,14 @@ module.export = cc.Class({
 
     self.setAnim(self.speciesName, () => {
       const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
-      self.animComp.play();
+      self.animComp.play(clipKey);
+      if (cb) {
+        cb();
+      }
     });
   },
 
-  transitToMoving() {
+  transitToMoving(cb) {
     const self = this;
     switch (this.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_OUT:
@@ -151,7 +157,10 @@ module.export = cc.Class({
     }
     self.setAnim(self.speciesName, () => {
       const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
-      self.animComp.play();
+      self.animComp.play(clipKey);
+      if (cb) {
+        cb();
+      }
     });
   },
 
@@ -320,11 +329,7 @@ module.export = cc.Class({
 
       self.node.runAction(cc.sequence(ccSeqActArray));
     };
-    if (null == self.animComp._clips || 0 >= self.animComp._clips.length) {
-      self.setAnim(self.speciesName, actualExecution);
-    } else {
-      actualExecution();
-    }
+    self.transitToMoving(actualExecution);
   },
 
   onCollisionEnter(otherCollider, selfCollider) {
@@ -379,10 +384,19 @@ module.export = cc.Class({
     if (!self.animComp) {
       self.animComp = self.node.getComponent(cc.Animation);
     }
-    switch (self.state) {
+
+    const selfStateWhenCalled = self.state;
+
+    switch (selfStateWhenCalled) {
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
         if (null != self.walkingAnimClips) {
+          for (let clip of self.animComp.getClips()) {
+            self.animComp.removeClip(clip);
+          }
+          for (let clip of self.walkingAnimClips) {
+            self.animComp.addClip(clip);
+          }
           if (cb) {
             cb(false);
           }
@@ -392,6 +406,12 @@ module.export = cc.Class({
         break;
       default:
         if (null != self.stayingAnimClips) {
+          for (let clip of self.animComp.getClips()) {
+            self.animComp.removeClip(clip);
+          }
+          for (let clip of self.stayingAnimClips) {
+            self.animComp.addClip(clip);
+          }
           if (cb) {
             cb(false);
           }
@@ -405,14 +425,25 @@ module.export = cc.Class({
       if (null != err) {
         cc.warn(err);
       }
-      self.animComp._clips = animClips;
-      switch (self.state) {
+      switch (selfStateWhenCalled) {
         case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
         case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
           self.walkingAnimClips = animClips;
+          for (let clip of self.animComp.getClips()) {
+            self.animComp.removeClip(clip);
+          }
+          for (let clip of animClips) {
+            self.animComp.addClip(clip);
+          }
           break;
         default:
           self.stayingAnimClips = animClips;
+          for (let clip of self.animComp.getClips()) {
+            self.animComp.removeClip(clip);
+          }
+          for (let clip of animClips) {
+            self.animComp.addClip(clip);
+          }
           break;
       }
       if (cb) {
