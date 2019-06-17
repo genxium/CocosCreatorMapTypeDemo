@@ -203,11 +203,19 @@ var constants = {
   STATELESS_BUILDABLE_RESOURCE_PATH: {
     ROOT_PATH: "textures/StatelessBuildable",
   },
+  ITEM_RESOURCE_PATH: "textures/GUIElements",
   CAMERA_AUTO_TRANSLATION: {
     BOUNDARY_WEIGHT: 0.2,
     MOVE_PIXELS: 20,
     MOVE_INTERVAL_MILLS: 30,
     FAST_MOVE_BOUNDARY_WEIGHT: 0.3,
+  },
+  STATELESS_BUILDABLE_ID: {
+    HEADQUARTER: 1,
+    RESTAURANT: 3,
+  },
+  ITEM_TARGET_EVENT_TYPE: {
+    ADD_COIN: 0,
   },
 };
 window.language = "en";

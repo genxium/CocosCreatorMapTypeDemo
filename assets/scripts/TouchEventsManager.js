@@ -194,7 +194,10 @@ cc.Class({
         }
         self.mainCameraNode.setPosition(cameraPos);
       } else {
-        if (null != self.mapScriptIns.onMovingBuildableInstance) {
+        if (self.mapScriptIns.isPositioningNewStatefulBuildableInstance()
+         || self.mapScriptIns.isEditingExistingStatefulBuildableInstance()
+         || self.mapScriptIns.isDraggingItem()
+        ) {
           /*
           * WARNING: The following equations might NOT take into account "mainCamera.zoomRatio", you should print the value of "touchLocation" roughly at the same
           * position on your screen before and after a zooming/pinch to see wheterh the values are different. If the printed values are the same then the following
@@ -207,7 +210,17 @@ cc.Class({
           if (!self.mapScriptIns.cameraAutoMove || !self.tryStartCameraAutoMove(event, touchLocation, touchPosInCamera)) {
             self.cancelCameraAutoMove();
           }
-          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
+          if (
+            (self.mapScriptIns.isPositioningNewStatefulBuildableInstance() || self.mapScriptIns.isEditingExistingStatefulBuildableInstance())
+            && null != self.mapScriptIns.onMovingBuildableInstance
+          ) {
+            self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
+          } else if (
+             self.mapScriptIns.isDraggingItem()
+          && self.mapScriptIns.onDraggingItem  
+          ){
+            self.mapScriptIns.onDraggingItem(touchPosInCamera, transformedImmediateDiffVec);
+          }
         }
       }
     } else {
@@ -308,11 +321,20 @@ cc.Class({
         this.mapScriptIns.onSignlePointTouchended(event.currentTouch._point);
       }
     }
+    this.cancelDraggingItem();
   },
 
   _touchCancelEvent(event) {
     this.mapNode.dispatchEvent(event);
     this.cancelCameraAutoMove();
+    this.cancelDraggingItem();
+  },
+
+  cancelDraggingItem() {
+    const self = this;
+    if (self.mapScriptIns.isDraggingItem()) {
+      self.mapScriptIns.cancelDraggingItem && self.mapScriptIns.cancelDraggingItem();
+    }
   },
 
   update(dt) {
@@ -395,7 +417,17 @@ cc.Class({
           return;
         }
         self.mainCameraNode.setPosition(nextCameraPos);
-        self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
+        if (
+         (self.mapScriptIns.isPositioningNewStatefulBuildableInstance() || self.mapScriptIns.isEditingExistingStatefulBuildableInstance())
+          && null != self.mapScriptIns.onMovingBuildableInstance
+        ) {
+          self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
+        } else if (
+           self.mapScriptIns.isDraggingItem()
+        && self.mapScriptIns.onDraggingItem
+        ) {
+          self.mapScriptIns.onDraggingItem(touchPosInCamera, diffVec);
+        }
       }
     }
   },

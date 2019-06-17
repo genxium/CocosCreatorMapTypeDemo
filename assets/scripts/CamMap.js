@@ -33,6 +33,7 @@ cc.Class({
     this.statelessBuildableInstanceCardListNode = null;
     this.homingNpcScriptInsDict = {}; // Used at least for refreshing the whole collection of `HomingNpc`s.
     this.statefulBuildableFollowingNpcScriptInsDict = {}; // Used at least for refreshing the whole collection of `StatefulBuildableFollowingNpc`s.
+    this.itemListNode = null;
   },
 
   // LIFE-CYCLE CALLBACKS:
@@ -66,16 +67,41 @@ cc.Class({
 
     self.startedAtMillis = Date.now();
     self.setupInputControls();
+    function loadStatelssBuildableResource(cb) {
+      cc.loader.loadResDir(constants.STATELESS_BUILDABLE_RESOURCE_PATH.ROOT_PATH, cc.SpriteAtlas, function(err, altasArray) {
+        if (err) {
+          cc.error(err);
+          return;
+        }
+        self.widgetsAboveAllScriptIns.buildButton.node.active = true;
+        self.statelessBuildableInstanceSpriteAltasArray = altasArray;
+        cb && cb();
+      });
+    }
 
-    cc.loader.loadResDir(constants.STATELESS_BUILDABLE_RESOURCE_PATH.ROOT_PATH, cc.SpriteAtlas, function(err, altasArray) {
-      self.widgetsAboveAllScriptIns.buildButton.node.active = true;
-      if (err) {
-        cc.error(err);
-        return;
-      }
-      self.statelessBuildableInstanceSpriteAltasArray = altasArray;
-      self.sendGlobalBuildableLevelConfQuery();
+    function loadItemResource(cb) {
+      cc.loader.loadResDir(constants.ITEM_RESOURCE_PATH, cc.SpriteAtlas, function(err, altasArray) {
+        if (err) {
+          cc.error(err);
+          return;
+        }
+        self.itemSpriteAltas = {};
+        altasArray.forEach((altas) => {
+          let spriteFrames = altas.getSpriteFrames();
+          spriteFrames.forEach((spriteFram) => {
+            self.itemSpriteAltas[spriteFram.name] = spriteFram;
+          });
+        });
+        cb && cb();
+      });
+    }
+
+    loadStatelssBuildableResource(() => {
+      loadItemResource(() => {
+        self.sendGlobalBuildableLevelConfQuery();
+      });
     });
+
   },
 
 
@@ -766,6 +792,11 @@ cc.Class({
         ]
       },
     ];
+    self.itemListData = [
+      { name: 'Coin', targetBuildableId: constants.STATELESS_BUILDABLE_ID.HEADQUARTER, targetEventType: constants.ITEM_TARGET_EVENT_TYPE.ADD_COIN, targetEventValue: 100 },
+    ];
+    self.initItemListData();
+    self.refreshItemListInstance;
     self.refreshStatelessBuildableInstances(self.AllStatelessBuildableInstances);
     let playerBuildableBindingList = cc.sys.localStorage.getItem("playerBuildableBindingList");
     if (null != playerBuildableBindingList) {
@@ -784,6 +815,8 @@ cc.Class({
 
     // self.spawnHomingNpcs();
     self.spawnOrRefreshStatefulBuildableFollowingNpcs();
+
+    self.refreshItemListNode();
   },
 
   sendPlayerSyncDataUpsync(queryParam) {
@@ -1029,4 +1062,55 @@ cc.Class({
       return null;
     }
   },
+
+  initItemListData() {
+    const self = this;
+    self.itemListData.forEach(itemData => {
+      itemData.appearance = self.itemSpriteAltas[itemData.name];
+    })
+  },
+
+  refreshItemListNode() {
+    const self = this;
+    const itemListData = self.itemListData;
+    if (!self.itemListNode) {
+      self.itemListNode = cc.instantiate(self.itemListPrefab);
+      safelyAddChild(self.widgetsAboveAllNode, self.itemListNode);
+    }
+    let itemListIns = self.itemListNode.getComponent('ItemList');
+    itemListIns.init(self);
+    itemListIns.refreshItemList(itemListData);
+  },
+
+  onStartDraggingItem(item) {
+    const self = this, itemNode = item.node;
+    if (!self.addDraggingItem()) {
+      cc.warn('Duplicate addDraggingItem()!');
+      return;
+    }
+    self.touchingItem = item;
+    self.followingItem = cc.instantiate(item.node);
+    safelyAddChild(self.node, self.followingItem);
+    setLocalZOrder(self.followingItem, window.CORE_LAYER_Z_INDEX.DRAGGING_ITEM);
+  },
+
+  onDraggingItem(touchPosInCamera, transformedImmediateDiffVec) {
+    const self = this;
+    if (!self.isDraggingItem()) {
+      self.warn('ircorrect state:', mapIns.state.toString(2));
+      return;
+    }
+    self.followingItem.position = touchPosInCamera;
+  },
+
+  cancelDraggingItem() {
+    const self = this;
+    self.removeDraggingItem();
+    if (self.followingItem) {
+      self.followingItem.parent.removeChild(self.followingItem);
+    }
+    self.touchingItem = null;
+    self.followingItem = null;
+  },
+
 });

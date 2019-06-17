@@ -4,6 +4,11 @@ window.ALL_MAP_STATES = {
   SHOWING_MODAL_POPUP: (1 << 2),
   IN_NARRATIVE_SCENE: (1 << 3),
   EDITING_EXISTING_STATEFUL_BUILDABLE_INSTANCE: (1 << 4),
+  /*
+   * When in DRAGGING_ITEM state, the following state are excluded:
+   * POSITIONING_NEW_STATEFUL_BUILDABLE_INSTANCE, EDITING_EXISTING_STATEFUL_BUILDABLE_INSTANCE
+   */
+  DRAGGING_ITEM: (1 << 5),
 };
 
 module.export = cc.Class({
@@ -87,6 +92,16 @@ module.export = cc.Class({
     return this.removeStateBit(ALL_MAP_STATES.SHOWING_MODAL_POPUP);
   },
 
+  addDraggingItem() {
+    return this.addStateBit(ALL_MAP_STATES.DRAGGING_ITEM);
+  },
+
+  removeDraggingItem() {
+    return this.removeStateBit(ALL_MAP_STATES.DRAGGING_ITEM);
+  },
+  isDraggingItem() {
+    return this.havingStateBit(ALL_MAP_STATES.DRAGGING_ITEM);
+  },
   isPurelyVisual() {
     return (0 < (this.state & ALL_MAP_STATES.VISUAL)) && (0 == (this.state & ~ALL_MAP_STATES.VISUAL));
   }, 
