@@ -217,7 +217,7 @@ cc.Class({
             self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, transformedImmediateDiffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
           } else if (
              self.mapScriptIns.isDraggingItem()
-          && self.mapScriptIns.onDraggingItem  
+          && self.mapScriptIns.onDraggingItem
           ){
             self.mapScriptIns.onDraggingItem(touchPosInCamera, transformedImmediateDiffVec);
           }

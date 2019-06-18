@@ -813,7 +813,6 @@ cc.Class({
       { name: 'Coin', targetBuildableId: constants.STATELESS_BUILDABLE_ID.HEADQUARTER, targetEventType: constants.ITEM_TARGET_EVENT_TYPE.ADD_COIN, targetEventValue: 100 },
     ];
     self.initItemListData();
-    self.refreshItemListInstance;
     self.refreshStatelessBuildableInstances(self.AllStatelessBuildableInstances);
     let playerBuildableBindingList = cc.sys.localStorage.getItem("playerBuildableBindingList");
     if (null != playerBuildableBindingList) {
@@ -1141,7 +1140,7 @@ cc.Class({
   },
 
   onItemAccept(statefulBuildableInstance) {
-    const self = this; 
+    const self = this;
     if (statefulBuildableInstance.playerBuildableBinding.buildable.id == constants.STATELESS_BUILDABLE_ID.HEADQUARTER) {
       cc.log("increase glod: 100");
     }

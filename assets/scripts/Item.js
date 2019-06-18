@@ -40,7 +40,7 @@ cc.Class({
         self.mapIns.onStartDraggingItem && self.mapIns.onStartDraggingItem(self, evt._touches[0].getLocation());
       }
       if (self.dragging) {
-        self.dispatchEvent(cc.Node.EventType.TOUCH_MOVE, evt); 
+        self.dispatchEvent(cc.Node.EventType.TOUCH_MOVE, evt);
       }
     });
     self.node.on(cc.Node.EventType.TOUCH_END, self.cancelDraggingItem.bind(self));
