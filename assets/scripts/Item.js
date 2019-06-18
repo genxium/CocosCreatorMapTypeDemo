@@ -16,6 +16,11 @@ cc.Class({
     const self = this;
     self.data = itemData;
     self.appearance.spriteFrame = itemData.appearance;
+    if (itemData.disabled) {
+      self.appearance.setState(cc.Sprite.State.GRAY);
+    } else {
+      self.appearance.setState(cc.Sprite.State.NORMAL);
+    }
   },
 
   init(mapIns) {
@@ -26,6 +31,10 @@ cc.Class({
     }
     self.eventInited = true;
     self.node.on(cc.Node.EventType.TOUCH_START, (evt) => {
+      let data = self.data;
+      if (data.disabled) {
+        return;
+      }
       if (!self.mapIns.isPurelyVisual()) {
         return;
       }
@@ -34,15 +43,7 @@ cc.Class({
       // 相关参数：target, _touches[0]
       self.dispatchEvent(cc.Node.EventType.TOUCH_START, evt);
     });
-    self.node.on(cc.Node.EventType.TOUCH_MOVE, (evt) => {
-      if (self.mapIns.isPurelyVisual() && !self.dragging && !self.isTouchPointInsideBoundingNode(evt.getLocation())) {
-        self.dragging = true;
-        self.mapIns.onStartDraggingItem && self.mapIns.onStartDraggingItem(self, evt._touches[0].getLocation());
-      }
-      if (self.dragging) {
-        self.dispatchEvent(cc.Node.EventType.TOUCH_MOVE, evt);
-      }
-    });
+    self.node.on(cc.Node.EventType.TOUCH_MOVE, self.draggingItem.bind(self));
     self.node.on(cc.Node.EventType.TOUCH_END, self.cancelDraggingItem.bind(self));
     self.node.on(cc.Node.EventType.TOUCH_CANCEL, self.cancelDraggingItem.bind(self));
   },
@@ -90,8 +91,27 @@ cc.Class({
     return inside;
   },
 
+  draggingItem(evt) {
+    const self = this;
+    let data = self.data;
+    if (data.disabled) {
+      return;
+    }
+    if (self.mapIns.isPurelyVisual() && !self.dragging && !self.isTouchPointInsideBoundingNode(evt.getLocation())) {
+      self.dragging = true;
+      self.mapIns.onStartDraggingItem && self.mapIns.onStartDraggingItem(self, evt._touches[0].getLocation());
+    }
+    if (self.dragging) {
+      self.dispatchEvent(cc.Node.EventType.TOUCH_MOVE, evt);
+    }
+  },
+
   cancelDraggingItem(evt) {
     const self = this;
+    let data = self.data;
+    if (data.disabled) {
+      return;
+    }
     if (self.mapIns.isDraggingItem()) {
       if (!self.isTouchPointInsideBoundingNode(evt.getLocation())) {
         self.dispatchEvent(cc.Node.EventType.TOUCH_END, evt);
@@ -102,6 +122,10 @@ cc.Class({
 
   dispatchEvent(type, evt) {
     const self = this;
+    let data = self.data;
+    if (data.disabled) {
+      return;
+    }
     let newEvt = new cc.Event.EventTouch(evt._touches, true);
     newEvt.type = type;
     newEvt.target = self.mapIns.node;
