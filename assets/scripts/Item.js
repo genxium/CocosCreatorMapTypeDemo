@@ -16,15 +16,54 @@ cc.Class({
   init(mapIns) {
     const self = this;
     self.mapIns = mapIns;
-    self.node.on(cc.Node.EventType.TOUCH_START, (event) => {
-      self.mapIns.onStartDraggingItem && self.mapIns.onStartDraggingItem(self);
+    if (self.eventInited) {
+      return;
+    }
+    self.eventInited = true;
+    self.node.on(cc.Node.EventType.TOUCH_START, (evt) => {
+      if (!self.mapIns.isPurelyVisual()) {
+        return;
+      }
+      self.dragging = false;
       // 鼠标穿透至mapIns，即调用mapIns的TOUCH_START
       // 相关参数：target, _touches[0]
-      let evt = new cc.Event.EventTouch([event._touches[0]], true);
-      evt.type = cc.Node.EventType.TOUCH_START;
-      evt.target = self.mapIns.node;
-      self.mapIns.node.dispatchEvent(evt);
+      self.dispatchEvent(cc.Node.EventType.TOUCH_START, evt);
     });
+    self.node.on(cc.Node.EventType.TOUCH_MOVE, (evt) => {
+      if (self.mapIns.isPurelyVisual() && !self.dragging && !self.node.getBoundingBox().contains(evt.getLocation())) {
+        self.dragging = true;
+        self.mapIns.onStartDraggingItem && self.mapIns.onStartDraggingItem(self, evt._touches[0].getLocation());
+      }
+      self.dispatchEvent(cc.Node.EventType.TOUCH_MOVE, evt); 
+    });
+    self.node.on(cc.Node.EventType.TOUCH_END, self.cancelDraggingItem.bind(self));
+    self.node.on(cc.Node.EventType.TOUCH_CANCEL, self.cancelDraggingItem.bind(self));
+  },
+
+  onLoad() {
+    const self = this;
+    self.eventInited = false;
+    self.dragging = false;
+  },
+
+  cancelDraggingItem(evt) {
+    const self = this;
+    if (self.mapIns.isDraggingItem()) {
+      if (!self.node.getBoundingBox().contains(evt.getLocation())) {
+        self.dispatchEvent(cc.Node.EventType.TOUCH_END, evt);
+      }
+      self.mapIns.onCancelDraggingItem && self.mapIns.onCancelDraggingItem();
+    }
+  },
+
+  dispatchEvent(type, evt) {
+    const self = this;
+    let newEvt = new cc.Event.EventTouch(evt._touches, true);
+    newEvt.type = type;
+    newEvt.target = self.mapIns.node;
+    newEvt.currentTouch = evt._touches[0];
+    newEvt.touch = evt._touches[0];
+    return self.mapIns.node.dispatchEvent(newEvt);
   },
 
   onLoad() {},

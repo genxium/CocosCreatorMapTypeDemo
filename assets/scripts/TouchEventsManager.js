@@ -321,20 +321,11 @@ cc.Class({
         this.mapScriptIns.onSignlePointTouchended(event.currentTouch._point);
       }
     }
-    this.cancelDraggingItem();
   },
 
   _touchCancelEvent(event) {
     this.mapNode.dispatchEvent(event);
     this.cancelCameraAutoMove();
-    this.cancelDraggingItem();
-  },
-
-  cancelDraggingItem() {
-    const self = this;
-    if (self.mapScriptIns.isDraggingItem()) {
-      self.mapScriptIns.cancelDraggingItem && self.mapScriptIns.cancelDraggingItem();
-    }
   },
 
   update(dt) {
@@ -409,24 +400,23 @@ cc.Class({
      && self.cameraAutoTranslationData.lastCalledAt + self.cameraAutoTranslation.MOVE_INTERVAL_MILLS <= Date.now()
     ) {
       const theListenerNode = event.target;
-      if (theListenerNode.statefulBuildableInstanceAtTouchStart == self.mapScriptIns.editingStatefulBuildableInstance) {
-        self.cameraAutoTranslationData.lastCalledAt = Date.now();
-        let { diffVec, touchPosInCamera, getNextCameraPos } = self.cameraAutoTranslationData;
-        let nextCameraPos = getNextCameraPos();
+      let { diffVec, touchPosInCamera, getNextCameraPos } = self.cameraAutoTranslationData;
+      let nextCameraPos = getNextCameraPos();
+      if (self.mapScriptIns.isDraggingItem() || self.mapScriptIns.isPositioningNewStatefulBuildableInstance() || self.mapScriptIns.isEditingExistingStatefulBuildableInstance()) {
         if (self.isMapOverMoved(nextCameraPos) || self.mapScriptIns.isEditingStatefulBuildableInstanceNodeOnBoundary()) {
           return;
         }
-        self.mainCameraNode.setPosition(nextCameraPos);
-        if (
-         (self.mapScriptIns.isPositioningNewStatefulBuildableInstance() || self.mapScriptIns.isEditingExistingStatefulBuildableInstance())
-          && null != self.mapScriptIns.onMovingBuildableInstance
-        ) {
+        self.cameraAutoTranslationData.lastCalledAt = Date.now();
+        if (theListenerNode.statefulBuildableInstanceAtTouchStart == self.mapScriptIns.editingStatefulBuildableInstance &&
+          (self.mapScriptIns.isPositioningNewStatefulBuildableInstance() || self.mapScriptIns.isEditingExistingStatefulBuildableInstance()) &&
+          null != self.mapScriptIns.onMovingBuildableInstance) {
+          self.mainCameraNode.setPosition(nextCameraPos);
           self.mapScriptIns.onMovingBuildableInstance(touchPosInCamera, diffVec, theListenerNode.statefulBuildableInstanceAtTouchStart);
-        } else if (
-           self.mapScriptIns.isDraggingItem()
-        && self.mapScriptIns.onDraggingItem
-        ) {
+        } else if (self.mapScriptIns.isDraggingItem() && self.mapScriptIns.onDraggingItem) {
+          self.mainCameraNode.setPosition(nextCameraPos);
           self.mapScriptIns.onDraggingItem(touchPosInCamera, diffVec);
+        } else {
+          self.cancelCameraAutoMove();
         }
       }
     }

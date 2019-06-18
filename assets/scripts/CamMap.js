@@ -86,11 +86,8 @@ cc.Class({
           return;
         }
         self.itemSpriteAltas = {};
-        altasArray.forEach((altas) => {
-          let spriteFrames = altas.getSpriteFrames();
-          spriteFrames.forEach((spriteFram) => {
-            self.itemSpriteAltas[spriteFram.name] = spriteFram;
-          });
+        altasArray.filter(x => x instanceof cc.SpriteFrame).forEach((spriteFram) => {
+          self.itemSpriteAltas[spriteFram.name] = spriteFram;
         });
         cb && cb();
       });
@@ -1100,10 +1097,10 @@ cc.Class({
       self.warn('ircorrect state:', mapIns.state.toString(2));
       return;
     }
-    self.followingItem.position = touchPosInCamera;
+    self.followingItem.position = self.ctrl.mainCameraNode.position.add(touchPosInCamera);
   },
 
-  cancelDraggingItem() {
+  onCancelDraggingItem() {
     const self = this;
     self.removeDraggingItem();
     if (self.followingItem) {
