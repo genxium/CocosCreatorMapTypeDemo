@@ -52,7 +52,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 150,
+      "width": 100,
       "height": 303
     },
     "_anchorPoint": {
@@ -387,10 +387,10 @@
   {
     "__type__": "cc.PrefabInfo",
     "root": {
-      "__id__": 8
+      "__id__": 1
     },
     "asset": {
-      "__uuid__": "6cb6213a-f1b9-48ef-ab24-24ebb61376c3"
+      "__uuid__": "586e7c94-b0fd-4403-848e-7cb35b2ffb05"
     },
     "fileId": "59wbZwWsFPoKtyC3iSkPvB",
     "sync": false
@@ -405,7 +405,7 @@
     "_enabled": true,
     "_layoutSize": {
       "__type__": "cc.Size",
-      "width": 150,
+      "width": 100,
       "height": 303
     },
     "_resize": 1,
@@ -439,7 +439,7 @@
     "alignMode": 1,
     "_target": null,
     "_alignFlags": 8,
-    "_left": 30,
+    "_left": 55,
     "_right": 0,
     "_top": 0,
     "_bottom": 0,

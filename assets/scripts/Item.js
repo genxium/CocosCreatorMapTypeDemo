@@ -5,7 +5,11 @@ cc.Class({
     appearance: {
       type: cc.Sprite,
       default: null,
-    }
+    },
+    boundingNode: {
+      type: cc.Node,
+      default: null,
+    },
   },
 
   setData(itemData) {
@@ -30,7 +34,7 @@ cc.Class({
       self.dispatchEvent(cc.Node.EventType.TOUCH_START, evt);
     });
     self.node.on(cc.Node.EventType.TOUCH_MOVE, (evt) => {
-      if (self.mapIns.isPurelyVisual() && !self.dragging && !self.node.getBoundingBox().contains(evt.getLocation())) {
+      if (self.mapIns.isPurelyVisual() && !self.dragging && !self.isTouchPointInsideBoundingNode(evt.getLocation())) {
         self.dragging = true;
         self.mapIns.onStartDraggingItem && self.mapIns.onStartDraggingItem(self, evt._touches[0].getLocation());
       }
@@ -46,13 +50,28 @@ cc.Class({
     self.dragging = false;
   },
 
+  getBoundingBoxToWorld() {
+    const self = this;
+    if (self.boundingNode) {
+      return self.boundingNode.getBoundingBoxToWorld();
+    }
+    return self.node.getBoundingBoxToWorld();
+  },
+
+  isTouchPointInsideBoundingNode(touchLocation) {
+    const self = this;
+    touchLocation = touchLocation.add(self.mapIns.mainCameraNode.position);
+    cc.log('inside', self.getBoundingBoxToWorld().contains(touchLocation));
+    return self.getBoundingBoxToWorld().contains(touchLocation);
+  },
+
   cancelDraggingItem(evt) {
     const self = this;
     if (self.mapIns.isDraggingItem()) {
-      if (!self.node.getBoundingBox().contains(evt.getLocation())) {
+      if (!self.isTouchPointInsideBoundingNode(evt.getLocation())) {
         self.dispatchEvent(cc.Node.EventType.TOUCH_END, evt);
       }
-      self.mapIns.onCancelDraggingItem && self.mapIns.onCancelDraggingItem();
+      self.mapIns.onDropItem && self.mapIns.onDropItem(evt);
     }
   },
 
@@ -66,6 +85,5 @@ cc.Class({
     return self.mapIns.node.dispatchEvent(newEvt);
   },
 
-  onLoad() {},
 
 })

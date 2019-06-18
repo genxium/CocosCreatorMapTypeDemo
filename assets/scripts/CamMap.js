@@ -55,6 +55,7 @@ cc.Class({
     */
     self.statefulBuildableInstanceList = [];
     self.statefulBuildableInstanceCompList = [];
+    self.droppingTarget = new Set();
     window.handleNetworkDisconnected = () => {
       //TODO
     };
@@ -68,26 +69,28 @@ cc.Class({
     self.startedAtMillis = Date.now();
     self.setupInputControls();
     function loadStatelssBuildableResource(cb) {
-      cc.loader.loadResDir(constants.STATELESS_BUILDABLE_RESOURCE_PATH.ROOT_PATH, cc.SpriteAtlas, function(err, altasArray) {
+      cc.loader.loadResDir(constants.STATELESS_BUILDABLE_RESOURCE_PATH.ROOT_PATH, cc.SpriteAtlas, function(err, atlasArray) {
         if (err) {
           cc.error(err);
           return;
         }
         self.widgetsAboveAllScriptIns.buildButton.node.active = true;
-        self.statelessBuildableInstanceSpriteAltasArray = altasArray;
+        self.statelessBuildableInstanceSpriteAtlasArray = atlasArray;
         cb && cb();
       });
     }
 
     function loadItemResource(cb) {
-      cc.loader.loadResDir(constants.ITEM_RESOURCE_PATH, cc.SpriteAtlas, function(err, altasArray) {
+      cc.loader.loadResDir(constants.ITEM_RESOURCE_PATH, cc.SpriteAtlas, function(err, atlasArray) {
         if (err) {
           cc.error(err);
           return;
         }
-        self.itemSpriteAltas = {};
-        altasArray.filter(x => x instanceof cc.SpriteFrame).forEach((spriteFram) => {
-          self.itemSpriteAltas[spriteFram.name] = spriteFram;
+        self.itemSpriteAtlas = {};
+        atlasArray.filter(x => x instanceof cc.SpriteAtlas).forEach((spriteAtlas) => {
+          spriteAtlas.getSpriteFrames().forEach((spriteFrame) => {
+            self.itemSpriteAtlas[spriteFrame.name] = spriteFrame;
+          });
         });
         cb && cb();
       });
@@ -193,7 +196,8 @@ cc.Class({
       statefulBuildableInstanceNode.setPosition(statefulBuildableInstance.fixedSpriteCentreContinuousPos);
     }
 
-
+    self.createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance);
+    
     safelyAddChild(self.node, statefulBuildableInstanceNode); // Using `statefulBuildableInstanceNode` as a direct child under `mapNode`, but NOT UNDER `mainCameraNode`, for the convenience of zooming and translating.
 
     // 使statefulBuildableInstanceNode.zIndex具有一个初始值
@@ -401,6 +405,22 @@ cc.Class({
     window.refreshCachedKnownBarrierGridDict(mapScriptIns.node, mapScriptIns.barrierColliders, null);
   },
 
+  createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance) {
+    if (statefulBuildableInstance.itemAcceptBoundaryBarrierNode) {
+      return;
+    }
+    const self = this;
+    let itemAcceptBoundaryBarrierNode = cc.instantiate(self.itemAcceptBoundaryBarrierPrefab);
+    let itemAcceptBoundaryBarrierIns = itemAcceptBoundaryBarrierNode.getComponent("ItemAcceptBoundaryBarrier");
+    itemAcceptBoundaryBarrierIns.points = [];
+    for (let p of statefulBuildableInstance.boundaryPoints) {
+      itemAcceptBoundaryBarrierIns.points.push(cc.v2(p));
+    }
+    itemAcceptBoundaryBarrierIns.init(self, statefulBuildableInstance);
+    statefulBuildableInstance.itemAcceptBoundaryBarrierNode = itemAcceptBoundaryBarrierNode;
+    safelyAddChild(statefulBuildableInstance.node, itemAcceptBoundaryBarrierNode);
+  },
+
   refreshHighlightedTileGridForEditingStatefulBuildableInstance(tiledMapIns) {
     const self = this;
     if (null == self.editingStatefulBuildableInstance) {
@@ -591,10 +611,10 @@ cc.Class({
     for (let k in allStatelessBuildableInstances) {
       const singleStatelessBuildableInstance = allStatelessBuildableInstances[k];
       const statelessBuildableInstanceScriptIns = new StatelessBuildableInstance();
-      for (let i in this.statelessBuildableInstanceSpriteAltasArray) {
-        const theAltas = this.statelessBuildableInstanceSpriteAltasArray[i];
-        if (singleStatelessBuildableInstance.displayName + ".plist" == theAltas.name) {
-          statelessBuildableInstanceScriptIns.init(this, singleStatelessBuildableInstance, theAltas);
+      for (let i in this.statelessBuildableInstanceSpriteAtlasArray) {
+        const theAtlas = this.statelessBuildableInstanceSpriteAtlasArray[i];
+        if (singleStatelessBuildableInstance.displayName + ".plist" == theAtlas.name) {
+          statelessBuildableInstanceScriptIns.init(this, singleStatelessBuildableInstance, theAtlas);
           this.statelessBuildableInstanceList.push(statelessBuildableInstanceScriptIns);
           break;
         }
@@ -1063,7 +1083,7 @@ cc.Class({
   initItemListData() {
     const self = this;
     self.itemListData.forEach(itemData => {
-      itemData.appearance = self.itemSpriteAltas[itemData.name];
+      itemData.appearance = self.itemSpriteAtlas[itemData.name];
     })
   },
 
@@ -1100,14 +1120,39 @@ cc.Class({
     self.followingItem.position = self.ctrl.mainCameraNode.position.add(touchPosInCamera);
   },
 
-  onCancelDraggingItem() {
+  onDropItem(evt) {
     const self = this;
     self.removeDraggingItem();
+    for (let statefulBuildableInstance of self.droppingTarget) {
+      self.onItemAccept(statefulBuildableInstance);
+    }
+    self.droppingTarget.clear();
+
     if (self.followingItem) {
       self.followingItem.parent.removeChild(self.followingItem);
     }
     self.touchingItem = null;
     self.followingItem = null;
+
+  },
+
+  onItemAccept(statefulBuildableInstance) {
+    const self = this; 
+    if (statefulBuildableInstance.playerBuildableBinding.buildable.id == constants.STATELESS_BUILDABLE_ID.HEADQUARTER) {
+      cc.log("increase glod: 100");
+    }
+  },
+
+  onItemAcceptIn(statefulBuildableInstance) {
+    const self = this;
+    statefulBuildableInstance.node.opacity = 127;
+    self.droppingTarget.add(statefulBuildableInstance);
+  },
+
+  onItemAcceptOut(statefulBuildableInstance) {
+    const self = this;
+    statefulBuildableInstance.node.opacity = 255;
+    self.droppingTarget.delete(statefulBuildableInstance);
   },
 
 });
