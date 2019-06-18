@@ -1106,9 +1106,13 @@ cc.Class({
       return;
     }
     self.touchingItem = item;
-    self.followingItem = cc.instantiate(item.node);
+    self.followingItem = cc.instantiate(self.itemPrefab);
+    let itemIns = self.followingItem.getComponent('Item');
+    itemIns.init(self);
+    itemIns.setData(item.data);
     safelyAddChild(self.node, self.followingItem);
     setLocalZOrder(self.followingItem, window.CORE_LAYER_Z_INDEX.DRAGGING_ITEM);
+    itemIns.enableCollider();
   },
 
   onDraggingItem(touchPosInCamera, transformedImmediateDiffVec) {

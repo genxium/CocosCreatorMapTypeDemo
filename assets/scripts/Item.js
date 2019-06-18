@@ -14,6 +14,7 @@ cc.Class({
 
   setData(itemData) {
     const self = this;
+    self.data = itemData;
     self.appearance.spriteFrame = itemData.appearance;
   },
 
@@ -38,7 +39,9 @@ cc.Class({
         self.dragging = true;
         self.mapIns.onStartDraggingItem && self.mapIns.onStartDraggingItem(self, evt._touches[0].getLocation());
       }
-      self.dispatchEvent(cc.Node.EventType.TOUCH_MOVE, evt); 
+      if (self.dragging) {
+        self.dispatchEvent(cc.Node.EventType.TOUCH_MOVE, evt); 
+      }
     });
     self.node.on(cc.Node.EventType.TOUCH_END, self.cancelDraggingItem.bind(self));
     self.node.on(cc.Node.EventType.TOUCH_CANCEL, self.cancelDraggingItem.bind(self));
@@ -48,21 +51,43 @@ cc.Class({
     const self = this;
     self.eventInited = false;
     self.dragging = false;
+    self.disableCollider();
   },
 
-  getBoundingBoxToWorld() {
+  enableCollider() {
+    const self = this;
+    self.getComponent(cc.BoxCollider).enabled = true;
+  },
+
+  disableCollider() {
+    const self = this;
+    self.getComponent(cc.BoxCollider).enabled = false;
+  },
+
+  getBoundingNode() {
     const self = this;
     if (self.boundingNode) {
-      return self.boundingNode.getBoundingBoxToWorld();
+      return self.boundingNode;
     }
-    return self.node.getBoundingBoxToWorld();
+    return self.node;
   },
 
   isTouchPointInsideBoundingNode(touchLocation) {
     const self = this;
-    touchLocation = touchLocation.add(self.mapIns.mainCameraNode.position);
-    cc.log('inside', self.getBoundingBoxToWorld().contains(touchLocation));
-    return self.getBoundingBoxToWorld().contains(touchLocation);
+    let boundingNode = self.getBoundingNode(), mainCamera = self.mapIns.mainCamera;
+    let currentBoundingCenterPoint = boundingNode.convertToWorldSpaceAR(cc.v2()),
+        currentCameraCenterPoint = mainCamera.node.convertToWorldSpaceAR(cc.v2());
+    let r = mainCamera.zoomRatio;
+    let targetBoundingCenterPoint = cc.v2(
+      r * currentBoundingCenterPoint.x - (r - 1) * currentCameraCenterPoint.x,
+      r * currentBoundingCenterPoint.y - (r - 1) * currentCameraCenterPoint.y
+    );
+    targetBoundingCenterPoint = targetBoundingCenterPoint.sub(mainCamera.node.position);
+    let bottomLeftPoint = targetBoundingCenterPoint.sub(cc.v2(boundingNode.width/2, boundingNode.height/2));
+    const inside = bottomLeftPoint.x <= touchLocation.x && bottomLeftPoint.x + boundingNode.width >= touchLocation.x
+        && bottomLeftPoint.y <= touchLocation.y && bottomLeftPoint.y + boundingNode.height >= touchLocation.y
+    // cc.log('inside', inside, targetBoundingCenterPoint, boundingNode.getContentSize(), touchLocation);
+    return inside;
   },
 
   cancelDraggingItem(evt) {
