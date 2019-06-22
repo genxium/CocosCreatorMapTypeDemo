@@ -47,7 +47,7 @@ cc.Class({
     window.mapIns = self;
     const mapNode = self.node;
     cc.director.getCollisionManager().enabled = true;
-    cc.director.getCollisionManager().enabledDebugDraw = false /* CC_DEBUG */; // This is to reduce the possible "memory leak suspect of `cc.Graphics` when automatically drawing colliders". -- YFLu
+    cc.director.getCollisionManager().enabledDebugDraw = CC_DEBUG; // This is to reduce the possible "memory leak suspect of `cc.Graphics` when automatically drawing colliders". -- YFLu
 
     /*
     * The nomenclature is a little tricky here for two very similar concepts "playerBuildableBinding" and "statefulBuildableInstance".
@@ -197,8 +197,6 @@ cc.Class({
       statefulBuildableInstanceNode.setPosition(statefulBuildableInstance.fixedSpriteCentreContinuousPos);
     }
 
-    self.createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance);
-    
     safelyAddChild(self.node, statefulBuildableInstanceNode); // Using `statefulBuildableInstanceNode` as a direct child under `mapNode`, but NOT UNDER `mainCameraNode`, for the convenience of zooming and translating.
 
     // 使statefulBuildableInstanceNode.zIndex具有一个初始值
@@ -402,24 +400,28 @@ cc.Class({
     newBarrierColliderIns.boundStatefulBuildable = statefulBuildableInstance;
     statefulBuildableInstance.barrierColliderNode = newBarrier;
     mapScriptIns.barrierColliders.push(newBarrierColliderIns);
-    mapScriptIns.node.addChild(newBarrier);
+    safelyAddChild(self.node, newBarrier);
+
+    self.createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance);
     window.refreshCachedKnownBarrierGridDict(mapScriptIns.node, mapScriptIns.barrierColliders, null);
   },
 
   createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance) {
-    if (statefulBuildableInstance.itemAcceptBoundaryBarrierNode) {
+    if (null != statefulBuildableInstance.itemAcceptBoundaryBarrierNode) {
       return;
     }
     const self = this;
+    const halfBarrierAnchorToBoundingBoxCentre = cc.v2(statefulBuildableInstance.boundingBoxContinuousWidth, statefulBuildableInstance.boundingBoxContinuousHeight).mul(0.5);
     let itemAcceptBoundaryBarrierNode = cc.instantiate(self.itemAcceptBoundaryBarrierPrefab);
     let itemAcceptBoundaryBarrierIns = itemAcceptBoundaryBarrierNode.getComponent("ItemAcceptBoundaryBarrier");
     itemAcceptBoundaryBarrierIns.points = [];
     for (let p of statefulBuildableInstance.boundaryPoints) {
-      itemAcceptBoundaryBarrierIns.points.push(cc.v2(p));
+      itemAcceptBoundaryBarrierIns.points.push(cc.v2(p).add(halfBarrierAnchorToBoundingBoxCentre));
     }
     itemAcceptBoundaryBarrierIns.init(self, statefulBuildableInstance);
+    itemAcceptBoundaryBarrierNode.setPosition(statefulBuildableInstance.barrierColliderNode);
     statefulBuildableInstance.itemAcceptBoundaryBarrierNode = itemAcceptBoundaryBarrierNode;
-    safelyAddChild(statefulBuildableInstance.node, itemAcceptBoundaryBarrierNode);
+    safelyAddChild(self.node, itemAcceptBoundaryBarrierNode);
   },
 
   refreshHighlightedTileGridForEditingStatefulBuildableInstance(tiledMapIns) {
