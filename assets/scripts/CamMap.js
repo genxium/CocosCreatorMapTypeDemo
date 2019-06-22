@@ -302,7 +302,7 @@ cc.Class({
       }
 
       editingStatefulBuildableInstanceNode.setPosition(editingStatefulBuildableInstance.fixedSpriteCentreContinuousPos);
-      self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
+      self.createBoundaryColliderForStatefulBuildableInstance(editingStatefulBuildableInstance, self.tiledMapIns);
     } else {
       let spriteCentreDiscretePosWrtMapNode = tileCollisionManager._continuousToDiscrete(self.node, self.tiledMapIns, editingStatefulBuildableInstanceNode.position, cc.v2(0, 0));
       spriteCentreDiscretePosWrtMapNode = cc.v2(spriteCentreDiscretePosWrtMapNode);
@@ -336,7 +336,7 @@ cc.Class({
           break;
       }
 
-      self.createBoundaryColliderForStatefulBuildableInsatnce(editingStatefulBuildableInstance, self.tiledMapIns);
+      self.createBoundaryColliderForStatefulBuildableInstance(editingStatefulBuildableInstance, self.tiledMapIns);
       self.renderPerStatefulBuildableInstanceNode(editingStatefulBuildableInstance);
     }
     self.editingStatefulBuildableInstance = null;
@@ -345,6 +345,14 @@ cc.Class({
   clearTheBoundaryColliderInfoForStatefulBuildableInstance(statefulBuildableInstance, tiledMapIns) {
     const self = this;
     const mapScriptIns = self;
+    if (statefulBuildableInstance.itemAcceptBoundaryBarrierIns) {
+      const itemAcceptBoundaryBarrierNode = statefulBuildableInstance.itemAcceptBoundaryBarrierNode; 
+      if (itemAcceptBoundaryBarrierNode && itemAcceptBoundaryBarrierNode.parent) {
+        itemAcceptBoundaryBarrierNode.parent.removeChild(itemAcceptBoundaryBarrierNode);
+      }
+      statefulBuildableInstance.itemAcceptBoundaryBarrierNode = null;
+      statefulBuildableInstance.itemAcceptBoundaryBarrierIns = null;
+    }
     if (statefulBuildableInstance.barrierColliderIns) {
       const barrierCollidersInMap = mapScriptIns.barrierColliders;
       for (let i in barrierCollidersInMap) {
@@ -359,17 +367,19 @@ cc.Class({
           break;
         }
       }
+      statefulBuildableInstance.barrierColliderIns = null;
+      statefulBuildableInstance.barrierColliderNode = null;
     }
   },
 
-  createBoundaryColliderForStatefulBuildableInsatnce(statefulBuildableInstance, tiledMapIns) {
+  createBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance, tiledMapIns) {
     /*
     * Be very careful using this function, it should only be called
     * - when a new `statefulBuildableInstance` is created from a new `playerBuildableBinding` record from either `localStorage` or `remote MySQLServer`, or
     * - when `endPositioningStatefulBuildableInstance`.
     */
     if (null == statefulBuildableInstance.fixedSpriteCentreContinuousPos) {
-      cc.warn("Invoking `createBoundaryColliderForStatefulBuildableInsatnce` when `null == statefulBuildableInstance.fixedSpriteCentreContinuousPos`.");
+      cc.warn("Invoking `createBoundaryColliderForStatefulBuildableInstance` when `null == statefulBuildableInstance.fixedSpriteCentreContinuousPos`.");
       return;
     }
     const self = this;
@@ -407,9 +417,6 @@ cc.Class({
   },
 
   createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance) {
-    if (null != statefulBuildableInstance.itemAcceptBoundaryBarrierNode) {
-      return;
-    }
     const self = this;
     const halfBarrierAnchorToBoundingBoxCentre = cc.v2(statefulBuildableInstance.boundingBoxContinuousWidth, statefulBuildableInstance.boundingBoxContinuousHeight).mul(0.5);
     let itemAcceptBoundaryBarrierNode = cc.instantiate(self.itemAcceptBoundaryBarrierPrefab);
@@ -421,6 +428,7 @@ cc.Class({
     itemAcceptBoundaryBarrierIns.init(self, statefulBuildableInstance);
     itemAcceptBoundaryBarrierNode.setPosition(statefulBuildableInstance.barrierColliderNode);
     statefulBuildableInstance.itemAcceptBoundaryBarrierNode = itemAcceptBoundaryBarrierNode;
+    statefulBuildableInstance.itemAcceptBoundaryBarrierIns = itemAcceptBoundaryBarrierIns;
     safelyAddChild(self.node, itemAcceptBoundaryBarrierNode);
   },
 
@@ -828,7 +836,7 @@ cc.Class({
         const playerBuildableBinding = playerBuildableBindingList[i];
         const targetedStatelessBuildableInstance = self._findStatelessBuildableInstance(playerBuildableBinding);
         const statefulBuildableInstance = self.createPerStatefulBuildableInstanceNodes(playerBuildableBinding, targetedStatelessBuildableInstance);
-        self.createBoundaryColliderForStatefulBuildableInsatnce(statefulBuildableInstance, self.tiledMapIns);
+        self.createBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance, self.tiledMapIns);
         self.statefulBuildableInstanceList.push(statefulBuildableInstance.playerBuildableBinding);
         self.statefulBuildableInstanceCompList.push(statefulBuildableInstance);
         self.renderPerStatefulBuildableInstanceNode(statefulBuildableInstance);
