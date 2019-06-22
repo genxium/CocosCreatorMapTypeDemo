@@ -27,6 +27,14 @@ module.export = cc.Class({
       type: cc.v2,
       default: null
     },
+    walkingAnimNode: {
+      type: cc.Node,
+      default: null
+    },
+    stayingAnimNode: {
+      type: cc.Node,
+      default: null
+    },
     currentDestination: {
       type: cc.v2,
       default: null
@@ -39,11 +47,19 @@ module.export = cc.Class({
   },
 
   ctor() {
+    this.clips = {
+      '01': 'TopRight',
+      '0-1': 'BottomLeft',
+      '-20': 'TopLeft',
+      '20': 'BottomRight',
+      '-21': 'TopLeft',
+      '21': 'TopRight',
+      '-2-1': 'BottomLeft',
+      '2-1': 'BottomRight'
+    };
     this.state = STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STAYING_AT_DESTINATION_AFTER_MOVING_IN;
     this.movementStops = null;
     this.drawer = null;
-    this.stayingAnimClips = null;
-    this.walkingAnimClips = null;
   },
 
   start() {
@@ -62,20 +78,11 @@ module.export = cc.Class({
     * -- YFLu
     */
 
-    self.clips = {
-      '01': 'TopRight',
-      '0-1': 'BottomLeft',
-      '-20': 'TopLeft',
-      '20': 'BottomRight',
-      '-21': 'TopLeft',
-      '21': 'TopRight',
-      '-2-1': 'BottomLeft',
-      '2-1': 'BottomRight'
-    };
     self.setAnim(self.speciesName, () => {
       self.scheduleNewDirection(self._generateRandomDirection());
-      const clipKey = self.clips[self.scheduledDirection.dx.toString() + self.scheduledDirection.dy.toString()];
-      self.animComp.play(clipKey);
+      self.transitToStaying(() => {
+        // Deliberately left blank. -- YFLu
+      });
     });
   },
 
@@ -259,7 +266,7 @@ module.export = cc.Class({
       
       self.movementStops = window.findPathWithMapDiscretizingAStar(self.node.position, self.currentDestination, 0.01 /* Hardcoded temporarily */ , npcBarrierCollider, self.mapIns.barrierColliders, null, self.mapNode, null, discreteBarrierGridsToIgnore);
     }
-    console.log("For statefulBuildableFollowingNpcComp.uuid == ", self.uuid, ", found steps from ", self.node.position, " to ", self.currentDestination, " :", self.movementStops);
+    // console.log("For statefulBuildableFollowingNpcComp.uuid == ", self.uuid, ", found steps from ", self.node.position, " to ", self.currentDestination, " :", self.movementStops);
 
     return self.movementStops;
   },
@@ -381,23 +388,15 @@ module.export = cc.Class({
     const self = this;
     let dirPath = null;
 
-    if (!self.animComp) {
-      self.animComp = self.node.getComponent(cc.Animation);
-    }
-
     const selfStateWhenCalled = self.state;
 
     switch (selfStateWhenCalled) {
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
       case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
-        if (null != self.walkingAnimClips) {
-          self.animComp.stop();
-          for (let clip of self.animComp.getClips()) {
-            self.animComp.removeClip(clip);
-          }
-          for (let clip of self.walkingAnimClips) {
-            self.animComp.addClip(clip);
-          }
+        if (null != self.walkingAnimComp) {
+          self.stayingAnimNode.active = false;
+          self.walkingAnimNode.active = true;
+          self.animComp = self.walkingAnimComp;
           if (cb) {
             cb(false);
           }
@@ -406,14 +405,10 @@ module.export = cc.Class({
         dirPath = constants.NPC_ANIM[speciesName].WALKING;
         break;
       default:
-        if (null != self.stayingAnimClips) {
-          self.animComp.stop();
-          for (let clip of self.animComp.getClips()) {
-            self.animComp.removeClip(clip);
-          }
-          for (let clip of self.stayingAnimClips) {
-            self.animComp.addClip(clip);
-          }
+        if (null != self.stayingAnimComp) {
+          self.walkingAnimNode.active = false;
+          self.stayingAnimNode.active = true;
+          self.animComp = self.stayingAnimComp;
           if (cb) {
             cb(false);
           }
@@ -430,24 +425,24 @@ module.export = cc.Class({
       switch (selfStateWhenCalled) {
         case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_OUT:
         case STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
-          self.walkingAnimClips = animClips;
-          self.animComp.stop();
-          for (let clip of self.animComp.getClips()) {
-            self.animComp.removeClip(clip);
-          }
+          const walkingAnimComp = self.walkingAnimNode.getComponent(cc.Animation);
           for (let clip of animClips) {
-            self.animComp.addClip(clip);
+            walkingAnimComp.addClip(clip);
           }
+          self.walkingAnimComp = walkingAnimComp; 
+          self.animComp = walkingAnimComp;
+          self.stayingAnimNode.active = false;
+          self.walkingAnimNode.active = true;
           break;
         default:
-          self.stayingAnimClips = animClips;
-          self.animComp.stop();
-          for (let clip of self.animComp.getClips()) {
-            self.animComp.removeClip(clip);
-          }
+          const stayingAnimComp = self.stayingAnimNode.getComponent(cc.Animation);
           for (let clip of animClips) {
-            self.animComp.addClip(clip);
+            stayingAnimComp.addClip(clip);
           }
+          self.stayingAnimComp = stayingAnimComp; 
+          self.animComp = stayingAnimComp;
+          self.walkingAnimNode.active = false;
+          self.stayingAnimNode.active = true;
           break;
       }
       if (cb) {

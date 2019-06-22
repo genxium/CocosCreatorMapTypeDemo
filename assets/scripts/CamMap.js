@@ -47,7 +47,8 @@ cc.Class({
     window.mapIns = self;
     const mapNode = self.node;
     cc.director.getCollisionManager().enabled = true;
-    cc.director.getCollisionManager().enabledDebugDraw = CC_DEBUG;
+    cc.director.getCollisionManager().enabledDebugDraw = false /* CC_DEBUG */; // This is to reduce the possible "memory leak suspect of `cc.Graphics` when automatically drawing colliders". -- YFLu
+
     /*
     * The nomenclature is a little tricky here for two very similar concepts "playerBuildableBinding" and "statefulBuildableInstance".
     * - When talking about frontend in-RAM instances for rendering, we use mostly "statefulBuildableInstance"
@@ -954,12 +955,14 @@ cc.Class({
       npcScriptIns.mapNode = self.node;
       npcScriptIns.mapIns = self;
       npcScriptIns.boundStatefulBuildable = statefulBuildableInstanceComp;
-      const npcSrcContinuousPosWrtMapNode = statefulBuildableInstanceComp.fixedSpriteCentreContinuousPos;
-      npcNode.setPosition(npcSrcContinuousPosWrtMapNode);
+      /*
+      * The order of invocation of the following statements is critical for correct initialization!
+      * -- YFLu
+      */
+      npcScriptIns.refreshGrandSrcAndCurrentDestination();
+      npcNode.setPosition(npcScriptIns.grandSrc);
       safelyAddChild(self.node, npcNode);
       setLocalZOrder(npcNode, window.CORE_LAYER_Z_INDEX.PLAYER);
-      npcScriptIns.refreshGrandSrcAndCurrentDestination();
-
       console.log("Calling `spawnOrRefreshStatefulBuildableFollowingNpcs` for statefulBuildableInstanceComp.uuid == " , statefulBuildableInstanceComp.uuid, ", spawned statefulBuildableInstanceComp.boundFollowingNpc.uuid == ", statefulBuildableInstanceComp.boundFollowingNpc.uuid, " at ", statefulBuildableInstanceComp.boundFollowingNpc.node.position, ".");
     }
   },
