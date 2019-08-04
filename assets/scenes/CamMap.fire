@@ -41,8 +41,8 @@
     },
     "_scale": {
       "__type__": "cc.Vec3",
-      "x": 0.10060764153798421,
-      "y": 0.10060764153798421,
+      "x": 0.36856730432277535,
+      "y": 0.36856730432277535,
       "z": 1
     },
     "_quat": {
@@ -68,14 +68,14 @@
         "__id__": 3
       },
       {
-        "__id__": 15
+        "__id__": 19
       }
     ],
     "_active": true,
     "_level": 1,
     "_components": [
       {
-        "__id__": 17
+        "__id__": 21
       }
     ],
     "_prefab": null,
@@ -142,19 +142,22 @@
       },
       {
         "__id__": 10
+      },
+      {
+        "__id__": 12
       }
     ],
     "_active": true,
     "_level": 1,
     "_components": [
       {
-        "__id__": 12
+        "__id__": 16
       },
       {
-        "__id__": 13
+        "__id__": 17
       },
       {
-        "__id__": 14
+        "__id__": 18
       }
     ],
     "_prefab": null,
@@ -483,6 +486,178 @@
     "_id": "94Em50FvpCBo7WGbV5Fhnk"
   },
   {
+    "__type__": "cc.Node",
+    "_name": "Demon",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 3
+    },
+    "_children": [
+      {
+        "__id__": 13
+      }
+    ],
+    "_active": true,
+    "_level": 2,
+    "_components": [
+      {
+        "__id__": 15
+      }
+    ],
+    "_prefab": null,
+    "_opacity": 255,
+    "_color": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 0,
+      "height": 0
+    },
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0.5,
+      "y": 0.5
+    },
+    "_position": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_scale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_rotationX": 0,
+    "_rotationY": 0,
+    "_quat": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_skewX": 0,
+    "_skewY": 0,
+    "groupIndex": 0,
+    "_id": "46HelVs2JKmoNB6N6cuuk/"
+  },
+  {
+    "__type__": "cc.Node",
+    "_name": "SkeletalAnim",
+    "_objFlags": 0,
+    "_parent": {
+      "__id__": 12
+    },
+    "_children": [],
+    "_active": true,
+    "_level": 3,
+    "_components": [
+      {
+        "__id__": 14
+      }
+    ],
+    "_prefab": null,
+    "_opacity": 255,
+    "_color": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 0,
+      "height": 0
+    },
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0.5,
+      "y": 0.5
+    },
+    "_position": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_scale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_rotationX": 0,
+    "_rotationY": 0,
+    "_quat": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_skewX": 0,
+    "_skewY": 0,
+    "groupIndex": 0,
+    "_id": "27PW+1db9DLa0XFCRtQlxR"
+  },
+  {
+    "__type__": "dragonBones.ArmatureDisplay",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 13
+    },
+    "_enabled": true,
+    "_armatureName": "Demon",
+    "_animationName": "skillAttack1",
+    "_preCacheMode": 0,
+    "_cacheMode": 0,
+    "playTimes": 0,
+    "premultipliedAlpha": true,
+    "_armatureKey": "a255e080-1752-4def-9577-18f951207ec6#ea531f39-8259-4af0-9184-64e9299face8",
+    "_accTime": 0,
+    "_playCount": 0,
+    "_frameCache": null,
+    "_curFrame": null,
+    "_playing": false,
+    "_armatureCache": null,
+    "_N$dragonAsset": {
+      "__uuid__": "a255e080-1752-4def-9577-18f951207ec6"
+    },
+    "_N$dragonAtlasAsset": {
+      "__uuid__": "ea531f39-8259-4af0-9184-64e9299face8"
+    },
+    "_N$_defaultArmatureIndex": 0,
+    "_N$_animationIndex": 2,
+    "_N$_defaultCacheMode": 0,
+    "_N$timeScale": 1,
+    "_N$debugBones": false,
+    "_N$enableBatch": false,
+    "_id": "6c9XXHmAlFF5vD7XkY40ut"
+  },
+  {
+    "__type__": "bbdc3qf8KJPg6/FYLVokPTW",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 12
+    },
+    "_enabled": true,
+    "mainArmature": {
+      "__id__": 14
+    },
+    "_id": "6d62mztOJLx5AWYWcThd9A"
+  },
+  {
     "__type__": "b52e5+Yqh9Mk7dA5b8Emgrm",
     "_name": "",
     "_objFlags": 0,
@@ -492,7 +667,7 @@
     "_enabled": true,
     "narrativeScenePrefab": null,
     "delegate": {
-      "__id__": 13
+      "__id__": 17
     },
     "_id": "03b8xYZwlLBIoZFTp7tzM1"
   },
@@ -548,7 +723,7 @@
     "_level": 1,
     "_components": [
       {
-        "__id__": 16
+        "__id__": 20
       }
     ],
     "_prefab": null,
@@ -601,7 +776,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 15
+      "__id__": 19
     },
     "_enabled": true,
     "_cullingMask": 4294967295,
