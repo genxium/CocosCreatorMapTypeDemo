@@ -46,10 +46,11 @@ module.export = cc.Class({
     this.boundStatefulBuildable = null; // It's a pointer to an instance of class "StatefulBuildableInstance" a.k.a. a "cc.Component class script instance".
     this.preGrandSrc = null; 
     this.grandSrc = null; 
+    this.currentSrc = null;
     this.currentDestination = null;
 
     // Caches for "LPA*" and "D* Lite" algorithms. [BEGINS]
-    this.discreteGrandSrc = null;
+    this.discreteCurrentSrc = null;
     this.discreteCurrentDestination = null;
     this.pqForPathFinding = null;
     this.rhsCache = null;
@@ -173,7 +174,8 @@ module.export = cc.Class({
     self.preGrandSrc = self.grandSrc;
     self.grandSrc = self.boundStatefulBuildable.fixedSpriteCentreContinuousPos.add(self.boundStatefulBuildable.estimatedSpriteCentreToAnchorTileCentreContinuousOffset); // Temporarily NOT seeing the "barrier grids occupied by `boundStatefulBuildable`" as a barrier to its own following NPCs. -- YFLu
 
-    self.discreteGrandSrc = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.grandSrc, cc.v2(0, 0));
+    self.currentSrc = self.node.position;
+    self.discreteCurrentSrc = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.currentSrc, cc.v2(0, 0));
 
     self.state = window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN; 
     self.refreshCurrentDestination();
@@ -189,7 +191,6 @@ module.export = cc.Class({
     let previousDiscretizedDestinaion = null;
     let discretizedDestinaion = null;
     const self = this;
-    self.node.stopAllActions();
     switch (self.state) {
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.MOVING_IN:
       case window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE.STUCK_WHILE_MOVING_IN:
@@ -358,9 +359,11 @@ module.export = cc.Class({
   },
 
   _calculatePriorityPair(discretePos) {
+    const discretePosKey = window.describe(discretePos);
+    const minOfGAndRhs = Math.min(this.rhsCache[discretePosKey], this.gCache[discretePosKey]); 
     return {
-      k1: Math.min(this.rhsCache[discretePos], this.gCache[discretePos]) + window.heuristicallyEstimatePathLength(discretePos, this.discreteCurrentDestination),
-      k2: Math.min(this.rhsCache[discretePos], this.gCache[discretePos]),
+      k1: minOfGAndRhs + window.heuristicallyEstimatePathLength(discretePos, this.discreteCurrentDestination),
+      k2: minOfGAndRhs,
     };
   },
 
@@ -380,15 +383,15 @@ module.export = cc.Class({
         self.rhsCache[discreteNeighbourPosKey] = Infinity;
       }
     }
-    self.rhsCache[window.describe(self.discreteGrandSrc)] = 0;
+    self.rhsCache[window.describe(self.discreteCurrentSrc)] = 0;
 
     self.pqForPathFinding = new window.PriorityQueue((element) => {
       const priorityPair = self._calculatePriorityPair(element);
       const base = 1000000000000;
-      return priorityPair[0]*base + priorityPair[1];
+      return priorityPair.k1*base + priorityPair.k2;
     });
     
-    self.pqForPathFinding.push(self.discreteGrandSrc);
+    self.pqForPathFinding.push(self.discreteCurrentSrc);
   },
 
   _computePathFindingCaches() {
@@ -401,11 +404,18 @@ module.export = cc.Class({
     let expanderTrialCount = 0;
 
     const discreteCurrentDestinationKey = window.describe(self.discreteCurrentDestination);
-    while (0 < self.pqForPathFinding.size() && (self.pqForPathFinding.scoreFunction(self.pqForPathFinding.content[0]) < self.pqForPathFinding.scoreFunction(self.discreteCurrentDestination) || self.rhsCache[discreteCurrentDestinationKey] != self.gCache[discreteCurrentDestinationKey])) {
+    while (0 < self.pqForPathFinding.size()) {
+      const topElementScore = self.pqForPathFinding.scoreFunction(self.pqForPathFinding.content[0]);
+      const discreteCurrentDestinationScore = self.pqForPathFinding.scoreFunction(self.discreteCurrentDestination);
+      if (topElementScore >= discreteCurrentDestinationScore && self.rhsCache[discreteCurrentDestinationKey] == self.gCache[discreteCurrentDestinationKey]) {
+        break;
+      }
+
       const expanderPos = self.pqForPathFinding.pop();
       const expanderPosKey = window.describe(expanderPos);
       if (self.gCache[expanderPosKey] > self.rhsCache[expanderPosKey]) {
         self.gCache[expanderPosKey] = self.rhsCache[expanderPosKey];
+        // Traversing all possible successors.
         for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
           const discreteNeighbourPos = {
             x: expanderPos.x + neighbourOffset.dx,
@@ -425,6 +435,7 @@ module.export = cc.Class({
         }
       } else {
         self.gCache[expanderPosKey] = Infinity;
+        // Traversing all possible successors.
         for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
           const discreteNeighbourPos = {
             x: discretePos.x + neighbourOffset.dx,
@@ -452,9 +463,22 @@ module.export = cc.Class({
     }
   },
 
+  _printGAndHSum() {
+    const self = this;
+    for (let k in self.gCache) {
+      if (Infinity == self.gCache[k]) {
+        continue;
+      }
+      const splitted = k.split(','); 
+      const x = parseInt(splitted[0]);
+      const y = parseInt(splitted[1]);
+      console.log(k, self.gCache[k], self.gCache[k] + window.heuristicallyEstimatePathLength({x: x, y: y}, self.discreteCurrentDestination));
+    }
+  },
+
   updatePathFindingCachesForDiscretePosition(discretePos) {
     const self = this;
-    if (null == self.discreteGrandSrc) {
+    if (null == self.discreteCurrentSrc) {
       return;
     }
 
@@ -462,7 +486,7 @@ module.export = cc.Class({
     const mapSizeDiscrete = tiledMapIns.getMapSize();
     const discretePosKey = window.describe(discretePos);
 
-    if (discretePos.x == self.discreteGrandSrc.x && discretePos.y == self.discreteGrandSrc.y) {
+    if (discretePos.x != self.discreteCurrentSrc.x || discretePos.y != self.discreteCurrentSrc.y) {
       let minRhs = Infinity;
       // Traversing all possible predecessors.
       for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
@@ -484,6 +508,7 @@ module.export = cc.Class({
         const edgeCost = (null != window.cachedKnownBarrierGridDict[discreteNeighbourPos.x] && true == window.cachedKnownBarrierGridDict[discreteNeighbourPos.x][discreteNeighbourPos.y]) ? Infinity : 1; /* Edge cost is currently constant. -- YFLu */
         const candidateValue = self.gCache[discreteNeighbourPosKey] + edgeCost; 
         if (candidateValue < minRhs) {
+          // We rely on selecting a "minRhs" to effectively select a "proper predecessor", instead of "successor" for the "discretePos(input parameter)".
           minRhs = candidateValue;
         } 
       }
@@ -505,7 +530,7 @@ module.export = cc.Class({
   },
   
   update(dt) {
-    if (null == this.grandSrc || null == this.discreteGrandSrc || null == this.currentDestination || null == this.discreteCurrentDestination || null == this.gCache || null == this.rhsCache) {
+    if (null == this.discreteCurrentSrc || null == this.currentDestination || null == this.discreteCurrentDestination || null == this.gCache || null == this.rhsCache) {
       return;
     }
     const self = this;
@@ -513,6 +538,10 @@ module.export = cc.Class({
     const mapSizeDiscrete = tiledMapIns.getMapSize();
     const discreteCurrentPos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
     const discreteCurrentPosKey = window.describe(discreteCurrentPos);
+    const baseNonInfinityCandidateSumValue = (self.gCache[discreteCurrentPosKey] + window.heuristicallyEstimatePathLength(discreteCurrentPos, self.discreteCurrentDestination)); 
+    if (Infinity == baseNonInfinityCandidateSumValue) {
+      return;
+    } 
 
     let maxDecrement = -Infinity;
     let chosenOffset = null;
@@ -533,19 +562,23 @@ module.export = cc.Class({
       }
       const discreteNeighbourPosKey = window.describe(discreteNeighbourPos);
       
-      const candidateValue = (self.gCache[discreteNeighbourPosKey] + window.heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination)) 
-                            - (self.gCache[discreteCurrentPosKey] + window.heuristicallyEstimatePathLength(discreteCurrentPos, self.discreteCurrentDestination)); 
-      if (candidateValue < maxDecrement) {
-        max = candidateValue;
+      const nonInfinityCandidateSumValue = (self.gCache[discreteNeighbourPosKey] + window.heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination));
+      if (Infinity == nonInfinityCandidateSumValue) {
+        continue;
+      }
+      const candidateValue = (nonInfinityCandidateSumValue - baseNonInfinityCandidateSumValue); 
+      if (candidateValue > maxDecrement) {
+        maxDecrement = candidateValue;
         chosenOffset = neighbourOffset;
       } 
     }
     if (null == chosenOffset) {
       return;
     }
+    const chosenOffsetMag = Math.sqrt(chosenOffset.dx*chosenOffset.dx + chosenOffset.dy*chosenOffset.dy);
     const toMoveMag = (self.speed*dt);
-    const toMoveX = toMoveMag*(chosenOffset.x/chosenOffset.mag());
-    const toMoveY = toMoveMag*(chosenOffset.y/chosenOffset.mag());
+    const toMoveX = toMoveMag*(chosenOffset.dx/chosenOffsetMag);
+    const toMoveY = toMoveMag*(chosenOffset.dy/chosenOffsetMag);
     const newPos = self.node.position.add(cc.v2(toMoveX, toMoveY));
     self.node.setPosition(newPos);
   },
