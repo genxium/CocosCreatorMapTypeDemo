@@ -31,7 +31,6 @@ cc.Class({
   ctor() {
     this.ctrl = null;
     this.statelessBuildableInstanceCardListNode = null;
-    this.homingNpcScriptInsDict = {}; // Used at least for refreshing the whole collection of `HomingNpc`s.
     this.statefulBuildableFollowingNpcScriptInsDict = {}; // Used at least for refreshing the whole collection of `StatefulBuildableFollowingNpc`s.
     this.itemListNode = null;
   },
@@ -843,7 +842,6 @@ cc.Class({
       }
     }
 
-    // self.spawnHomingNpcs();
     self.spawnOrRefreshStatefulBuildableFollowingNpcs();
 
     self.refreshItemListNode();
@@ -896,52 +894,6 @@ cc.Class({
       }
     }
     return AllStatelessBuildableInstances;
-  },
-
-  spawnHomingNpcs() {
-    const self = this;
-    if (!self.homingNpcPrefab) {
-      cc.warn(`There's no "homingNpcPrefab" yet!`);
-      return;
-    }
-    const tiledMapIns = self.tiledMapIns;
-    const homingNpcGrandSrcLayer = tiledMapIns.getObjectGroup('HomingNpcGrandSrc');
-    if (!homingNpcGrandSrcLayer) {
-      return;
-    }
-
-    const homingNpcGrandSrcList = homingNpcGrandSrcLayer.getObjects();
-    for (let indice = 0; indice < homingNpcGrandSrcList.length; ++indice) {
-      let homingNpcGrandSrc = homingNpcGrandSrcList[indice];
-      const npcNode = cc.instantiate(self.homingNpcPrefab);
-      const npcScriptIns = npcNode.getComponent("HomingNpc");
-      npcScriptIns.mapNode = self.node;
-      npcScriptIns.mapIns = self;
-      const npcSrcContinuousPosWrtMapNode = tileCollisionManager.continuousObjLayerOffsetToContinuousMapNodePos(self.node, homingNpcGrandSrc.offset);
-      npcNode.setPosition(npcSrcContinuousPosWrtMapNode);
-      safelyAddChild(self.node, npcNode);
-      setLocalZOrder(npcNode, window.CORE_LAYER_Z_INDEX.PLAYER);
-      npcScriptIns.grandSrc = npcSrcContinuousPosWrtMapNode;
-      self.homingNpcScriptInsDict[npcNode.uuid] = npcScriptIns;
-
-      cc.log(`Finding destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
-      npcScriptIns.refreshCurrentDestination();
-      if (null == npcScriptIns.currentDestination) {
-        cc.log(`	Destination not found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}`);
-      } else {
-        cc.log(`	Found destination for HomingNpc located at ${npcSrcContinuousPosWrtMapNode}: ${npcScriptIns.currentDestination}`);
-
-        cc.log("\t\tVerifying destination for HomingNpc by A* search...");
-        const stops = npcScriptIns.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
-        if (null == stops) {
-          cc.warn(`		[NOT VERIFIED]Path not found for HomingNpc ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`);
-          continue;
-        }
-        cc.log(`		[VERIFIED]Path found for HomingNpc located at ${npcSrcContinuousPosWrtMapNode} => ${npcScriptIns.currentDestination}`, stops);
-        npcScriptIns.restartPatrolling();
-      }
-
-    }
   },
 
   spawnOrRefreshStatefulBuildableFollowingNpcs() {

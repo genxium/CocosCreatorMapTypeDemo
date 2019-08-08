@@ -1,12 +1,21 @@
 const describe = function(discretePt) {
   return discretePt.x.toString() + "," + discretePt.y.toString();
 };
+window.describe = describe;
+
+window.reverseHomingNpcDestinationDict = {};
+window.reverseStatefulBuildableFollowingNpcDestinationDict = {};
+window.cachedKnownBarrierGridDict = {};
 
 const heuristicallyEstimatePathLength = function(p1, p2) {
+  if (null != window.cachedKnownBarrierGridDict[p1.x] && true == window.cachedKnownBarrierGridDict[p1.x][p1.y]) {
+    return Infinity;
+  }
   const absDx = Math.abs(p1.x - p2.x);
   const absDy = Math.abs(p1.y - p2.y);
   return Math.sqrt(absDx * absDx + absDy * absDy);
 };
+window.heuristicallyEstimatePathLength = heuristicallyEstimatePathLength; 
 
 const hamiltonDistance = function(p1, p2) {
   const absDx = Math.abs(p1.x - p2.x);
@@ -14,14 +23,31 @@ const hamiltonDistance = function(p1, p2) {
   return absDx + absDy;
 };
 
-window.reverseHomingNpcDestinationDict = {};
-window.reverseStatefulBuildableFollowingNpcDestinationDict = {};
-window.cachedKnownBarrierGridDict = {};
+window.hamiltonDistance = hamiltonDistance;
+
 window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, thisPlayerCollider) {
-  cachedKnownBarrierGridDict = {};
+  let prevCachedKnownBarrierGridDict = {};
+  const uniformDiscreteMargin = 0;
+  
   const tiledMapIns = mapNode.getComponent(cc.TiledMap); // This is a magic name.
   const mapSizeDiscrete = tiledMapIns.getMapSize();
-  const uniformDiscreteMargin = 0;
+
+  for (let discretePosXInMap = uniformDiscreteMargin; discretePosXInMap < mapSizeDiscrete.width - uniformDiscreteMargin; ++discretePosXInMap) {
+    if (null == cachedKnownBarrierGridDict[discretePosXInMap]) {
+      continue;
+    }
+    if (null == prevCachedKnownBarrierGridDict[discretePosXInMap]) {
+      prevCachedKnownBarrierGridDict[discretePosXInMap] = {};
+    }
+    for (let discretePosYInMap = uniformDiscreteMargin; discretePosYInMap < mapSizeDiscrete.height - uniformDiscreteMargin; ++discretePosYInMap) {
+      if (true == cachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap]) {
+        prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap] = true;
+      }
+    }
+  }
+
+  cachedKnownBarrierGridDict = {};
+  let changedGridPos = [];
 
   for (let aComp of barrierColliders) {
     let toCollidePolygon = [];
@@ -50,40 +76,23 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
             cachedKnownBarrierGridDict[discretePosXInMap] = {};
           }
           cachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap] = true;
-          if (null != window.reverseHomingNpcDestinationDict && null != window.reverseHomingNpcDestinationDict[discretePosXInMap]) {
-            const reverseHomingNpcDestinationDictRecord = window.reverseHomingNpcDestinationDict[discretePosXInMap][discretePosYInMap];
-            if (null != reverseHomingNpcDestinationDictRecord) {
-              const homingNpcsBoundForThisGrid = Object.values(reverseHomingNpcDestinationDictRecord);  
-              for (let homingNpc of homingNpcsBoundForThisGrid) {
-                homingNpc.refreshCurrentDestination();
-              }
-            }  
-          } 
-
-          if (null != window.reverseStatefulBuildableFollowingNpcDestinationDict && null != window.reverseStatefulBuildableFollowingNpcDestinationDict[discretePosXInMap]) {
-            const reverseStatefulBuildableFollowingNpcDestinationDictRecord = window.reverseStatefulBuildableFollowingNpcDestinationDict[discretePosXInMap][discretePosYInMap];
-            if (null != reverseStatefulBuildableFollowingNpcDestinationDictRecord) {
-              const statefulBuildableFollowingNpcsBoundForThisGrid = Object.values(reverseStatefulBuildableFollowingNpcDestinationDictRecord);  
-              for (let statefulBuildableFollowingNpc of statefulBuildableFollowingNpcsBoundForThisGrid) {
-                statefulBuildableFollowingNpc.refreshCurrentDestination();
-              }
-            }  
-          } 
+          if (null == prevCachedKnownBarrierGridDict[discretePosXInMap] || null == prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap]) {
+            changedGridPos.push(cc.v2(discretePosXInMap, discretePosYInMap));
+          }
+        } else {
+          if (null != prevCachedKnownBarrierGridDict[discretePosXInMap] && true == prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap]) {
+            changedGridPos.push(cc.v2(discretePosXInMap, discretePosYInMap));
+          }
         }
       }
     }
   }
 
-  for (let k in window.mapIns.homingNpcScriptInsDict) {
-    const homingNpc = window.mapIns.homingNpcScriptInsDict[k]; 
-    homingNpc.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
-    homingNpc.restartPatrolling();
-  }  
-
   for (let k in window.mapIns.statefulBuildableFollowingNpcScriptInsDict) {
     const statefulBuildableFollowingNpc = window.mapIns.statefulBuildableFollowingNpcScriptInsDict[k]; 
-    statefulBuildableFollowingNpc.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
-    statefulBuildableFollowingNpc.restartPatrolling();
+    for (let v of changedGridPos) {
+      statefulBuildableFollowingNpc.updatePathFindingCachesForDiscretePosition(v);
+    }
   }  
 };
 
@@ -112,149 +121,7 @@ const NEIGHBOUR_DISCRETE_OFFSETS = [{
   dx: -1,
   dy: 1
 }];
-
-window.findPathWithMapDiscretizingAStar = function(continuousSrcPtInMapNode, continuousDstPtInMapNode, eps, thisPlayerCollider, barrierColliders, controlledPlayerColliders, mapNode, maxExpanderTrialCount, discreteBarrierGridsToIgnore) {
-  const tiledMapIns = mapNode.getComponent(cc.TiledMap); // This is a magic name.
-  const mapSizeDiscrete = tiledMapIns.getMapSize();
-  if (null == maxExpanderTrialCount) {
-    maxExpanderTrialCount = ((mapSizeDiscrete.width*mapSizeDiscrete.height) << 1);
-  }
-  // [Phase#0] Discretize the mapNode to grids (be it ORTHO or ISOMETRIC w.r.t. orientation of the tiledMapIns) and mark `cachedKnownBarrierGridDict`.
-  if (!cachedKnownBarrierGridDict) {
-    window.refreshCachedKnownBarrierGridDict(mapNode, barrierColliders, thisPlayerCollider);
-  }
-
-  const discreteSrcPos = tileCollisionManager._continuousToDiscrete(mapNode, tiledMapIns, continuousSrcPtInMapNode, cc.v2(0, 0));
-  const discreteDstPos = tileCollisionManager._continuousToDiscrete(mapNode, tiledMapIns, continuousDstPtInMapNode, cc.v2(0, 0));
-
-  let openSetFromSrc = new Set();
-  let closedSet = new Set();
-  let dFromSrc = {}; // Actial distance for path "srcPt -> k (end of current path)". 
-  let hTotal = {}; // Heuristically estimated total distance for path "srcPt -> k (must pass) -> dstPt". 
-
-  // Initialization.
-  openSetFromSrc.add(describe(discreteSrcPos));
-  dFromSrc[describe(discreteSrcPos)] = {
-    pos: discreteSrcPos,
-    value: 0.0,
-    pre: null // Always NULL for `dFromSrc`.
-  };
-  hTotal[describe(discreteSrcPos)] = {
-    pos: discreteSrcPos,
-    value: dFromSrc[describe(discreteSrcPos)].value + heuristicallyEstimatePathLength(discreteDstPos, discreteDstPos),
-    pre: null
-  };
-  let expanderTrialCount = 0;
-
-  // Main iteration body.  
-  while (0 < openSetFromSrc.size) {
-    if (expanderTrialCount > maxExpanderTrialCount) {
-      cc.log(`No path for (${discreteSrcPos.x}, ${discreteSrcPos.y}) => (${discreteDstPos.x}, ${discreteDstPos.y}), returning after maxExpanderTrialCount == ${maxExpanderTrialCount} reached.`);
-      return null;
-    }
-    // [Phase#1] 
-    let expanderKey = null;
-    let expander = null;
-    /*
-    * TODO
-    * 
-    * Make `openSetFromSrc` a heap scored by `hTotal[candidateKey]` and still be popping `candidateKey`.
-    */
-    for (let candidateKey of openSetFromSrc) {
-      let candidate = hTotal[candidateKey];
-      if (null != expander && (expander.value <= candidate.value)) continue;
-      expanderKey = candidateKey;
-      expander = candidate;
-    }
-
-    if (null == expanderKey) {
-      // Not reachable in this discretization. 
-      cc.log(`No path for (${discreteSrcPos.x}, ${discreteSrcPos.y}) => (${discreteDstPos.x}, ${discreteDstPos.y}), returning early.`);
-      return null;
-    }
-
-    if (expander.pos.x == discreteDstPos.x && expander.pos.y == discreteDstPos.y) {
-      // Found a path in this discretization. 
-      let pathToRet = [];
-      while (null != expander) {
-        const discretePos = expander.pos;
-        const continuousPtInMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(mapNode, tiledMapIns, null, discretePos.x, discretePos.y);
-        pathToRet.push(continuousPtInMapNode);
-        expander = expander.pre;
-      }
-      pathToRet.reverse();
-      return pathToRet;
-    }
-
-    ++expanderTrialCount;
-
-    // [Phase#2] 
-    openSetFromSrc.delete(expanderKey);
-
-    // [Phase#3] 
-    closedSet.add(expanderKey);
-
-    // [Phase#4] Traverse the neighbours of `expanderKey` and update accordingly.
-    for (let neighbourOffset of NEIGHBOUR_DISCRETE_OFFSETS) {
-      const discreteNeighbourPos = {
-        x: expander.pos.x + neighbourOffset.dx,
-        y: expander.pos.y + neighbourOffset.dy,
-      };
-      if (discreteNeighbourPos.x < 0
-          ||
-          discreteNeighbourPos.x >= mapSizeDiscrete.width
-          ||
-          discreteNeighbourPos.y < 0
-          ||
-          discreteNeighbourPos.y >= mapSizeDiscrete.height
-          ) {
-        continue;
-      }
-      const discreteNeighbourPosDesc = describe(discreteNeighbourPos);
-
-      if (true == closedSet.has(discreteNeighbourPosDesc)) {
-        continue;
-      }
-
-      if (
-        (cachedKnownBarrierGridDict[discreteNeighbourPos.x] && true == cachedKnownBarrierGridDict[discreteNeighbourPos.x][discreteNeighbourPos.y])
-        && 
-        (null == discreteBarrierGridsToIgnore || null == discreteBarrierGridsToIgnore[discreteNeighbourPos.x] || true != discreteBarrierGridsToIgnore[discreteNeighbourPos.x][discreteNeighbourPos.y])
-        ) {
-        // cc.log(`discreteNeighbourPos == (${discreteNeighbourPos.x}, ${discreteNeighbourPos.y}) is a knownBarrierGrid.`);
-        continue;
-      }
-
-      if (!openSetFromSrc.has(discreteNeighbourPosDesc)) {
-        openSetFromSrc.add(discreteNeighbourPosDesc);
-      }
-      const proposedNeighbourDFromSrcValue = dFromSrc[expanderKey].value + hamiltonDistance(expander.pos, discreteNeighbourPos);
-
-      if (null == dFromSrc[discreteNeighbourPosDesc]) {
-        dFromSrc[discreteNeighbourPosDesc] = {
-          pos: discreteNeighbourPos,
-          value: proposedNeighbourDFromSrcValue,
-          pre: null
-        };
-        hTotal[discreteNeighbourPosDesc] = {
-          pos: discreteNeighbourPos,
-          value: proposedNeighbourDFromSrcValue + heuristicallyEstimatePathLength(discreteNeighbourPos, discreteDstPos),
-          pre: hTotal[expanderKey],
-        };
-      } else {
-        const origNeighbourDFromSrcValue = dFromSrc[discreteNeighbourPosDesc].val;
-        if (origNeighbourDFromSrcValue <= proposedNeighbourDFromSrcValue) {
-          continue;
-        }
-        dFromSrc[discreteNeighbourPosDesc].value = proposedNeighbourDFromSrcValue;
-        hTotal[discreteNeighbourPosDesc].value = proposedNeighbourDFromSrcValue + heuristicallyEstimatePathLength(discreteNeighbourPos, discreteDstPos);
-        hTotal[discreteNeighbourPosDesc].pre = hTotal[expanderKey];
-      }
-    }
-  }
-
-  return null;
-};
+window.NEIGHBOUR_DISCRETE_OFFSETS = NEIGHBOUR_DISCRETE_OFFSETS;
 
 window.findNearbyNonBarrierGridByBreathFirstSearch = function(mapNode, continuousSrcPtInMapNode /* cc.v2 */, minRequiredLayerDistance, maxExpanderTrialCount) {
   const tiledMapIns = mapNode.getComponent(cc.TiledMap); // This is a magic name.

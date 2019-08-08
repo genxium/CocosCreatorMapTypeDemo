@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.1.6" orientation="isometric" renderorder="right-down" width="40" height="40" tilewidth="256" tileheight="128" infinite="0" nextobjectid="15">
+<map version="1.2" tiledversion="1.2.3" orientation="isometric" renderorder="right-down" width="40" height="40" tilewidth="256" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="15">
  <tileset firstgid="1" source="Tile_W256_H128_S01.tsx"/>
- <layer name="floor" width="40" height="40">
+ <layer id="1" name="floor" width="40" height="40">
   <data encoding="base64" compression="zlib">
    eJzt17EJACAMAMFgZ8D919UZDBGLK76/9jMiUpIeNx5165un1dzk4+Pj4+Pj4+Pj4+Pj4/vA1/3mFZ8kVdoLEEN/
   </data>
  </layer>
- <layer name="StatefulBuildableInstanceHighlighter" width="40" height="40">
+ <layer id="2" name="StatefulBuildableInstanceHighlighter" width="40" height="40">
   <properties>
    <property name="type" value="stateful_buildable_instance_highlighter"/>
   </properties>
@@ -14,50 +14,4 @@
    eJztzgENAAAIA6AXsH9dY1w3SEACAAAAAHw07QDAYQtb1AAO
   </data>
  </layer>
- <objectgroup name="TestDst">
-  <object id="6" x="3488" y="1408">
-   <point/>
-  </object>
-  <object id="7" x="3800" y="2120">
-   <point/>
-  </object>
-  <object id="8" x="2880" y="4480">
-   <point/>
-  </object>
-  <object id="9" x="3936" y="4480">
-   <point/>
-  </object>
-  <object id="10" x="3784" y="3320">
-   <point/>
-  </object>
-  <object id="13" x="2152" y="2232">
-   <point/>
-  </object>
-  <object id="14" x="2008" y="3304">
-   <point/>
-  </object>
- </objectgroup>
- <objectgroup name="TestSrc">
-  <object id="1" x="1176" y="1256">
-   <point/>
-  </object>
-  <object id="2" x="928" y="1792">
-   <point/>
-  </object>
-  <object id="3" x="1272" y="2696">
-   <point/>
-  </object>
-  <object id="4" x="1168" y="3472">
-   <point/>
-  </object>
-  <object id="5" x="1296" y="4016">
-   <point/>
-  </object>
-  <object id="11" x="4088" y="1896">
-   <point/>
-  </object>
-  <object id="12" x="4480" y="3872">
-   <point/>
-  </object>
- </objectgroup>
 </map>
