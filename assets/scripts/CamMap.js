@@ -387,6 +387,7 @@ cc.Class({
     if (null != statefulBuildableInstance.boundFollowingNpc) {
       console.log("Refreshing `GrandSrcAndCurrentDestination` for statefulBuildableFollowingNpcComp.uuid == ", statefulBuildableInstance.boundFollowingNpc.uuid);
       statefulBuildableInstance.boundFollowingNpc.refreshGrandSrcAndCurrentDestination();
+      // Note that the distribution of "g+h" might change after the invocation of `window.refreshCachedKnownBarrierGridDict(...)`.
     }
     const halfBarrierAnchorToBoundingBoxCentre = cc.v2(statefulBuildableInstance.boundingBoxContinuousWidth, statefulBuildableInstance.boundingBoxContinuousHeight).mul(0.5);
     const newBarrier = cc.instantiate(mapScriptIns.polygonBoundaryBarrierPrefab);

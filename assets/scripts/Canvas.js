@@ -8,16 +8,18 @@ window.reverseStatefulBuildableFollowingNpcDestinationDict = {};
 window.cachedKnownBarrierGridDict = {};
 
 const heuristicallyEstimatePathLength = function(p1, p2) {
-  if (null != window.cachedKnownBarrierGridDict[p1.x] && true == window.cachedKnownBarrierGridDict[p1.x][p1.y]) {
-    return Infinity;
-  }
   const absDx = Math.abs(p1.x - p2.x);
   const absDy = Math.abs(p1.y - p2.y);
   return Math.sqrt(absDx * absDx + absDy * absDy);
 };
-window.heuristicallyEstimatePathLength = heuristicallyEstimatePathLength; 
 
 const hamiltonDistance = function(p1, p2) {
+  if (null != window.cachedKnownBarrierGridDict[p1.x] && true == window.cachedKnownBarrierGridDict[p1.x][p1.y]) {
+    return Infinity;
+  }
+  if (null != window.cachedKnownBarrierGridDict[p2.x] && true == window.cachedKnownBarrierGridDict[p2.x][p2.y]) {
+    return Infinity;
+  }
   const absDx = Math.abs(p1.x - p2.x);
   const absDy = Math.abs(p1.y - p2.y);
   return absDx + absDy;
