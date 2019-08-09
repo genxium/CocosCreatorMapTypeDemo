@@ -663,16 +663,12 @@
     "magicLeanLowerBound": 0.414,
     "magicLeanUpperBound": 2.414,
     "speciesName": "DUCK",
-    "preGrandSrc": null,
-    "grandSrc": null,
     "walkingAnimNode": {
       "__id__": 12
     },
     "stayingAnimNode": {
       "__id__": 16
     },
-    "currentDestination": null,
-    "boundStatefulBuildable": null,
     "_id": ""
   },
   {

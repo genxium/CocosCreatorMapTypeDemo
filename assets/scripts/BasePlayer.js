@@ -52,6 +52,9 @@ module.export = cc.Class({
   },
 
   scheduleNewDirection(newScheduledDirection, forceAnimSwitch) {
+    if (!this.animComp) {
+      return;
+    }
     if (!newScheduledDirection) {
       return;
     }
