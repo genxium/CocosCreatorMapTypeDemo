@@ -12,7 +12,7 @@ window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE = {
   STAYING_AT_DESTINATION_AFTER_MOVING_IN: 11, // A.k.a. staying at "grandSrc".
 };
 
-const INFINITY_FOR_PATH_FINDING = 9999999999;
+const INFINITY_FOR_PATH_FINDING = 1600;
 const DOUBLE_BARRIER_PATH_LENGTH = (INFINITY_FOR_PATH_FINDING * 2);
 
 module.export = cc.Class({
@@ -631,7 +631,7 @@ module.export = cc.Class({
     const referenceGValue = (self.gCache[discreteCurrentPosKey]);
     const referenceGAndHSumValue = (self.gCache[discreteCurrentPosKey] + self._heuristicallyEstimatePathLength(discreteCurrentPos, self.discreteCurrentDestination));
 
-    let minGAndHSum = DOUBLE_BARRIER_PATH_LENGTH;
+    let minGAndHSum = referenceGAndHSumValue;
     let chosenOffset = null;
 
     for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
@@ -656,28 +656,21 @@ module.export = cc.Class({
       const neighbourOffsetMemberVarName = self._neighbourOffsetToMemberVarName(neighbourOffset);
       const theLabel = self[neighbourOffsetMemberVarName];
 
-      theLabel.string = "(" + self.gCache[discreteNeighbourPosKey] + "," + candidateSumValue + ")";
-      if (!(INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) && self.gCache[discreteNeighbourPosKey] < referenceGValue) {
-        /*
-         * Skip the obvious predecessors. 
-         *
-         * The case that if "`INFINITY_FOR_PATH_FINDING <= referenceGValue` but `INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]`",
-         * it should not be skipped. 
-         */
-        continue;
-      }
+      theLabel.string = "(" + self.gCache[discreteNeighbourPosKey] + ", " + candidateSumValue.toFixed(1) + ")";
+      if ((INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) 
+          || 
+          self.gCache[discreteNeighbourPosKey] > referenceGValue && (INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey])) {
 
-      if (DOUBLE_BARRIER_PATH_LENGTH <= self.gCache[discreteNeighbourPosKey]) {
-        // Skip the obvious non-path direction.
-        continue;
-      }
-
-      if (candidateSumValue <= minGAndHSum) {
-        minGAndHSum = candidateSumValue;
-        if (minGAndHSum <= referenceGAndHSumValue) {
-          chosenOffset = neighbourOffset;
+        if (candidateSumValue > minGAndHSum) {
+          continue;
         }
+
+        minGAndHSum = candidateSumValue;
+        chosenOffset = neighbourOffset;
+      } else {
+        continue;
       }
+
     }
     if (null == chosenOffset) {
       return;
