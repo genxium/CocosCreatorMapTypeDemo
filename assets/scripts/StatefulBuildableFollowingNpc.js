@@ -30,6 +30,10 @@ module.export = cc.Class({
       type: cc.Node,
       default: null
     },
+    cacheCollectionNode: {
+      type: cc.Node,
+      default: null
+    },
   },
 
   ctor() {
@@ -80,6 +84,35 @@ module.export = cc.Class({
   start() {
     BasePlayer.prototype.start.call(this);
   },
+    
+  _neighbourOffsetToMemberVarName(neighbourOffset) {
+    return ("_" + neighbourOffset.dx + "_" + neighbourOffset.dy + "_").replace("+", "plus").replace("-", "minus");
+  },
+
+  _initCacheCollectionLabels() {
+    const self = this;
+    const discreteCurrentPos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
+    
+    for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
+      const discreteNeighbourPos = {
+        x: discreteCurrentPos.x + neighbourOffset.dx,
+        y: discreteCurrentPos.y + neighbourOffset.dy,
+      };
+
+      const continuousPtInMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapNode, self.mapIns.tiledMapIns, null, discreteNeighbourPos.x, discreteNeighbourPos.y);
+
+      const continuousDiffVecInMapNode = continuousPtInMapNode.sub(self.node.position);
+      const theMemberVarName = self._neighbourOffsetToMemberVarName(neighbourOffset);
+      const theLabelNode = new cc.Node(theMemberVarName); 
+      const theLabel = theLabelNode.addComponent(cc.Label); 
+      theLabel.string = theMemberVarName;
+
+      theLabelNode.setPosition(continuousDiffVecInMapNode);
+      setLocalZOrder(theLabelNode, CORE_LAYER_Z_INDEX.DRAGGING_ITEM);
+      self[theMemberVarName] = theLabel;
+      safelyAddChild(self.cacheCollectionNode, theLabelNode);
+    }
+  },
 
   onLoad() {
     const self = this;
@@ -93,6 +126,7 @@ module.export = cc.Class({
     * -- YFLu
     */
 
+    self._initCacheCollectionLabels();
     self.setAnim(self.speciesName, () => {
       self.scheduleNewDirection(self._generateRandomDirection());
       self.transitToStaying(() => {
@@ -605,6 +639,7 @@ module.export = cc.Class({
         x: discreteCurrentPos.x + neighbourOffset.dx,
         y: discreteCurrentPos.y + neighbourOffset.dy,
       };
+
       if (discreteNeighbourPos.x < 0
         ||
         discreteNeighbourPos.x >= mapSizeDiscrete.width
@@ -616,7 +651,12 @@ module.export = cc.Class({
         continue;
       }
       const discreteNeighbourPosKey = window.describe(discreteNeighbourPos);
+      const candidateSumValue = (self.gCache[discreteNeighbourPosKey] + self._heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination));
 
+      const neighbourOffsetMemberVarName = self._neighbourOffsetToMemberVarName(neighbourOffset);
+      const theLabel = self[neighbourOffsetMemberVarName];
+
+      theLabel.string = "(" + self.gCache[discreteNeighbourPosKey] + "," + candidateSumValue + ")";
       if (!(INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) && self.gCache[discreteNeighbourPosKey] < referenceGValue) {
         /*
          * Skip the obvious predecessors. 
@@ -632,7 +672,6 @@ module.export = cc.Class({
         continue;
       }
 
-      const candidateSumValue = (self.gCache[discreteNeighbourPosKey] + self._heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination));
       if (candidateSumValue <= minGAndHSum) {
         minGAndHSum = candidateSumValue;
         if (minGAndHSum <= referenceGAndHSumValue) {
