@@ -635,7 +635,7 @@ module.export = cc.Class({
       const candidateSumValue = (self.gCache[discreteNeighbourPosKey] + self._heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination));
       if (candidateSumValue <= minGAndHSum) {
         minGAndHSum = candidateSumValue;
-        if (minGAndHSum < referenceGAndHSumValue) {
+        if (minGAndHSum <= referenceGAndHSumValue) {
           chosenOffset = neighbourOffset;
         }
       }
