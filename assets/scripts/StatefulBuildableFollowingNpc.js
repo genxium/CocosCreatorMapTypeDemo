@@ -13,6 +13,7 @@ window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE = {
 };
 
 const INFINITY_FOR_PATH_FINDING = 9999999999;
+const DOUBLE_BARRIER_PATH_LENGTH = (INFINITY_FOR_PATH_FINDING * 2);
 
 module.export = cc.Class({
   extends: BasePlayer,
@@ -592,9 +593,11 @@ module.export = cc.Class({
     const mapSizeDiscrete = tiledMapIns.getMapSize();
     const discreteCurrentPos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
     const discreteCurrentPosKey = window.describe(discreteCurrentPos);
+
+    const referenceGValue = (self.gCache[discreteCurrentPosKey]);
     const referenceGAndHSumValue = (self.gCache[discreteCurrentPosKey] + self._heuristicallyEstimatePathLength(discreteCurrentPos, self.discreteCurrentDestination));
 
-    let minGAndHSum = (INFINITY_FOR_PATH_FINDING * 2);
+    let minGAndHSum = DOUBLE_BARRIER_PATH_LENGTH;
     let chosenOffset = null;
 
     for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
@@ -614,18 +617,23 @@ module.export = cc.Class({
       }
       const discreteNeighbourPosKey = window.describe(discreteNeighbourPos);
 
-      if (self.gCache[discreteNeighbourPosKey] < self.gCache[discreteCurrentPosKey]) {
-        // Skip the obvious predecessors.
+      if (!(INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) && self.gCache[discreteNeighbourPosKey] < referenceGValue) {
+        /*
+         * Skip the obvious predecessors. 
+         *
+         * The case that if "`INFINITY_FOR_PATH_FINDING <= referenceGValue` but `INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]`",
+         * it should not be skipped. 
+         */
         continue;
       }
 
-      if (INFINITY_FOR_PATH_FINDING <= self.gCache[discreteNeighbourPosKey]) {
+      if (DOUBLE_BARRIER_PATH_LENGTH <= self.gCache[discreteNeighbourPosKey]) {
         // Skip the obvious non-path direction.
         continue;
       }
 
       const candidateSumValue = (self.gCache[discreteNeighbourPosKey] + self._heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination));
-      if (candidateSumValue < minGAndHSum) {
+      if (candidateSumValue <= minGAndHSum) {
         minGAndHSum = candidateSumValue;
         if (minGAndHSum < referenceGAndHSumValue) {
           chosenOffset = neighbourOffset;
