@@ -49,7 +49,7 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
   }
 
   cachedKnownBarrierGridDict = {};
-  let changedGridPos = [];
+  let changedGridPosList = [];
 
   for (let aComp of barrierColliders) {
     let toCollidePolygon = [];
@@ -79,20 +79,21 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
           }
           cachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap] = true;
           if (null == prevCachedKnownBarrierGridDict[discretePosXInMap] || null == prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap]) {
-            changedGridPos.push(cc.v2(discretePosXInMap, discretePosYInMap));
+            changedGridPosList.push(cc.v2(discretePosXInMap, discretePosYInMap));
           }
         } else {
           if (null != prevCachedKnownBarrierGridDict[discretePosXInMap] && true == prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap]) {
-            changedGridPos.push(cc.v2(discretePosXInMap, discretePosYInMap));
+            changedGridPosList.push(cc.v2(discretePosXInMap, discretePosYInMap));
           }
         }
       }
     }
   }
 
+  console.log("The list of `changedGridPosList` is ", changedGridPosList);
   for (let k in window.mapIns.statefulBuildableFollowingNpcScriptInsDict) {
     const statefulBuildableFollowingNpc = window.mapIns.statefulBuildableFollowingNpcScriptInsDict[k]; 
-    for (let v of changedGridPos) {
+    for (let v of changedGridPosList) {
       statefulBuildableFollowingNpc.updatePathFindingCachesForDiscretePosition(v);
     }
   }  

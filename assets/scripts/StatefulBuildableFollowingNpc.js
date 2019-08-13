@@ -14,6 +14,7 @@ window.STATEFUL_BUILDABLE_FOLLOWING_NPC_STATE = {
 
 const INFINITY_FOR_PATH_FINDING = 1600;
 const DOUBLE_BARRIER_PATH_LENGTH = (INFINITY_FOR_PATH_FINDING * 2);
+const QUARAL_BARRIER_PATH_LENGTH = (INFINITY_FOR_PATH_FINDING * 4);
 
 module.export = cc.Class({
   extends: BasePlayer,
@@ -89,6 +90,10 @@ module.export = cc.Class({
     return ("_" + neighbourOffset.dx + "_" + neighbourOffset.dy + "_").replace("+", "plus").replace("-", "minus");
   },
 
+  _cacheValueToString(g, gAndHSum) {
+    return "(" + g + ", " + gAndHSum.toFixed(1) + ")";
+  },
+
   _initCacheCollectionLabels() {
     const self = this;
     const discreteCurrentPos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
@@ -112,6 +117,16 @@ module.export = cc.Class({
       self[theMemberVarName] = theLabel;
       safelyAddChild(self.cacheCollectionNode, theLabelNode);
     }
+
+    const theMemberVarName = self._neighbourOffsetToMemberVarName({dx: 0, dy: 0});
+    const theLabelNode = new cc.Node(theMemberVarName); 
+    const theLabel = theLabelNode.addComponent(cc.Label); 
+    theLabel.string = theMemberVarName;
+
+    theLabelNode.setPosition(cc.v2(0, 0));
+    setLocalZOrder(theLabelNode, CORE_LAYER_Z_INDEX.DRAGGING_ITEM);
+    self[theMemberVarName] = theLabel;
+    safelyAddChild(self.cacheCollectionNode, theLabelNode);
   },
 
   onLoad() {
@@ -631,7 +646,12 @@ module.export = cc.Class({
     const referenceGValue = (self.gCache[discreteCurrentPosKey]);
     const referenceGAndHSumValue = (self.gCache[discreteCurrentPosKey] + self._heuristicallyEstimatePathLength(discreteCurrentPos, self.discreteCurrentDestination));
 
-    let minGAndHSum = referenceGAndHSumValue;
+    const theMemberVarName = self._neighbourOffsetToMemberVarName({dx: 0, dy: 0});
+    const theLabelNode = new cc.Node(theMemberVarName); 
+    const theLabel = theLabelNode.addComponent(cc.Label); 
+    theLabel.string = self._cacheValueToString(referenceGValue, referenceGAndHSumValue);
+
+    let minGAndHSum = DOUBLE_BARRIER_PATH_LENGTH;
     let chosenOffset = null;
 
     for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
@@ -656,9 +676,9 @@ module.export = cc.Class({
       const neighbourOffsetMemberVarName = self._neighbourOffsetToMemberVarName(neighbourOffset);
       const theLabel = self[neighbourOffsetMemberVarName];
 
-      theLabel.string = "(" + self.gCache[discreteNeighbourPosKey] + ", " + candidateSumValue.toFixed(1) + ")";
+      theLabel.string = self._cacheValueToString(self.gCache[discreteNeighbourPosKey], candidateSumValue);
       if ((INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) 
-          || 
+          ||
           self.gCache[discreteNeighbourPosKey] > referenceGValue && (INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey])) {
 
         if (candidateSumValue > minGAndHSum) {

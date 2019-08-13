@@ -363,10 +363,6 @@ cc.Class({
             barrierColliderNode.parent.removeChild(barrierColliderNode);
           }
           window.refreshCachedKnownBarrierGridDict(mapScriptIns.node, mapScriptIns.barrierColliders, null);
-          if (null != statefulBuildableInstance.boundFollowingNpc) {
-            console.log("After pulled up, the boundFollowingNpc for ", statefulBuildableInstance.node.uuid, " has non-infinite caches:");
-            statefulBuildableInstance.boundFollowingNpc._printGAndHSum();
-          }
           break;
         }
       }
@@ -418,11 +414,6 @@ cc.Class({
 
     self.createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance);
     window.refreshCachedKnownBarrierGridDict(mapScriptIns.node, mapScriptIns.barrierColliders, null);
-
-    if (null != statefulBuildableInstance.boundFollowingNpc) {
-      console.log("After put down, the boundFollowingNpc for ", statefulBuildableInstance.node.uuid, " has non-infinite caches:");
-      statefulBuildableInstance.boundFollowingNpc._printGAndHSum();
-    }
   },
 
   createItemAcceptBoundaryColliderForStatefulBuildableInstance(statefulBuildableInstance) {
