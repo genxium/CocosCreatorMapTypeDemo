@@ -31,6 +31,10 @@ module.export = cc.Class({
       type: cc.Node,
       default: null
     },
+    uuidLabel: {
+      type: cc.Label,
+      default: null
+    },
     cacheCollectionNode: {
       type: cc.Node,
       default: null
@@ -73,10 +77,17 @@ module.export = cc.Class({
     const absDx = Math.abs(p1.x - p2.x);
     const absDy = Math.abs(p1.y - p2.y);
     let ret = Math.sqrt(absDx * absDx + absDy * absDy);
-    if (null != window.cachedKnownBarrierGridDict[p1.x] && true == window.cachedKnownBarrierGridDict[p1.x][p1.y]) {
+
+    const p1IsBarrier = (null != window.cachedKnownBarrierGridDict[p1.x] && true == window.cachedKnownBarrierGridDict[p1.x][p1.y]);
+    const p1BarrierIsIgnored = (null != this.discreteBarrierGridsToIgnore && null != this.discreteBarrierGridsToIgnore[p1.x] && true == this.discreteBarrierGridsToIgnore[p1.x][p1.y]);
+
+    if (p1IsBarrier && false == p1BarrierIsIgnored) {
       ret += INFINITY_FOR_PATH_FINDING;
     }
-    if (null != window.cachedKnownBarrierGridDict[p2.x] && true == window.cachedKnownBarrierGridDict[p2.x][p2.y]) {
+
+    const p2IsBarrier = (null != window.cachedKnownBarrierGridDict[p2.x] && true == window.cachedKnownBarrierGridDict[p2.x][p2.y]);
+    const p2BarrierIsIgnored = (null != this.discreteBarrierGridsToIgnore && null != this.discreteBarrierGridsToIgnore[p2.x] && true == this.discreteBarrierGridsToIgnore[p2.x][p2.y]);
+    if (p2IsBarrier && false == p2BarrierIsIgnored) {
       ret += INFINITY_FOR_PATH_FINDING;
     }
     return ret;
@@ -96,6 +107,7 @@ module.export = cc.Class({
 
   _initCacheCollectionLabels() {
     const self = this;
+    self.uuidLabel.string = self.node.uuid;
     const discreteCurrentPos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.node.position, cc.v2(0, 0));
     
     for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
@@ -106,24 +118,26 @@ module.export = cc.Class({
 
       const continuousPtInMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapNode, self.mapIns.tiledMapIns, null, discreteNeighbourPos.x, discreteNeighbourPos.y);
 
-      const continuousDiffVecInMapNode = continuousPtInMapNode.sub(self.node.position);
+      const continuousDiffVecInSelfNode = continuousPtInMapNode.sub(self.node.position);
       const theMemberVarName = self._neighbourOffsetToMemberVarName(neighbourOffset);
       const theLabelNode = new cc.Node(theMemberVarName); 
       const theLabel = theLabelNode.addComponent(cc.Label); 
       theLabel.string = theMemberVarName;
 
-      theLabelNode.setPosition(continuousDiffVecInMapNode);
+      theLabelNode.setPosition(continuousDiffVecInSelfNode);
       setLocalZOrder(theLabelNode, CORE_LAYER_Z_INDEX.DRAGGING_ITEM);
       self[theMemberVarName] = theLabel;
       safelyAddChild(self.cacheCollectionNode, theLabelNode);
     }
 
+    const continuousPtInMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapNode, self.mapIns.tiledMapIns, null, discreteCurrentPos.x, discreteCurrentPos.y);
+    const continuousDiffVecInSelfNode = continuousPtInMapNode.sub(self.node.position);
     const theMemberVarName = self._neighbourOffsetToMemberVarName({dx: 0, dy: 0});
     const theLabelNode = new cc.Node(theMemberVarName); 
     const theLabel = theLabelNode.addComponent(cc.Label); 
     theLabel.string = theMemberVarName;
 
-    theLabelNode.setPosition(cc.v2(0, 0));
+    theLabelNode.setPosition(continuousDiffVecInSelfNode);
     setLocalZOrder(theLabelNode, CORE_LAYER_Z_INDEX.DRAGGING_ITEM);
     self[theMemberVarName] = theLabel;
     safelyAddChild(self.cacheCollectionNode, theLabelNode);
@@ -267,7 +281,7 @@ module.export = cc.Class({
     self.refreshCurrentDestination();
 
     self._initPathFindingCaches();
-    self._computePathFindingCaches();
+    self.computePathFindingCaches();
   },
 
   refreshCurrentDestination() {
@@ -342,7 +356,7 @@ module.export = cc.Class({
         let collidingWithAssociatedStatefulBuildable = false;
         const boundStatefulBuildableOfCollider = otherCollider.boundStatefulBuildable;
         collidingWithAssociatedStatefulBuildable = (null != boundStatefulBuildableOfCollider && (boundStatefulBuildableOfCollider.uuid == self.boundStatefulBuildable.uuid));
-        if (collidingWithAssociatedStatefulBuildable) {
+        if (true == collidingWithAssociatedStatefulBuildable) {
           return;
         }
         const availableNewPositionNearby = window.findNearbyNonBarrierGridByBreathFirstSearch(self.mapNode, self.node.position, 1);
@@ -482,7 +496,7 @@ module.export = cc.Class({
     self.pqForPathFinding.push(self.discreteCurrentSrc);
   },
 
-  _computePathFindingCaches() {
+  computePathFindingCaches() {
     const self = this;
 
     const tiledMapIns = self.mapIns.tiledMapIns;
@@ -599,7 +613,7 @@ module.export = cc.Class({
         const discreteNeighbourPosKey = window.describe(discreteNeighbourPos);
 
         let edgeCost = 1; /* Edge cost is currently constant. -- YFLu */
-        const neightbourIsBarrier = (window.cachedKnownBarrierGridDict[discreteNeighbourPos.x] && true == window.cachedKnownBarrierGridDict[discreteNeighbourPos.x][discreteNeighbourPos.y]);
+        const neightbourIsBarrier = (null != window.cachedKnownBarrierGridDict[discreteNeighbourPos.x] && true == window.cachedKnownBarrierGridDict[discreteNeighbourPos.x][discreteNeighbourPos.y]);
         const thatBarrierIsIgnored = (null != self.discreteBarrierGridsToIgnore && null != self.discreteBarrierGridsToIgnore[discreteNeighbourPos.x] && true == self.discreteBarrierGridsToIgnore[discreteNeighbourPos.x][discreteNeighbourPos.y]);
 
         if (true == neightbourIsBarrier && false == thatBarrierIsIgnored) {
@@ -651,7 +665,7 @@ module.export = cc.Class({
     const theLabel = theLabelNode.addComponent(cc.Label); 
     theLabel.string = self._cacheValueToString(referenceGValue, referenceGAndHSumValue);
 
-    let minGAndHSum = DOUBLE_BARRIER_PATH_LENGTH;
+    let minGAndHSum = referenceGAndHSumValue;
     let chosenOffset = null;
 
     for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
@@ -677,9 +691,13 @@ module.export = cc.Class({
       const theLabel = self[neighbourOffsetMemberVarName];
 
       theLabel.string = self._cacheValueToString(self.gCache[discreteNeighbourPosKey], candidateSumValue);
-      if ((INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) 
+      if (
+          (INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) 
           ||
-          self.gCache[discreteNeighbourPosKey] > referenceGValue && (INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey])) {
+          self.gCache[discreteNeighbourPosKey] > referenceGValue && (INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey])
+          ||
+          candidateSumValue < referenceGAndHSumValue 
+        ) {
 
         if (candidateSumValue > minGAndHSum) {
           continue;
@@ -693,6 +711,8 @@ module.export = cc.Class({
 
     }
     if (null == chosenOffset) {
+      const rectifiedContinuousPtInMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapNode, self.mapIns.tiledMapIns, null, discreteCurrentPos.x, discreteCurrentPos.y);
+      self.node.setPosition(rectifiedContinuousPtInMapNode); 
       return;
     }
     const nextDiscretePosition = {x: discreteCurrentPos.x + chosenOffset.dx, y: discreteCurrentPos.y + chosenOffset.dy};

@@ -78,13 +78,26 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
             cachedKnownBarrierGridDict[discretePosXInMap] = {};
           }
           cachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap] = true;
-          if (null == prevCachedKnownBarrierGridDict[discretePosXInMap] || null == prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap]) {
-            changedGridPosList.push(cc.v2(discretePosXInMap, discretePosYInMap));
-          }
-        } else {
-          if (null != prevCachedKnownBarrierGridDict[discretePosXInMap] && true == prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap]) {
-            changedGridPosList.push(cc.v2(discretePosXInMap, discretePosYInMap));
-          }
+        }
+      }
+    }
+  }
+
+  for (let discretePosXInMap = uniformDiscreteMargin; discretePosXInMap < mapSizeDiscrete.width - uniformDiscreteMargin; ++discretePosXInMap) {
+    for (let discretePosYInMap = uniformDiscreteMargin; discretePosYInMap < mapSizeDiscrete.height - uniformDiscreteMargin; ++discretePosYInMap) {
+      if (    
+        (null != cachedKnownBarrierGridDict[discretePosXInMap] && true == cachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap])
+        &&
+        (null == prevCachedKnownBarrierGridDict[discretePosXInMap] || true != prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap])
+        ) {
+        changedGridPosList.push(cc.v2(discretePosXInMap, discretePosYInMap));
+      } else {
+        if (    
+          (null != prevCachedKnownBarrierGridDict[discretePosXInMap] && true == prevCachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap])
+          &&
+          (null == cachedKnownBarrierGridDict[discretePosXInMap] || true != cachedKnownBarrierGridDict[discretePosXInMap][discretePosYInMap])
+        ) {
+          changedGridPosList.push(cc.v2(discretePosXInMap, discretePosYInMap));
         }
       }
     }
@@ -96,6 +109,7 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
     for (let v of changedGridPosList) {
       statefulBuildableFollowingNpc.updatePathFindingCachesForDiscretePosition(v);
     }
+    statefulBuildableFollowingNpc.computePathFindingCaches(); // To update "statefulBuildableFollowingNpc.gCache" after the update of "statefulBuildableFollowingNpc.rhsCache".
   }  
 };
 
