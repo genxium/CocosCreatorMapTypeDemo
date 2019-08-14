@@ -74,9 +74,13 @@ module.export = cc.Class({
   },
 
   _heuristicallyEstimatePathLength(p1, p2) {
+    // const absDx = Math.abs(p1.x - p2.x);
+    // const absDy = Math.abs(p1.y - p2.y);
+    // let ret = Math.sqrt(absDx * absDx + absDy * absDy);
+
     const absDx = Math.abs(p1.x - p2.x);
     const absDy = Math.abs(p1.y - p2.y);
-    let ret = Math.sqrt(absDx * absDx + absDy * absDy);
+    let ret = absDx + absDy;    
 
     const p1IsBarrier = (null != window.cachedKnownBarrierGridDict[p1.x] && true == window.cachedKnownBarrierGridDict[p1.x][p1.y]);
     const p1BarrierIsIgnored = (null != this.discreteBarrierGridsToIgnore && null != this.discreteBarrierGridsToIgnore[p1.x] && true == this.discreteBarrierGridsToIgnore[p1.x][p1.y]);
@@ -259,7 +263,6 @@ module.export = cc.Class({
      */
     self.discreteBarrierGridsToIgnore = {};
     const discreteWidth = self.boundStatefulBuildable.discreteWidth;
-
     const discreteHeight = self.boundStatefulBuildable.discreteHeight;
 
     const anchorTileDiscretePos = tileCollisionManager._continuousToDiscrete(self.mapNode, self.mapIns.tiledMapIns, self.boundStatefulBuildable.node.position.add(self.boundStatefulBuildable.estimatedSpriteCentreToAnchorTileCentreContinuousOffset), cc.v2(0, 0));
@@ -383,7 +386,7 @@ module.export = cc.Class({
     const self = this.getComponent(this.node.name);
     switch (otherCollider.node.name) {
       case "PolygonBoundaryBarrier":
-        // Deliberatly not handling. -- YFLu
+        // Deliberately not handling. -- YFLu
         break;
       default:
         break;
@@ -665,8 +668,16 @@ module.export = cc.Class({
     const theLabel = theLabelNode.addComponent(cc.Label); 
     theLabel.string = self._cacheValueToString(referenceGValue, referenceGAndHSumValue);
 
-    let minGAndHSum = referenceGAndHSumValue;
-    let chosenOffset = null;
+    /*
+    * First round.
+    *
+    * Try to find a neighbour whose "GValue" is strictly higher, and "GAndHSum" is not higher than that of the current grid.
+    * Priority goes to "GValue(the higher the better) -> GAndHSum(the lower the better)". 
+    */
+    let maxG = referenceGValue;
+    let associatedGAndHSum = referenceGAndHSumValue;
+
+    let chosenOffsetInDiscreteIsometricCood = null;
 
     for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
       const discreteNeighbourPos = {
@@ -685,37 +696,68 @@ module.export = cc.Class({
         continue;
       }
       const discreteNeighbourPosKey = window.describe(discreteNeighbourPos);
-      const candidateSumValue = (self.gCache[discreteNeighbourPosKey] + self._heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination));
+      const candidateGValue = self.gCache[discreteNeighbourPosKey];
+      const candidateGAndHSumValue = (candidateGValue + self._heuristicallyEstimatePathLength(discreteNeighbourPos, self.discreteCurrentDestination));
 
+      // Updates the labels at "first round".  
       const neighbourOffsetMemberVarName = self._neighbourOffsetToMemberVarName(neighbourOffset);
       const theLabel = self[neighbourOffsetMemberVarName];
+      theLabel.string = self._cacheValueToString(candidateGValue, candidateGAndHSumValue);
+    
+      const canMoveToNonInfiniteG = (INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > candidateGValue);
+      const maxGNeverUpdated = (maxG == referenceGValue); 
+      const hasValidNextG = (candidateGValue > referenceGValue && INFINITY_FOR_PATH_FINDING > candidateGValue); 
+      const hasValidNextGAndH = (candidateGAndHSumValue <= referenceGAndHSumValue); 
 
-      theLabel.string = self._cacheValueToString(self.gCache[discreteNeighbourPosKey], candidateSumValue);
-      if (
-          (INFINITY_FOR_PATH_FINDING <= referenceGValue && INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey]) 
-          ||
-          self.gCache[discreteNeighbourPosKey] > referenceGValue && (INFINITY_FOR_PATH_FINDING > self.gCache[discreteNeighbourPosKey])
-          ||
-          candidateSumValue < referenceGAndHSumValue 
-        ) {
-
-        if (candidateSumValue > minGAndHSum) {
-          continue;
-        }
-
-        minGAndHSum = candidateSumValue;
-        chosenOffset = neighbourOffset;
-      } else {
+      if (false == (hasValidNextG && hasValidNextGAndH) && false == canMoveToNonInfiniteG) {
         continue;
       }
 
+      /*
+      * By far it's definitely sufficed that "INFINITY_FOR_PATH_FINDING > candidateGValue".
+      */ 
+
+      if (canMoveToNonInfiniteG && maxGNeverUpdated) {
+        // This is put as a "primarily checked case" to update "maxG" as early as possible. 
+        maxG = candidateGValue;
+        associatedGAndHSum = candidateGAndHSumValue;
+        chosenOffsetInDiscreteIsometricCood = neighbourOffset;
+      } else if (candidateGValue > maxG) {
+        maxG = candidateGValue;
+        associatedGAndHSum = candidateGAndHSumValue;
+        chosenOffsetInDiscreteIsometricCood = neighbourOffset;
+      } else if (candidateGValue == maxG && candidateGAndHSumValue < associatedGAndHSum) {
+        associatedGAndHSum = candidateGAndHSumValue;
+        chosenOffsetInDiscreteIsometricCood = neighbourOffset;
+      } else {
+        // Deliberately left blank. -- YFLu 
+      }
     }
-    if (null == chosenOffset) {
+
+    if (null == chosenOffsetInDiscreteIsometricCood) {
+      /*
+      * Proposed Second round.
+      *
+      * Try to find a neighbour whose "GValue" is strictly higher, and "GAndHSum" is strictly higher than that of the current grid.
+      * Priority goes to "GValue(the higher the better) -> GAndHSum(the lower the better)". 
+      */
+    }
+
+    /*
+    // This commented out snippet is to be used for debugging only. 
+
+    if (null == chosenOffsetInDiscreteIsometricCood) {
       const rectifiedContinuousPtInMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapNode, self.mapIns.tiledMapIns, null, discreteCurrentPos.x, discreteCurrentPos.y);
       self.node.setPosition(rectifiedContinuousPtInMapNode); 
       return;
     }
-    const nextDiscretePosition = {x: discreteCurrentPos.x + chosenOffset.dx, y: discreteCurrentPos.y + chosenOffset.dy};
+    */
+
+    if (null == chosenOffsetInDiscreteIsometricCood) {
+      return;
+    }
+
+    const nextDiscretePosition = {x: discreteCurrentPos.x + chosenOffsetInDiscreteIsometricCood.dx, y: discreteCurrentPos.y + chosenOffsetInDiscreteIsometricCood.dy};
     const nextContinuousPtInMapNode = tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapNode, self.mapIns.tiledMapIns, null, nextDiscretePosition.x, nextDiscretePosition.y);
 
     const continuousDiffVecInMapNode = nextContinuousPtInMapNode.sub(self.node.position);
