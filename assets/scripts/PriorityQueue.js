@@ -142,7 +142,7 @@ BinaryHeap.prototype.removeAny = function (lookupKey) {
  * @return {boolean} Whether the heap is empty.
  */
 BinaryHeap.prototype.isEmpty = function () {
-  return !this.list.length;
+  return 0 == this.list.length;
 };
 
 /**

@@ -554,7 +554,7 @@ module.export = cc.Class({
 
     const trialLimit = 500;
     let trialCount = 0;
-    while (self.pqForPathFinding.top().key < self._calculatePriorityPair(self.discreteCurrentSrc) || self.rhsCache[discreteCurrentSrcKey] != self.gCache[discreteCurrentSrcKey]) {
+    while (!self.pqForPathFinding.isEmpty() && self.pqForPathFinding.top().key < self._calculatePriorityPair(self.discreteCurrentSrc) || self.rhsCache[discreteCurrentSrcKey] != self.gCache[discreteCurrentSrcKey]) {
       ++trialCount;
       if (trialCount > trialLimit) break; 
       const topNode = self.pqForPathFinding.pop();
@@ -562,10 +562,10 @@ module.export = cc.Class({
       const u = topNode.value;  
       const uKey = window.describe(u);
 
-      console.log("id: " + self.node.uuid + ", pqForPathFinding.size: " + self.pqForPathFinding.list.length + ", u: " + uKey + ", priority[u]: [" + kOld[0] + ", " + kOld[1] + "], rest in queue:");
-      for (let node of self.pqForPathFinding.list) {
-        console.log("priority: [" + node.key[0] + ", " + node.key[1] + "], pt: ", node.lookupKey);
-      }
+      // console.log("id: " + self.node.uuid + ", pqForPathFinding.size: " + self.pqForPathFinding.list.length + ", u: " + uKey + ", priority[u]: [" + kOld[0] + ", " + kOld[1] + "], rest in queue:");
+      // for (let node of self.pqForPathFinding.list) {
+      //   console.log("priority: [" + node.key[0] + ", " + node.key[1] + "], pt: ", node.lookupKey);
+      // }
 
       const newPriority = self._calculatePriorityPair(u);
 
@@ -622,18 +622,25 @@ module.export = cc.Class({
       self.movementStops = null;
       return;
     } 
+
+    const trialLimit = 500;
+    let trialCount = 0;
+
     self.movementStops = [];
 
     const tiledMapIns = self.mapIns.tiledMapIns;
     const mapSizeDiscrete = tiledMapIns.getMapSize();
 
-    const discreteCurrentPos = tileCollisionManager._continuousToDiscrete(mapNode, tiledMapIns, self.node.position, cc.v2(0, 0));
+    const discreteCurrentPos = tileCollisionManager._continuousToDiscrete(self.mapNode, tiledMapIns, self.node.position, cc.v2(0, 0));
 
-    // console.log("For statefulBuildableFollowingNpcComp.uuid == ", self.uuid, ", found steps from ", self.node.position, " to ", self.currentDestination, " :", self.movementStops);
-
-    let u = discreteCurrentPos; // for every "stop"
+    let u = discreteCurrentPos, gOfU = self.gCache[window.describe(u)]; // for every "stop"
     while (u.x != self.discreteCurrentDestination.x || u.y != self.discreteCurrentDestination.y) {
-      let nextU = null, nextUValue = Infinity;
+      ++trialCount;
+      if (trialCount > trialLimit) {
+        self.movementStops = null;
+        return;
+      }
+      let nextU = null, nextGOfU = Infinity, nextUValue = Infinity;
       for (let neighbourOffset of window.NEIGHBOUR_DISCRETE_OFFSETS) {
         const discreteNeighbourPos = {
           x: u.x + neighbourOffset.dx,
@@ -653,16 +660,29 @@ module.export = cc.Class({
         
         const discreteNeighbourPosKey = window.describe(discreteNeighbourPos);
         const candidateGValue = self.gCache[discreteNeighbourPosKey];
-        const candidateRhsValue = (candidateGValue + self._cost(discreteNeighbourPos, discretePos));
+        if (candidateGValue > gOfU) {
+          // We should be approaching the destination.
+          continue;
+        }
+        const candidateValue = (candidateGValue + self._cost(discreteNeighbourPos, discreteCurrentPos));
 
-        if (candidateRhsValue < nextUValue) {
+        if (candidateValue < nextUValue) {
           nextU = discreteNeighbourPos;
-          nextUValue = candidateRhsValue;
+          nextUValue = candidateValue;
+          nextGOfU = candidateGValue; 
         }  
       }
+      if (null == nextU) {
+        self.movementStops = null;
+        return;
+      }
+      console.log("For statefulBuildableFollowingNpcComp.uuid == ", self.uuid, " u <- ", nextU, ", where g[u] <- ", self.gCache[window.describe(nextU)]);
       u = nextU;
+      gOfU = nextGOfU;
       self.movementStops.push(tileCollisionManager._continuousFromCentreOfDiscreteTile(self.mapNode, self.mapIns.tiledMapIns, null, u.x, u.y));
     }
+
+    console.log("For statefulBuildableFollowingNpcComp.uuid == ", self.uuid, ", found steps from ", self.node.position, " to ", self.currentDestination, " :", self.movementStops);
   },
 
   restartPatrolling() {

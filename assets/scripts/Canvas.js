@@ -87,6 +87,8 @@ window.refreshCachedKnownBarrierGridDict = function(mapNode, barrierColliders, t
   for (let k in window.mapIns.statefulBuildableFollowingNpcScriptInsDict) {
     const statefulBuildableFollowingNpc = window.mapIns.statefulBuildableFollowingNpcScriptInsDict[k]; 
     statefulBuildableFollowingNpc.computePathFindingCaches();
+    statefulBuildableFollowingNpc.refreshContinuousStopsFromCurrentPositionToCurrentDestination();
+    statefulBuildableFollowingNpc.restartPatrolling();
   }  
 };
 
