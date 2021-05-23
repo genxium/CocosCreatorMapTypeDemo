@@ -24,12 +24,12 @@ module.export = cc.Class({
     },
   },
 
-  // LIFE-CYCLE CALLBACKS:
-  start() {
+  ctor() {
     const self = this;
-    self.contactedControlledPlayers = [];
-    self.contactedNPCPlayers = [];
-    self.contactedBarriers = [];
+    self.contactedControlledPlayers = new Map();
+    self.contactedNPCPlayers = new Map();
+    self.contactedBarriers = new Map();
+
     self.coveringShelterZReducers = [];
 
     self.computedNewDifferentPosLocalToParentWithinCurrentFrame = null;
@@ -45,8 +45,13 @@ module.export = cc.Class({
     };
   },
 
+  // LIFE-CYCLE CALLBACKS:
+  start() {
+  },
+
   onLoad() {
     const self = this;
+
     self.animComp = this.node.getComponent(cc.Animation);
     self.animComp.play();
   },
@@ -98,59 +103,38 @@ module.export = cc.Class({
 
   _addContactedBarrier(collider) {
     const self = this;
-    for (let contactedBarrier of self.contactedBarriers) {
-      if (contactedBarrier.id == collider.id) {
-        return false;
-      }
-    }
-    self.contactedBarriers.push(collider);
+    if (self.contactedBarriers.has(collider.id)) return false;
+    self.contactedBarriers.set(collider.id, collider);
     return true;
   },
 
   _removeContactedBarrier(collider) {
     const self = this;
-    self.contactedBarriers = self.contactedBarriers.filter((contactedBarrier) => {
-      return contactedBarrier.id != collider.id;
-    });
-    return true;
+    return self.contactedBarriers.delete(collider.id);
   },
 
   _addContactedControlledPlayers(comp) {
     const self = this;
-    for (let aComp of self.contactedControlledPlayers) {
-      if (aComp.uuid == comp.uuid) {
-        return false;
-      }
-    }
-    self.contactedControlledPlayers.push(comp);
+    if (self.contactedControlledPlayers.has(comp.uuid)) return false;
+    self.contactedControlledPlayers.set(comp.uuid, comp);
     return true;
   },
 
   _removeContactedControlledPlayer(comp) {
     const self = this;
-    self.contactedControlledPlayers = self.contactedControlledPlayers.filter((aComp) => {
-      return aComp.uuid != comp.uuid;
-    });
-    return true;
+    self.contactedControlledPlayers.delete(comp.uuid);
   },
 
   _addContactedNPCPlayers(comp) {
     const self = this;
-    for (let aComp of self.contactedNPCPlayers) {
-      if (aComp.uuid == comp.uuid) {
-        return false;
-      }
-    }
-    self.contactedNPCPlayers.push(comp);
+    if (self.contactedNPCPlayers.has(comp.uuid)) return false;
+    self.contactedNPCPlayers.set(comp.uuid, comp);
     return true;
   },
 
   _removeContactedNPCPlayer(comp) {
     const self = this;
-    self.contactedNPCPlayers = self.contactedNPCPlayers.filter((aComp) => {
-      return aComp.uuid != comp.uuid;
-    });
-    return true;
+    return self.contactedNPCPlayers.delete(comp.uuid); 
   },
 
   _canMoveBy(vecToMoveBy) {
@@ -164,11 +148,11 @@ module.export = cc.Class({
 
     const currentSelfColliderCircle = self.node.getComponent(cc.CircleCollider);
     let nextSelfColliderCircle = null;
-    if (0 < self.contactedBarriers.length || 0 < self.contactedNPCPlayers.length) {
+    if (0 < self.contactedBarriers.size || 0 < self.contactedNPCPlayers.size) {
       /* To avoid unexpected buckling. */
       const mutatedVecToMoveBy = vecToMoveBy.mul(2);
       nextSelfColliderCircle = {
-        position: self.node.position.add(vecToMoveBy.mul(2)).add(
+        position: self.node.position.add(mutatedVecToMoveBy).add(
           currentSelfColliderCircle.offset
         ),
         radius: currentSelfColliderCircle.radius,
@@ -180,12 +164,27 @@ module.export = cc.Class({
       };
     }
 
-    for (let contactedBarrier of self.contactedBarriers) {
+    for (let contactedBarrier of self.contactedBarriers.values()) {
       let contactedBarrierPolygonLocalToParentWithinCurrentFrame = [];
       for (let p of contactedBarrier.points) {
         contactedBarrierPolygonLocalToParentWithinCurrentFrame.push(contactedBarrier.node.position.add(p));
       }
       if (cc.Intersection.polygonCircle(contactedBarrierPolygonLocalToParentWithinCurrentFrame, nextSelfColliderCircle)) {
+        return false;
+      }
+    }
+
+    for (let contactedPlayer of self.contactedNPCPlayers.values()) {
+      const contactedPlayerColliderCircle = contactedPlayer.node.getComponent(cc.CircleCollider);
+
+      const contactedPlayerColliderCircleLocalToParentWithinCurrentFrame = {
+        position: contactedPlayer.node.position.add(
+          contactedPlayerColliderCircle.offset
+        ),
+        radius: contactedPlayerColliderCircle.radius,
+      };
+
+      if (cc.Intersection.circleCircle(contactedPlayerColliderCircleLocalToParentWithinCurrentFrame, nextSelfColliderCircle)) {
         return false;
       }
     }
@@ -284,7 +283,8 @@ module.export = cc.Class({
       case "PolygonBoundaryTransparent":
         if (false == other.node.pTiledLayer.node.active || 0 == other.node.pTiledLayer.node.opacity ) break;
         other.node.affectedAccount--;
-        if(0 == other.node.affectedAccount) { //如果该透明化建筑中还有npc, 则不隐藏shelter
+        if(0 == other.node.affectedAccount) { 
+          //如果该透明化建筑中还有npc, 则不隐藏shelter
           window.cancelPreviewingOfShelter(mapIns, playerScriptIns.mapNode, other.node.pTiledLayer, other.node.tileDiscretePos);
         }
         break;
@@ -300,25 +300,10 @@ module.export = cc.Class({
   },
 
   _generateRandomDirection() {
-    return ALL_DISCRETE_DIRECTIONS_CLOCKWISE[Math.floor(Math.random() * ALL_DISCRETE_DIRECTIONS_CLOCKWISE.length)];
-  },
-
-  _generateRandomDirectionExcluding(toExcludeDx, toExcludeDy, withJumpingDt) {
-    let randomDirectionList = [];
-    let exactIdx = null;
-    for (let ii = 0; ii < ALL_DISCRETE_DIRECTIONS_CLOCKWISE.length; ++ii) {
-      if (toExcludeDx != ALL_DISCRETE_DIRECTIONS_CLOCKWISE[ii].dx || toExcludeDy != ALL_DISCRETE_DIRECTIONS_CLOCKWISE[ii].dy) continue;
-      exactIdx = ii;
-      break;
-    }
-
-    for (let ii = 0; ii < ALL_DISCRETE_DIRECTIONS_CLOCKWISE.length; ++ii) {
-      if (ii == exactIdx) continue;
-      const roughDtPerFrame = (null == withJumpingDt ? 1/10.0 : withJumpingDt);
-      const extrapolatedVecToMove = this._calculateVecToMoveByInDir(roughDtPerFrame, ALL_DISCRETE_DIRECTIONS_CLOCKWISE[ii]);
-      if (!this._canMoveBy(extrapolatedVecToMove)) continue;
-      randomDirectionList.push(ALL_DISCRETE_DIRECTIONS_CLOCKWISE[ii]);
-    }
-    return randomDirectionList[Math.floor(Math.random() * randomDirectionList.length)];
+    const idx = Math.floor(Math.random() * NEIGHBOUR_DISCRETE_OFFSETS_X.length);
+    return {
+      dx: NEIGHBOUR_DISCRETE_OFFSETS_X[idx],
+      dy: NEIGHBOUR_DISCRETE_OFFSETS_Y[idx]
+    };
   },
 });
