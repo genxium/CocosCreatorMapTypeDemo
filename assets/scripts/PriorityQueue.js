@@ -20,7 +20,7 @@ var BinaryHeap = function (customCompare) {
 };
 
 BinaryHeap.prototype.contains = function (lookupKey) {
-  return this.lookupKeyToIndex.hasOwnProperty(lookupKey);
+  return null != this.lookupKeyToIndex[lookupKey];
 };
 
 /**
@@ -62,7 +62,7 @@ BinaryHeap.prototype.pop = function () {
  * empty.
  */
 BinaryHeap.prototype.top = function () {
-  return this.isEmpty() ? undefined : this.list[0];
+  return this.isEmpty() ? null : this.list[0];
 };
 
 /**
@@ -87,7 +87,7 @@ BinaryHeap.prototype.push = function (key, value, lookupKey) {
 };
 
 BinaryHeap.prototype.update = function (lookupKey, newKey, newValue) {
-  if (false == this.lookupKeyToIndex.hasOwnProperty(lookupKey)) return null;
+  if (null == this.lookupKeyToIndex[lookupKey]) return null;
   var i = this.lookupKeyToIndex[lookupKey];
 
   this.list[i].key = newKey;
@@ -106,7 +106,7 @@ BinaryHeap.prototype.update = function (lookupKey, newKey, newValue) {
 };
 
 BinaryHeap.prototype.removeAny = function (lookupKey) {
-  if (false == this.lookupKeyToIndex.hasOwnProperty(lookupKey)) return null;
+  if (null == this.lookupKeyToIndex[lookupKey]) return null;
 
   if (0 == this.list.length) {
     return null;
@@ -180,12 +180,11 @@ BinaryHeap.prototype.compare = function (a, b) {
 function heapify(heap, i) {
   let cur = i;
   let smallest = -1;
-  while (smallest != cur) {
+  while (cur != smallest) {
     const l = getLeft(cur);
     const r = getRight(cur);
     
     smallest = cur;
-
     if (l < heap.list.length &&
         heap.compare(heap.list[l], heap.list[smallest]) < 0) {
       smallest = l;
@@ -197,7 +196,8 @@ function heapify(heap, i) {
 
     if (smallest !== cur) {
       swap(heap.list, cur, smallest, heap.lookupKeyToIndex);
-      cur = smallest; 
+      cur = smallest;
+      smallest = -1;
     }
   }
 }

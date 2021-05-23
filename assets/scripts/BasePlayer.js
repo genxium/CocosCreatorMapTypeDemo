@@ -300,25 +300,10 @@ module.export = cc.Class({
   },
 
   _generateRandomDirection() {
-    return NEIGHBOUR_DISCRETE_OFFSETS[Math.floor(Math.random() * NEIGHBOUR_DISCRETE_OFFSETS.length)];
-  },
-
-  _generateRandomDirectionExcluding(toExcludeDx, toExcludeDy, withJumpingDt) {
-    let randomDirectionList = [];
-    let exactIdx = null;
-    for (let ii = 0; ii < NEIGHBOUR_DISCRETE_OFFSETS.length; ++ii) {
-      if (toExcludeDx != NEIGHBOUR_DISCRETE_OFFSETS[ii].dx || toExcludeDy != NEIGHBOUR_DISCRETE_OFFSETS[ii].dy) continue;
-      exactIdx = ii;
-      break;
-    }
-
-    for (let ii = 0; ii < NEIGHBOUR_DISCRETE_OFFSETS.length; ++ii) {
-      if (ii == exactIdx) continue;
-      const roughDtPerFrame = (null == withJumpingDt ? 1/10.0 : withJumpingDt);
-      const extrapolatedVecToMove = this._calculateVecToMoveByInDir(roughDtPerFrame, NEIGHBOUR_DISCRETE_OFFSETS[ii]);
-      if (!this._canMoveBy(extrapolatedVecToMove)) continue;
-      randomDirectionList.push(NEIGHBOUR_DISCRETE_OFFSETS[ii]);
-    }
-    return randomDirectionList[Math.floor(Math.random() * randomDirectionList.length)];
+    const idx = Math.floor(Math.random() * NEIGHBOUR_DISCRETE_OFFSETS_X.length);
+    return {
+      dx: NEIGHBOUR_DISCRETE_OFFSETS_X[idx],
+      dy: NEIGHBOUR_DISCRETE_OFFSETS_Y[idx]
+    };
   },
 });
